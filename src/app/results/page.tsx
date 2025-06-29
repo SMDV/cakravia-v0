@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail, Check, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
@@ -9,15 +9,65 @@ import Link from 'next/link';
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 
-// Type definitions for ApexCharts
+// Type definitions
 interface SmallChartProps {
   score: number;
   name: string;
   color: string;
 }
 
-const ResultsDashboard = () => {
+interface ChartOptions {
+  chart: {
+    height: number;
+    type: string;
+    toolbar: {
+      show: boolean;
+    };
+  };
+  plotOptions: {
+    radialBar: {
+      offsetY: number;
+      startAngle: number;
+      endAngle: number;
+      hollow: {
+        margin: number;
+        size: string;
+        background: string;
+        image: undefined;
+      };
+      dataLabels: {
+        name: {
+          show: boolean;
+        };
+        value: {
+          show: boolean;
+        };
+      };
+      barLabels: {
+        enabled: boolean;
+        useSeriesColors: boolean;
+        offsetX: number;
+        fontSize: string;
+        formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => string;
+      };
+    };
+  };
+  colors: string[];
+  labels: string[];
+  responsive: Array<{
+    breakpoint: number;
+    options: {
+      legend: {
+        show: boolean;
+      };
+    };
+  }>;
+  legend: {
+    show: boolean;
+  };
+}
 
+const ResultsDashboard = () => {
   // Data for ApexCharts Radial Bar Chart (Learning Preferences)
   const learningChartSeries = [150, 12, 18, 9]; // Visual, Auditory, Reading, Kinesthetic scores
 
@@ -53,7 +103,8 @@ const ResultsDashboard = () => {
           useSeriesColors: true,
           offsetX: -8,
           fontSize: "16px",
-          formatter: (seriesName: string, opts: any) => seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
+          formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => 
+            seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
         },
       },
     },

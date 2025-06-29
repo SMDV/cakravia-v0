@@ -12,14 +12,15 @@ interface ChatMessage {
 }
 
 const TestInterface = () => {
-  const [timeLeft, setTimeLeft] = useState(2432); // 40 minutes 32 seconds
+  const [timeLeft, setTimeLeft] = useState(2432);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentSliderValue, setCurrentSliderValue] = useState(50);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const dummyQuestions = [
+  // Move questions outside component or use useMemo to prevent re-creation
+  const dummyQuestions = React.useMemo(() => [
     {
       id: 1,
       text: "Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum Lorem ipsum"
@@ -40,11 +41,11 @@ const TestInterface = () => {
       id: 5,
       text: "Pertanyaan nomor 5. Neque porro quisquam est, qui dolorem ipsum quia dolor sit amet, consectetur, adipisci velit."
     }
-  ];
+  ], []);
 
   const totalQuestions = dummyQuestions.length;
 
-  // Initialize chat with first question
+  // Initialize chat with first question - now includes dummyQuestions in dependency
   useEffect(() => {
     if (dummyQuestions.length > 0 && chatHistory.length === 0) {
       setChatHistory([{ 
@@ -53,14 +54,7 @@ const TestInterface = () => {
         text: dummyQuestions[0].text 
       }]);
     }
-  }, [chatHistory.length]);
-
-  // Auto-scroll to bottom when new messages are added
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatHistory]);
+  }, [chatHistory.length, dummyQuestions]);
 
   // Timer countdown
   useEffect(() => {
