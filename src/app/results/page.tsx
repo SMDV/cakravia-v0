@@ -16,65 +16,15 @@ interface SmallChartProps {
   color: string;
 }
 
-interface ChartOptions {
-  chart: {
-    height: number;
-    type: string;
-    toolbar: {
-      show: boolean;
-    };
-  };
-  plotOptions: {
-    radialBar: {
-      offsetY: number;
-      startAngle: number;
-      endAngle: number;
-      hollow: {
-        margin: number;
-        size: string;
-        background: string;
-        image: undefined;
-      };
-      dataLabels: {
-        name: {
-          show: boolean;
-        };
-        value: {
-          show: boolean;
-        };
-      };
-      barLabels: {
-        enabled: boolean;
-        useSeriesColors: boolean;
-        offsetX: number;
-        fontSize: string;
-        formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => string;
-      };
-    };
-  };
-  colors: string[];
-  labels: string[];
-  responsive: Array<{
-    breakpoint: number;
-    options: {
-      legend: {
-        show: boolean;
-      };
-    };
-  }>;
-  legend: {
-    show: boolean;
-  };
-}
-
 const ResultsDashboard = () => {
   // Data for ApexCharts Radial Bar Chart (Learning Preferences)
-  const learningChartSeries = [150, 12, 18, 9]; // Visual, Auditory, Reading, Kinesthetic scores
+  const learningChartSeries = [150, 12, 18, 9];
 
-  const learningChartOptions: any = {
+  // Use a more flexible type for ApexCharts options
+  const learningChartOptions = {
     chart: {
       height: 390,
-      type: "radialBar",
+      type: "radialBar" as const,
       toolbar: {
         show: false,
       },
@@ -103,7 +53,7 @@ const ResultsDashboard = () => {
           useSeriesColors: true,
           offsetX: -8,
           fontSize: "16px",
-          formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => 
+          formatter: (seriesName: string, opts: any) => 
             seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
         },
       },
@@ -125,7 +75,7 @@ const ResultsDashboard = () => {
     },
   };
 
-  // Individual scores component with proper types
+  // Individual scores component
   const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => (
     <div className="rounded-xl overflow-hidden shadow-lg">
       <div 
@@ -344,11 +294,8 @@ const ResultsDashboard = () => {
             </h2>
             
             <div className="space-y-6">
-              {/* Visual Score */}
               <SmallChart score={10} name="Visual" color="#8B5CF6" />
-              {/* Auditory Score */}
               <SmallChart score={12} name="Auditory" color="#EF4444" />
-              {/* Reading Score */}
               <SmallChart score={18} name="Reading" color="#06B6D4" />
             </div>
           </div>
