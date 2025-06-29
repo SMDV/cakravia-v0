@@ -53,6 +53,7 @@ const ResultsDashboard = () => {
           useSeriesColors: true,
           offsetX: -8,
           fontSize: "16px",
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (seriesName: string, opts: any) => 
             seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
         },
