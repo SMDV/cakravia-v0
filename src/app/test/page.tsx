@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { User, Check } from 'lucide-react';
+import Link from 'next/link';
 
 interface ChatMessage {
   sender: "ai" | "user";
@@ -210,9 +211,9 @@ const TestInterface = () => {
           <span className="font-bold text-lg">logoipsum</span>
         </div>
         <nav className="flex space-x-8">
-          <a href="/" className="text-gray-700 hover:text-blue-600">Home</a>
-          <a href="/about" className="text-gray-700 hover:text-blue-600">About Us</a>
-          <a href="/profile" className="text-gray-700 hover:text-blue-600">Login</a>
+          <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
+          <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
+          <Link href="/profile" className="text-gray-700 hover:text-blue-600">Login</Link>
         </nav>
       </header>
 

@@ -1,9 +1,10 @@
 "use client"
 
 import React, { useState } from 'react';
-import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail, Download, Check, Shield, Lock } from 'lucide-react';
+import { Facebook, Instagram, Linkedin, Youtube, Phone, Mail, Check, Lock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
+import Link from 'next/link';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -16,12 +17,6 @@ interface SmallChartProps {
 }
 
 const ResultsDashboard = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const userName = "Anonymous";
-
-  const handleLoginToggle = () => {
-    setIsLoggedIn(!isLoggedIn);
-  };
 
   // Data for ApexCharts Radial Bar Chart (Learning Preferences)
   const learningChartSeries = [150, 12, 18, 9]; // Visual, Auditory, Reading, Kinesthetic scores
@@ -127,9 +122,9 @@ const ResultsDashboard = () => {
           <span className="font-bold text-lg">logoipsum</span>
         </div>
         <nav className="flex space-x-8">
-          <a href="/" className="text-gray-700 hover:text-blue-600">Home</a>
-          <a href="/about" className="text-gray-700 hover:text-blue-600">About Us</a>
-          <a href="/profile" className="text-gray-700 hover:text-blue-600">Login</a>
+          <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
+          <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
+          <Link href="/profile" className="text-gray-700 hover:text-blue-600">Login</Link>
         </nav>
       </header>
 
@@ -344,8 +339,8 @@ const ResultsDashboard = () => {
             
             <div className="flex space-x-12">
               <nav className="flex space-x-8">
-                <a href="/" className="text-white hover:text-gray-300">Home</a>
-                <a href="/about" className="text-white hover:text-gray-300">About us</a>
+                <Link href="/" className="text-white hover:text-gray-300">Home</Link>
+                <Link href="/about" className="text-white hover:text-gray-300">About us</Link>
                 <a href="#" className="text-white hover:text-gray-300">Terms of use</a>
                 <a href="#" className="text-white hover:text-gray-300">Privacy policy</a>
               </nav>

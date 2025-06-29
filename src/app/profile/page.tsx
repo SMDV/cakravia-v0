@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail } from 'lucide-react';
+import Link from 'next/link';
 
 interface FormData {
   name: string;
@@ -39,9 +40,9 @@ const ProfileForm = () => {
           <span className="font-bold text-lg">logoipsum</span>
         </div>
         <nav className="flex space-x-8">
-          <a href="/" className="text-gray-700 hover:text-blue-600">Home</a>
-          <a href="/about" className="text-gray-700 hover:text-blue-600">About Us</a>
-          <a href="/profile" className="text-gray-700 hover:text-blue-600 border-b-2 border-blue-600">Login</a>
+          <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
+          <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
+          <Link href="/profile" className="text-gray-700 hover:text-blue-600 border-b-2 border-blue-600">Login</Link>
         </nav>
       </header>
 
@@ -172,8 +173,8 @@ const ProfileForm = () => {
             
             <div className="flex space-x-12">
               <nav className="flex space-x-8">
-                <a href="/" className="text-white hover:text-gray-300">Home</a>
-                <a href="/about" className="text-white hover:text-gray-300">About us</a>
+                <Link href="/" className="text-white hover:text-gray-300">Home</Link>
+                <Link href="/about" className="text-white hover:text-gray-300">About us</Link>
                 <a href="#" className="text-white hover:text-gray-300">Terms of use</a>
                 <a href="#" className="text-white hover:text-gray-300">Privacy policy</a>
               </nav>
