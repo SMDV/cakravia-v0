@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const RegisterPage = () => {
   const router = useRouter();
-  const { register, isLoading } = useAuth();
+  const { register } = useAuth(); // Removed unused isLoading
   
   const [formData, setFormData] = useState({
     name: '',
@@ -90,8 +90,9 @@ const RegisterPage = () => {
     try {
       await register(formData);
       router.push('/'); // Redirect to homepage after successful registration
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed';
+      setErrors({ submit: errorMessage });
     } finally {
       setIsSubmitting(false);
     }

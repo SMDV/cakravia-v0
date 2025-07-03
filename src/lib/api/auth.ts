@@ -1,5 +1,6 @@
 import { apiClient } from './client';
 import { AuthResponse, RegisterData, LoginData, User, ApiResponse } from '../types';
+import Cookies from 'js-cookie';
 
 export const authAPI = {
   // Register new user
@@ -35,7 +36,6 @@ export const authAPI = {
   // Logout (client-side only for now)
   logout: () => {
     // Remove tokens from cookies
-    const Cookies = require('js-cookie');
     Cookies.remove('auth_token');
     Cookies.remove('user_data');
   },

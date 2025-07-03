@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 
 const LoginPage = () => {
   const router = useRouter();
-  const { login, isLoading } = useAuth();
+  const { login } = useAuth(); // Removed unused isLoading
   
   const [formData, setFormData] = useState({
     email: '',
@@ -63,8 +63,9 @@ const LoginPage = () => {
     try {
       await login(formData);
       router.push('/'); // Redirect to homepage after successful login
-    } catch (error: any) {
-      setErrors({ submit: error.message });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Login failed';
+      setErrors({ submit: errorMessage });
     } finally {
       setIsSubmitting(false);
     }
@@ -208,7 +209,7 @@ const LoginPage = () => {
             {/* Register Link */}
             <div className="text-center">
               <span className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link 
                   href="/register" 
                   className="font-medium hover:underline"

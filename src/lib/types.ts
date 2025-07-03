@@ -91,7 +91,7 @@ export interface PaymentOrder {
     type: string;
     status: string;
   };
-  payment: any;
+  payment: Record<string, unknown> | null;
   can_download_certificate: boolean;
 }
 

@@ -23,7 +23,7 @@ export const varkAPI = {
   },
 
   // Submit test answers
-  submitAnswers: async (testId: string, submission: VarkSubmission): Promise<ApiResponse<any>> => {
+  submitAnswers: async (testId: string, submission: VarkSubmission): Promise<ApiResponse<Record<string, unknown>>> => {
     const response = await apiClient.post(`/users/vark_tests/${testId}/submit_answers`, submission);
     return response.data;
   },

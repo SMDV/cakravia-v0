@@ -31,8 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const response = await authAPI.getProfile();
           setUser(response.data);
         }
-      } catch (error) {
+      } catch (authError) {
         // Token might be expired, remove it
+        console.error('Auth check failed:', authError);
         Cookies.remove('auth_token');
         Cookies.remove('user_data');
       } finally {
@@ -52,8 +53,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Cookies.set('user_data', JSON.stringify(response.data.user), { expires: 7 });
       
       setUser(response.data.user);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Login failed');
+    } catch (loginError: unknown) {
+      const errorMessage = loginError instanceof Error ? loginError.message : 'Login failed';
+      throw new Error(errorMessage);
     }
   };
 
@@ -66,8 +68,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       Cookies.set('user_data', JSON.stringify(response.data.user), { expires: 7 });
       
       setUser(response.data.user);
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || 'Registration failed');
+    } catch (registerError: unknown) {
+      const errorMessage = registerError instanceof Error ? registerError.message : 'Registration failed';
+      throw new Error(errorMessage);
     }
   };
 
