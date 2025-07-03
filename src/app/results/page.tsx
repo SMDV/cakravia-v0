@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { varkAPI, paymentAPI } from '@/lib/api';
+import { varkAPI } from '@/lib/api';
 import { VarkTest, VarkTestResults } from '@/lib/types';
 
 // Import ApexCharts dynamically for client-side rendering
@@ -37,6 +37,21 @@ const EnhancedResultsDashboard = () => {
     canDownloadCertificate: false
   });
 
+  // Payment state - stored locally for now
+  const [isPaid, setIsPaid] = useState(false);
+
+  // Check payment status on mount
+  useEffect(() => {
+    const checkPaymentStatus = () => {
+      const savedPaymentStatus = localStorage.getItem('vark_payment_status');
+      if (savedPaymentStatus === 'paid') {
+        setIsPaid(true);
+        setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+      }
+    };
+    checkPaymentStatus();
+  }, []);
+
   // Remove the mock scores and use real data
   const scoresData = resultsState.resultsData ? {
     visual: resultsState.resultsData.visual_score,
@@ -49,6 +64,42 @@ const EnhancedResultsDashboard = () => {
     reading: 0,
     kinesthetic: 0
   };
+
+  // Get percentage data from API
+  const percentageData = resultsState.resultsData?.scores_breakdown || [];
+  
+  // Create organized data with both scores and percentages
+  const organizedScores = [
+    { 
+      name: 'Visual', 
+      score: scoresData.visual, 
+      percentage: percentageData.find(item => item.code === 'V')?.percentage || 0,
+      color: '#8B5CF6' 
+    },
+    { 
+      name: 'Auditory', 
+      score: scoresData.auditory, 
+      percentage: percentageData.find(item => item.code === 'A')?.percentage || 0,
+      color: '#EF4444' 
+    },
+    { 
+      name: 'Reading', 
+      score: scoresData.reading, 
+      percentage: percentageData.find(item => item.code === 'R')?.percentage || 0,
+      color: '#06B6D4' 
+    },
+    { 
+      name: 'Kinesthetic', 
+      score: scoresData.kinesthetic, 
+      percentage: percentageData.find(item => item.code === 'K')?.percentage || 0,
+      color: '#10B981' 
+    }
+  ];
+
+  // Sort by score to get highest first
+  const sortedScores = [...organizedScores].sort((a, b) => b.score - a.score);
+  const highestScore = sortedScores[0];
+  const otherScores = sortedScores.slice(1);
 
   // Handle certificate purchase
   useEffect(() => {
@@ -106,26 +157,20 @@ const EnhancedResultsDashboard = () => {
 
   // Handle certificate purchase
   const handlePurchaseCertificate = async () => {
-    if (!resultsState.testData) {
-      alert('No test data available for certificate generation');
-      return;
-    }
-
     try {
       console.log('Initiating certificate purchase...');
       
-      // Create payment order and get payment token
-      const { order, paymentToken } = await paymentAPI.initializeVarkPayment(resultsState.testData.id);
+      // Simulate payment process - replace with real payment integration
+      // For now, we'll just simulate a successful payment
+      alert('Payment successful! Content unlocked.');
       
-      console.log('Payment order created:', order);
-      console.log('Payment token:', paymentToken);
-      
-      // Here you would typically redirect to payment gateway
-      // For now, we'll just show an alert
-      alert(`Payment order created: ${order.order_number}\nAmount: Rp. ${order.amount}\nRedirect to payment gateway with token: ${paymentToken.snap_token}`);
+      // Store payment status locally
+      localStorage.setItem('vark_payment_status', 'paid');
+      setIsPaid(true);
+      setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
       
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create payment order';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
       console.error('Payment error:', error);
       alert(`Payment failed: ${errorMessage}`);
     }
@@ -189,44 +234,48 @@ const EnhancedResultsDashboard = () => {
     },
   };
 
-  // Individual scores component
-  const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => (
-    <div className="rounded-xl overflow-hidden shadow-lg">
-      <div 
-        className="text-white text-center py-3 font-bold text-lg"
-        style={{ backgroundColor: '#8BC34A' }}
-      >
-        {name} Score: {score}
-      </div>
-      <div className="p-6 bg-gray-50 flex justify-center">
-        <div className="w-32 h-32 relative flex items-center justify-center">
-          <svg className="transform -rotate-90" width="128" height="128" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              fill="none"
-              stroke="#E5E7EB"
-              strokeWidth="8"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              fill="none"
-              stroke={color}
-              strokeWidth="8"
-              strokeDasharray={`${(score / 20) * 251.2} 251.2`}
-              strokeLinecap="round"
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-lg font-bold" style={{ color: '#2A3262' }}>{score}</span>
+  // Individual scores component - Updated to use percentage for chart
+  const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => {
+    const percentage = organizedScores.find(item => item.name === name)?.percentage || 0;
+    
+    return (
+      <div className="rounded-xl overflow-hidden shadow-lg">
+        <div 
+          className="text-white text-center py-3 font-bold text-lg"
+          style={{ backgroundColor: '#8BC34A' }}
+        >
+          {name} Score: {score}
+        </div>
+        <div className="p-6 bg-gray-50 flex justify-center">
+          <div className="w-32 h-32 relative flex items-center justify-center">
+            <svg className="transform -rotate-90" width="128" height="128" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke="#E5E7EB"
+                strokeWidth="8"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r="40"
+                fill="none"
+                stroke={color}
+                strokeWidth="8"
+                strokeDasharray={`${(percentage / 100) * 251.2} 251.2`}
+                strokeLinecap="round"
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-lg font-bold" style={{ color: '#2A3262' }}>{score}</span>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   // Loading state
   if (resultsState.isLoading) {
@@ -416,94 +465,104 @@ const EnhancedResultsDashboard = () => {
             </div>
           </div>
 
-          {/* Learning Style Details Section */}
-          <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 mb-12">
+          {/* Learning Style Details Section - Updated with Primary + 3 Others Layout */}
+          <div className={`bg-white rounded-xl shadow-lg p-8 md:p-12 mb-12 relative ${!isPaid ? 'overflow-hidden' : ''}`}>
+            {/* Blur overlay for locked content */}
+            {!isPaid && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center">
+                <div className="bg-white p-6 text-center border-2 shadow-md rounded-xl max-w-md" style={{ borderColor: '#4A47A3' }}>
+                  <h3 className="text-xl font-bold mb-2 text-gray-900">
+                    VARK Results + Report Certificate
+                  </h3>
+                  <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                  <button 
+                    onClick={handlePurchaseCertificate}
+                    className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                    style={{ backgroundColor: '#4A47A3' }}
+                  >
+                    Get My Results
+                  </button>
+                  <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                    <Lock className="h-4 w-4" />
+                    <span className="text-xs font-medium">100% Secure</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#4A47A3' }}>
               Your Primary Learning Style
             </h2>
             
-            {/* Determine primary style using real data */}
-            {(() => {
-              const maxScore = Math.max(scoresData.visual, scoresData.auditory, scoresData.reading, scoresData.kinesthetic);
-              const primaryStyle = Object.entries(scoresData).find(([, score]) => score === maxScore);
-              const [styleName, score] = primaryStyle || ['visual', scoresData.visual];
-              
-              const styleDescriptions = {
-                visual: "You prefer visual representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.",
-                auditory: "You prefer information that is heard or spoken. You learn best through lectures, discussions, talking things through and listening to what others have to say.",
-                reading: "You prefer words and text as a method to receive and give information. You like to read and write in all its forms.",
-                kinesthetic: "You prefer physical experience - touching, feeling, holding, doing, practical hands-on experiences."
-              };
-
-              return (
-                <div className="flex flex-row gap-8 items-center">
-                  <div className="w-1/2 flex justify-center">
-                    <div className="rounded-xl overflow-hidden shadow-lg">
-                      <div 
-                        className="text-white text-center py-3 font-bold text-lg"
-                        style={{ backgroundColor: '#8BC34A' }}
-                      >
-                        {styleName.charAt(0).toUpperCase() + styleName.slice(1)} Score: {score}
-                      </div>
-                      <div className="p-6 bg-gray-50">
-                        <div className="w-48 h-48 mx-auto relative flex items-center justify-center">
-                          <svg className="transform -rotate-90" width="192" height="192" viewBox="0 0 100 100">
-                            <circle
-                              cx="50"
-                              cy="50"
-                              r="40"
-                              fill="none"
-                              stroke="#E5E7EB"
-                              strokeWidth="8"
-                            />
-                            <circle
-                              cx="50"
-                              cy="50"
-                              r="40"
-                              fill="none"
-                              stroke="#06B6D4"
-                              strokeWidth="8"
-                              strokeDasharray={`${(score / 20) * 251.2} 251.2`}
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <span className="text-2xl font-bold" style={{ color: '#2A3262' }}>{score}</span>
-                          </div>
-                        </div>
+            {/* Primary Learning Style - Highest Score */}
+            <div className="flex flex-row gap-8 items-center mb-12">
+              <div className="w-1/2 flex justify-center">
+                <div className="rounded-xl overflow-hidden shadow-lg">
+                  <div 
+                    className="text-white text-center py-3 font-bold text-lg"
+                    style={{ backgroundColor: '#8BC34A' }}
+                  >
+                    {highestScore.name} Score: {highestScore.score}
+                  </div>
+                  <div className="p-6 bg-gray-50">
+                    <div className="w-48 h-48 mx-auto relative flex items-center justify-center">
+                      <svg className="transform -rotate-90" width="192" height="192" viewBox="0 0 100 100">
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          fill="none"
+                          stroke="#E5E7EB"
+                          strokeWidth="8"
+                        />
+                        <circle
+                          cx="50"
+                          cy="50"
+                          r="40"
+                          fill="none"
+                          stroke={highestScore.color}
+                          strokeWidth="8"
+                          strokeDasharray={`${(highestScore.percentage / 100) * 251.2} 251.2`}
+                          strokeLinecap="round"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-2xl font-bold" style={{ color: '#2A3262' }}>{highestScore.score}</span>
                       </div>
                     </div>
                   </div>
-                  
-                  <div className="w-1/2">
-                    <h3 className="text-xl font-bold mb-4" style={{ color: '#4A47A3' }}>
-                      {styleName.charAt(0).toUpperCase() + styleName.slice(1)} Learning Style
-                    </h3>
-                    
-                    <p className="mb-4 text-gray-700">
-                      {styleDescriptions[styleName as keyof typeof styleDescriptions]}
-                    </p>
-                    
-                    <p className="text-gray-700">
-                      This is your strongest learning preference based on your assessment results. Consider incorporating more {styleName} learning techniques into your study routine.
-                    </p>
-                  </div>
                 </div>
-              );
-            })()}
-          </div>
+              </div>
+              
+              <div className="w-1/2">
+                <h3 className="text-xl font-bold mb-4" style={{ color: '#4A47A3' }}>
+                  {highestScore.name} Learning Style
+                </h3>
+                
+                <p className="mb-4 text-gray-700">
+                  You prefer {highestScore.name.toLowerCase()} representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.
+                </p>
+                
+                <p className="text-gray-700">
+                  This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
+                </p>
+              </div>
+            </div>
 
-          {/* Your Other Scores Section */}
-          <div className="bg-white rounded-xl shadow-lg p-8 md:p-12 mb-12">
+            {/* Your Complete Score Breakdown - 3 Other Scores */}
             <h2 className="text-3xl font-bold text-center mb-8" style={{ color: '#4A47A3' }}>
               Your Complete Score Breakdown
             </h2>
             
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <SmallChart score={scoresData.visual} name="Visual" color="#8B5CF6" />
-              <SmallChart score={scoresData.auditory} name="Auditory" color="#EF4444" />
-              <SmallChart score={scoresData.reading} name="Reading" color="#06B6D4" />
-              <SmallChart score={scoresData.kinesthetic} name="Kinesthetic" color="#10B981" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {otherScores.map((scoreItem, index) => (
+                <SmallChart 
+                  key={index} 
+                  score={scoreItem.score} 
+                  name={scoreItem.name} 
+                  color={scoreItem.color} 
+                />
+              ))}
             </div>
           </div>
 
