@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Cookies from 'js-cookie';
 
-const BASE_URL = 'http://103.186.1.139/api/v1';
+const BASE_URL = 'https://api.cakravia.com/api/v1';
 
 export const apiClient = axios.create({
   baseURL: BASE_URL,
