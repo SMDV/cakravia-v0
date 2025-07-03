@@ -247,7 +247,18 @@ const EnhancedResultsDashboard = () => {
         <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
           <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold mb-4 text-yellow-700">No Results Available</h2>
-          <p className="text-gray-600 mb-6">No test results found. Please complete a test first.</p>
+          <p className="text-gray-600 mb-4">
+            {resultsState.error || 'No test results found. Please complete a test first.'}
+          </p>
+          
+          {/* Debug info */}
+          <div className="text-xs text-gray-500 mb-4 p-2 bg-gray-100 rounded">
+            <p>Debug Info:</p>
+            <p>URL: {window.location.href}</p>
+            <p>Test ID: {new URLSearchParams(window.location.search).get('testId') || 'Not found'}</p>
+            <p>Error: {resultsState.error || 'No error'}</p>
+          </div>
+          
           <Link 
             href="/test-vark" 
             className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
