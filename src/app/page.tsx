@@ -1,10 +1,13 @@
 "use client"
 
 import React from 'react';
-import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail } from 'lucide-react';
 import Link from 'next/link';
+import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
 
 const TestSelectionPage = () => {
+  const { user, isAuthenticated, logout } = useAuth();
+
   const testCards = [
     {
       title: "Visual, Auditory, Reading, Kinesthetic",
@@ -27,17 +30,61 @@ const TestSelectionPage = () => {
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Header */}
-      <header className="flex justify-between items-center px-6 py-4 bg-white">
-        <div className="flex items-center">
+      <header className="flex justify-between items-center px-6 py-4 bg-white shadow-sm">
+        <Link href="/" className="flex items-center">
           <div className="w-8 h-8 bg-gray-800 rounded mr-2"></div>
           <span className="font-bold text-lg">logoipsum</span>
-        </div>
-        <nav className="flex space-x-8">
+        </Link>
+        <nav className="flex items-center space-x-8">
           <Link href="/" className="text-gray-700 hover:text-blue-600 border-b-2 border-blue-600">Home</Link>
           <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
-          <Link href="/profile" className="text-gray-700 hover:text-blue-600">Login</Link>
+          
+          {isAuthenticated ? (
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-5 h-5 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium text-gray-700">
+                  Hi, {user?.name || 'User'}
+                </span>
+              </div>
+              <Link href="/profile" className="text-gray-700 hover:text-blue-600">Profile</Link>
+              <button 
+                onClick={logout}
+                className="flex items-center space-x-1 text-gray-700 hover:text-red-600"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Logout</span>
+              </button>
+            </div>
+          ) : (
+            <Link href="/login" className="text-gray-700 hover:text-blue-600">Login</Link>
+          )}
         </nav>
       </header>
+
+      {/* Welcome Message for Authenticated Users */}
+      {isAuthenticated && (
+        <div className="bg-blue-50 border-b border-blue-200">
+          <div className="max-w-6xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-blue-900">
+                  Welcome back, {user?.name}! 👋
+                </h2>
+                <p className="text-blue-700">Ready to discover your learning style?</p>
+              </div>
+              <div className="text-right">
+                <p className="text-sm text-blue-600">Email: {user?.email}</p>
+                {user?.phone && (
+                  <p className="text-sm text-blue-600">Phone: {user?.phone}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hero Section */}
       <section className="px-6 py-16" style={{ backgroundColor: '#2A3262' }}>
@@ -52,12 +99,23 @@ const TestSelectionPage = () => {
                 Ever wonder what your learning<br />
                 preferences are ?
               </p>
-              <button 
-                className="px-8 py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                style={{ color: '#2A3262' }}
-              >
-                Start Test Now
-              </button>
+              {isAuthenticated ? (
+                <Link 
+                  href="/test"
+                  className="inline-block px-8 py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                  style={{ color: '#2A3262' }}
+                >
+                  Start Your Test Now
+                </Link>
+              ) : (
+                <Link 
+                  href="/register"
+                  className="inline-block px-8 py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                  style={{ color: '#2A3262' }}
+                >
+                  Get Started - Sign Up
+                </Link>
+              )}
             </div>
             <div className="ml-8">
               {/* Illustration */}
@@ -115,12 +173,23 @@ const TestSelectionPage = () => {
                   {card.title}
                 </h3>
                 
-                <button 
-                  className="w-full py-2 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                  style={{ color: '#2A3262' }}
-                >
-                  {card.buttonText}
-                </button>
+                {isAuthenticated ? (
+                  <Link
+                    href="/test"
+                    className="block w-full py-2 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    style={{ color: '#2A3262' }}
+                  >
+                    {card.buttonText}
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block w-full py-2 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    style={{ color: '#2A3262' }}
+                  >
+                    Login to Start
+                  </Link>
+                )}
               </div>
             ))}
           </div>
@@ -161,12 +230,23 @@ const TestSelectionPage = () => {
                   </div>
                 </div>
                 
-                <button 
-                  className="w-full py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
-                  style={{ color: '#2A3262' }}
-                >
-                  Start Test Now
-                </button>
+                {isAuthenticated ? (
+                  <button 
+                    onClick={() => alert('TPA test will be available soon!')}
+                    className="w-full py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    style={{ color: '#2A3262' }}
+                  >
+                    Start Test Now
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block w-full py-3 bg-white rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                    style={{ color: '#2A3262' }}
+                  >
+                    Login to Start
+                  </Link>
+                )}
               </div>
             </div>
           </div>
