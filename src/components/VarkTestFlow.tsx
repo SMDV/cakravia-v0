@@ -165,6 +165,12 @@ const VarkTestFlow = () => {
       addLog(`📈 Response: ${JSON.stringify(response.data)}`);
       
       setTestState(prev => ({ ...prev, step: 'completed' }));
+      
+      // Redirect to results page with test ID after a short delay
+      setTimeout(() => {
+        window.location.href = `/results?testId=${test.id}`;
+      }, 2000);
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
       addLog(`❌ Submission failed: ${errorMessage}`);

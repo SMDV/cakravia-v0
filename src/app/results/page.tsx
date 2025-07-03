@@ -6,8 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { paymentAPI } from '@/lib/api';
-import { VarkTest } from '@/lib/types';
+import { varkAPI, paymentAPI } from '@/lib/api';
+import { VarkTest, VarkTestResults } from '@/lib/types';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -15,6 +15,7 @@ const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 interface ResultsState {
   isLoading: boolean;
   testData: VarkTest | null;
+  resultsData: VarkTestResults | null;
   error: string | null;
   canDownloadCertificate: boolean;
 }
@@ -31,19 +32,25 @@ const EnhancedResultsDashboard = () => {
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
+    resultsData: null,
     error: null,
     canDownloadCertificate: false
   });
 
-  // Mock data for now - will be replaced with real data
-  const [mockScores] = useState({
-    visual: 15,
-    auditory: 12,
-    reading: 18,
-    kinesthetic: 9
-  });
+  // Remove the mock scores and use real data
+  const scoresData = resultsState.resultsData ? {
+    visual: resultsState.resultsData.visual_score,
+    auditory: resultsState.resultsData.aural_score,
+    reading: resultsState.resultsData.read_score,
+    kinesthetic: resultsState.resultsData.kinesthetic_score
+  } : {
+    visual: 0,
+    auditory: 0,
+    reading: 0,
+    kinesthetic: 0
+  };
 
-  // Load test results on component mount
+  // Handle certificate purchase
   useEffect(() => {
     const loadResults = async () => {
       if (!isAuthenticated) {
@@ -56,21 +63,36 @@ const EnhancedResultsDashboard = () => {
       }
 
       try {
-        // For now, we'll use mock data
-        // In a real app, you'd get the test ID from URL params or user's test history
-        console.log('Loading test results for user:', user?.name);
+        // Get test ID from URL params
+        const urlParams = new URLSearchParams(window.location.search);
+        const testId = urlParams.get('testId');
         
-        // Simulate loading
-        await new Promise(resolve => setTimeout(resolve, 1000));
+        if (!testId) {
+          setResultsState(prev => ({ 
+            ...prev, 
+            isLoading: false, 
+            error: 'No test ID provided. Please complete a test first.' 
+          }));
+          return;
+        }
+
+        console.log('Loading test results for test ID:', testId);
+        
+        // Fetch test results from the new API endpoint
+        const resultsResponse = await varkAPI.getTestResults(testId);
+        const resultsData = resultsResponse.data;
+        
+        console.log('Loaded results data:', resultsData);
         
         setResultsState(prev => ({
           ...prev,
           isLoading: false,
-          // testData will be loaded from API in real implementation
+          resultsData,
           canDownloadCertificate: false // Will be determined by payment status
         }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
+        console.error('Error loading results:', error);
         setResultsState(prev => ({
           ...prev,
           isLoading: false,
@@ -110,7 +132,7 @@ const EnhancedResultsDashboard = () => {
   };
 
   // Data for ApexCharts Radial Bar Chart (Learning Preferences)
-  const learningChartSeries = [mockScores.visual, mockScores.auditory, mockScores.reading, mockScores.kinesthetic];
+  const learningChartSeries = [scoresData.visual, scoresData.auditory, scoresData.reading, scoresData.kinesthetic];
 
   const learningChartOptions = {
     chart: {
@@ -218,14 +240,14 @@ const EnhancedResultsDashboard = () => {
     );
   }
 
-  // Error state
-  if (resultsState.error) {
+  // Don't render if no results data
+  if (!resultsState.resultsData) {
     return (
       <div className="min-h-screen bg-[#E0E6F6] flex items-center justify-center">
         <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4 text-red-700">Error Loading Results</h2>
-          <p className="text-gray-600 mb-6">{resultsState.error}</p>
+          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+          <h2 className="text-xl font-bold mb-4 text-yellow-700">No Results Available</h2>
+          <p className="text-gray-600 mb-6">No test results found. Please complete a test first.</p>
           <Link 
             href="/test-vark" 
             className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
@@ -322,7 +344,7 @@ const EnhancedResultsDashboard = () => {
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 mt-1" style={{ color: '#8BC34A' }} />
                   <div>
-                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Visual (Score: {mockScores.visual})</h3>
+                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Visual (Score: {scoresData.visual})</h3>
                     <p className="text-sm text-gray-700">
                       Learning by looking at pictures, graphs, videos, and graphics. Could not take complete note during presentation
                     </p>
@@ -332,7 +354,7 @@ const EnhancedResultsDashboard = () => {
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 mt-1" style={{ color: '#8BC34A' }} />
                   <div>
-                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Auditory (Score: {mockScores.auditory})</h3>
+                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Auditory (Score: {scoresData.auditory})</h3>
                     <p className="text-sm text-gray-700">
                       Receive learning by listening method, by speaking or from music, discussion, and explanation
                     </p>
@@ -342,7 +364,7 @@ const EnhancedResultsDashboard = () => {
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 mt-1" style={{ color: '#8BC34A' }} />
                   <div>
-                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Reading (Score: {mockScores.reading})</h3>
+                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Reading (Score: {scoresData.reading})</h3>
                     <p className="text-sm text-gray-700">
                       Prefer words and texts as an information obtaining method. They like presentation style, by text or writing
                     </p>
@@ -352,7 +374,7 @@ const EnhancedResultsDashboard = () => {
                 <div className="flex items-start gap-3">
                   <Check className="w-5 h-5 mt-1" style={{ color: '#8BC34A' }} />
                   <div>
-                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Kinesthetic (Score: {mockScores.kinesthetic})</h3>
+                    <h3 className="font-bold mb-2" style={{ color: '#2A3262' }}>Kinesthetic (Score: {scoresData.kinesthetic})</h3>
                     <p className="text-sm text-gray-700">
                       More likely to experience through physical movement aspect while studying, such as, touch, feel, hold, perform, and move something. They prefer hands on work, practical, project, and real experience
                     </p>
@@ -389,11 +411,11 @@ const EnhancedResultsDashboard = () => {
               Your Primary Learning Style
             </h2>
             
-            {/* Determine primary style */}
+            {/* Determine primary style using real data */}
             {(() => {
-              const maxScore = Math.max(mockScores.visual, mockScores.auditory, mockScores.reading, mockScores.kinesthetic);
-              const primaryStyle = Object.entries(mockScores).find(([, score]) => score === maxScore);
-              const [styleName, score] = primaryStyle || ['reading', mockScores.reading];
+              const maxScore = Math.max(scoresData.visual, scoresData.auditory, scoresData.reading, scoresData.kinesthetic);
+              const primaryStyle = Object.entries(scoresData).find(([, score]) => score === maxScore);
+              const [styleName, score] = primaryStyle || ['visual', scoresData.visual];
               
               const styleDescriptions = {
                 visual: "You prefer visual representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.",
@@ -467,10 +489,10 @@ const EnhancedResultsDashboard = () => {
             </h2>
             
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-              <SmallChart score={mockScores.visual} name="Visual" color="#8B5CF6" />
-              <SmallChart score={mockScores.auditory} name="Auditory" color="#EF4444" />
-              <SmallChart score={mockScores.reading} name="Reading" color="#06B6D4" />
-              <SmallChart score={mockScores.kinesthetic} name="Kinesthetic" color="#10B981" />
+              <SmallChart score={scoresData.visual} name="Visual" color="#8B5CF6" />
+              <SmallChart score={scoresData.auditory} name="Auditory" color="#EF4444" />
+              <SmallChart score={scoresData.reading} name="Reading" color="#06B6D4" />
+              <SmallChart score={scoresData.kinesthetic} name="Kinesthetic" color="#10B981" />
             </div>
           </div>
 

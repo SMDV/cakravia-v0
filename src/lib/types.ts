@@ -77,6 +77,34 @@ export interface VarkSubmission {
   answers: VarkAnswer[];
 }
 
+// VARK Results Types (based on the new API response)
+export interface VarkScoreBreakdown {
+  category: string;
+  code: string;
+  score: number;
+  percentage: number;
+}
+
+export interface VarkLearningStyleInterpretation {
+  visual: string;
+  aural: string;
+  read_write: string;
+  kinesthetic: string;
+}
+
+export interface VarkTestResults {
+  visual_score: number;
+  aural_score: number;
+  read_score: number;
+  kinesthetic_score: number;
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: VarkScoreBreakdown[];
+  dominant_learning_styles: string[];
+  learning_style_interpretation: VarkLearningStyleInterpretation;
+}
+
 // Payment Types
 export interface PaymentOrder {
   id: string;

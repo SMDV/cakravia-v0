@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { ApiResponse, VarkQuestionSet, VarkTest, VarkSubmission } from '../types';
+import { ApiResponse, VarkQuestionSet, VarkTest, VarkSubmission, VarkTestResults } from '../types';
 import { AxiosError } from 'axios';
 
 interface ApiErrorResponse {
@@ -74,6 +74,26 @@ export const varkAPI = {
         throw new Error(axiosError.response.data.message);
       } else {
         throw new Error('Failed to submit answers. Please try again.');
+      }
+    }
+  },
+
+  // Get VARK test results
+  getTestResults: async (testId: string): Promise<ApiResponse<VarkTestResults>> => {
+    try {
+      console.log('🔄 Fetching test results for:', testId);
+      const response = await apiClient.get(`/users/vark_tests/${testId}/results`);
+      console.log('✅ Test results response:', response.data);
+      return response.data; // API returns { data: results, status: "ok", error: false }
+    } catch (error) {
+      console.error('❌ Failed to fetch test results:', error);
+      
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to fetch test results. Please try again.');
       }
     }
   },
