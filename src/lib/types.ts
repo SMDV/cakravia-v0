@@ -3,10 +3,11 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  phone?: string;
-  birthday?: string;
-  avatar?: string;
-  created_at: string;
+  phone?: string | null;
+  birthday?: string | null;
+  avatar_url?: string | null;
+  password_digest?: string; // Only in register response
+  created_at?: string;
   updated_at: string;
 }
 
@@ -108,7 +109,7 @@ export interface PaymentToken {
   midtrans_response: string;
 }
 
-// API Response Types
+// API Response Types (Based on actual API responses)
 export interface ApiResponse<T> {
   data: T;
   status: string;
