@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail, LogOut, BookOpen, Brain, Target, BarChart3 } from 'lucide-react';
+import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail, LogOut } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Import your image assets
@@ -18,7 +18,6 @@ const EnhancedHomepage = () => {
       title: "Visual, Auditory, Reading, Kinesthetic",
       subtitle: "VARK Learning Style Assessment",
       buttonText: "Start Exam",
-      icon: BookOpen,
       href: "/test-vark",
       description: "Discover how you learn best through our comprehensive VARK assessment"
     },
@@ -26,7 +25,6 @@ const EnhancedHomepage = () => {
       title: "AI Knowledge",
       subtitle: "Artificial Intelligence Assessment",
       buttonText: "Start Exam",
-      icon: Brain,
       href: "/test",
       description: "Test your understanding of AI concepts and technologies"
     },
@@ -34,7 +32,6 @@ const EnhancedHomepage = () => {
       title: "Learning Behavior",
       subtitle: "Behavioral Learning Patterns",
       buttonText: "Start Exam", 
-      icon: Target,
       href: "/test",
       description: "Analyze your learning behaviors and study patterns"
     },
@@ -42,7 +39,6 @@ const EnhancedHomepage = () => {
       title: "Additional Measurement",
       subtitle: "Comprehensive Assessment",
       buttonText: "Start Exam",
-      icon: BarChart3,
       href: "/test",
       description: "Additional metrics to understand your learning profile"
     }
@@ -223,66 +219,63 @@ const EnhancedHomepage = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-            {testCards.map((card, index) => {
-              const Icon = card.icon;
-              return (
-                <div 
-                  key={index} 
-                  className="group relative rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl flex flex-col h-full"
-                  style={{ backgroundColor: '#ABD305' }}
-                >
-                  {/* Icon container */}
-                  <div className="mb-6">
-                    <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
-                      {/* Main icon - your listening-music.png without circle background */}
-                      <Image 
-                        src={listeningMusicImage} 
-                        alt={card.subtitle} 
-                        width={80} 
-                        height={80}
-                        className="object-contain"
-                      />
-                    </div>
+            {testCards.map((card, index) => (
+              <div 
+                key={index} 
+                className="group relative rounded-2xl p-8 text-center transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-2xl flex flex-col h-full"
+                style={{ backgroundColor: '#ABD305' }}
+              >
+                {/* Icon container */}
+                <div className="mb-6">
+                  <div className="w-20 h-20 mx-auto mb-4 flex items-center justify-center">
+                    {/* Main icon - your listening-music.png without circle background */}
+                    <Image 
+                      src={listeningMusicImage} 
+                      alt={card.subtitle} 
+                      width={80} 
+                      height={80}
+                      className="object-contain"
+                    />
                   </div>
-                  
-                  <div className="flex-grow">
-                    <h3 className="text-white font-bold mb-2 text-lg leading-tight">
-                      {card.subtitle}
-                    </h3>
-                    <h4 className="text-white font-medium mb-4 text-sm leading-tight opacity-90">
-                      {card.title}
-                    </h4>
-                    <p className="text-white text-xs mb-6 opacity-80 leading-relaxed">
-                      {card.description}
-                    </p>
-                  </div>
-                  
-                  {/* Button at bottom */}
-                  <div className="mt-auto">
-                    {isAuthenticated ? (
-                      <Link
-                        href={card.href}
-                        className="block w-full py-3 bg-white rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
-                        style={{ color: '#2A3262' }}
-                      >
-                        {card.buttonText}
-                      </Link>
-                    ) : (
-                      <Link
-                        href="/login"
-                        className="block w-full py-3 bg-white rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
-                        style={{ color: '#2A3262' }}
-                      >
-                        Login to Start
-                      </Link>
-                    )}
-                  </div>
-                  
-                  {/* Hover effect overlay */}
-                  <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
                 </div>
-              );
-            })}
+                
+                <div className="flex-grow">
+                  <h3 className="text-white font-bold mb-2 text-lg leading-tight">
+                    {card.subtitle}
+                  </h3>
+                  <h4 className="text-white font-medium mb-4 text-sm leading-tight opacity-90">
+                    {card.title}
+                  </h4>
+                  <p className="text-white text-xs mb-6 opacity-80 leading-relaxed">
+                    {card.description}
+                  </p>
+                </div>
+                
+                {/* Button at bottom */}
+                <div className="mt-auto">
+                  {isAuthenticated ? (
+                    <Link
+                      href={card.href}
+                      className="block w-full py-3 bg-white rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                      style={{ color: '#2A3262' }}
+                    >
+                      {card.buttonText}
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/login"
+                      className="block w-full py-3 bg-white rounded-lg font-semibold hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                      style={{ color: '#2A3262' }}
+                    >
+                      Login to Start
+                    </Link>
+                  )}
+                </div>
+                
+                {/* Hover effect overlay */}
+                <div className="absolute inset-0 rounded-2xl bg-white opacity-0 group-hover:opacity-10 transition-opacity duration-300"></div>
+              </div>
+            ))}
           </div>
           
           {/* Call to Action */}
@@ -357,7 +350,13 @@ const EnhancedHomepage = () => {
                 {/* Enhanced illustration */}
                 <div className="mb-6">
                   <div className="w-24 h-24 mx-auto mb-4 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
-                    <Brain className="w-12 h-12 text-white" />
+                    <Image 
+                      src={listeningMusicImage} 
+                      alt="Academic Potential Test" 
+                      width={48} 
+                      height={48}
+                      className="object-contain"
+                    />
                   </div>
                   <div className="flex justify-center gap-2">
                     <div className="w-2 h-2 bg-white rounded-full opacity-60"></div>
