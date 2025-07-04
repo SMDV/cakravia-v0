@@ -1,8 +1,9 @@
 "use client"
 
 import React, { useState } from 'react';
-import { User, Facebook, Instagram, Linkedin, Youtube, Phone, Mail } from 'lucide-react';
-import Link from 'next/link';
+import { User } from 'lucide-react';
+import Header from '@/components/Header';
+import Footer from '@/components/Footer';
 
 interface FormData {
   name: string;
@@ -34,17 +35,7 @@ const ProfileForm = () => {
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Header */}
-      <header className="flex justify-between items-center px-6 py-4 bg-white shadow-sm">
-        <div className="flex items-center">
-          <div className="w-8 h-8 bg-gray-800 rounded mr-2"></div>
-          <span className="font-bold text-lg">logoipsum</span>
-        </div>
-        <nav className="flex space-x-8">
-          <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
-          <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
-          <Link href="/profile" className="text-gray-700 hover:text-blue-600 border-b-2 border-blue-600">Login</Link>
-        </nav>
-      </header>
+      <Header currentPage="profile" />
 
       {/* Form Section */}
       <div className="py-16 px-6">
@@ -163,50 +154,7 @@ const ProfileForm = () => {
       </div>
 
       {/* Footer */}
-      <footer className="py-12" style={{ backgroundColor: '#212437' }}>
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex justify-between items-start">
-            <div className="flex items-center mb-8">
-              <div className="w-8 h-8 bg-white rounded mr-2"></div>
-              <span className="font-bold text-lg text-white">logoipsum</span>
-            </div>
-            
-            <div className="flex space-x-12">
-              <nav className="flex space-x-8">
-                <Link href="/" className="text-white hover:text-gray-300">Home</Link>
-                <Link href="/about" className="text-white hover:text-gray-300">About us</Link>
-                <a href="#" className="text-white hover:text-gray-300">Terms of use</a>
-                <a href="#" className="text-white hover:text-gray-300">Privacy policy</a>
-              </nav>
-              
-              <div className="text-right">
-                <div className="flex items-center text-white mb-2">
-                  <Mail className="w-4 h-4 mr-2" />
-                  <span>support@cakravia.com</span>
-                </div>
-                <div className="flex items-center text-white mb-4">
-                  <Phone className="w-4 h-4 mr-2" />
-                  <span>+62 812-3456-789</span>
-                </div>
-                
-                <div>
-                  <p className="text-white mb-2">Follow us:</p>
-                  <div className="flex space-x-3">
-                    <Facebook className="w-6 h-6 text-white hover:text-blue-400 cursor-pointer" />
-                    <Instagram className="w-6 h-6 text-white hover:text-pink-400 cursor-pointer" />
-                    <Linkedin className="w-6 h-6 text-white hover:text-blue-500 cursor-pointer" />
-                    <Youtube className="w-6 h-6 text-white hover:text-red-500 cursor-pointer" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <div className="text-center pt-8 border-t border-gray-600">
-            <p className="text-gray-400">Copyright © Cakravia 2025</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

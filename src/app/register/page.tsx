@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import Header from '@/components/Header';
 
 const RegisterPage = () => {
   const router = useRouter();
@@ -101,17 +102,7 @@ const RegisterPage = () => {
   return (
     <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Header */}
-      <header className="flex justify-between items-center px-6 py-4 bg-white shadow-sm">
-        <Link href="/" className="flex items-center">
-          <div className="w-8 h-8 bg-gray-800 rounded mr-2"></div>
-          <span className="font-bold text-lg">logoipsum</span>
-        </Link>
-        <nav className="flex space-x-8">
-          <Link href="/" className="text-gray-700 hover:text-blue-600">Home</Link>
-          <Link href="/about" className="text-gray-700 hover:text-blue-600">About Us</Link>
-          <Link href="/login" className="text-gray-700 hover:text-blue-600">Login</Link>
-        </nav>
-      </header>
+        <Header />
 
       {/* Register Form Section */}
       <div className="py-16 px-6">
