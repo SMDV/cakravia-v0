@@ -860,45 +860,7 @@ const EnhancedResultsDashboard = () => {
                 Take Test Again
               </Link>
             </div>
-          </div>
-
-          {/* Bottom Section: Get to know more in detail */}
-          <div className="text-center py-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8" style={{ color: '#4A47A3' }}>
-              Get to know more in detail
-            </h2>
-            
-            <div className="bg-white p-6 text-center border-2 shadow-md rounded-xl max-w-md mx-auto" style={{ borderColor: '#4A47A3' }}>
-              <h3 className="text-xl font-bold mb-2 text-gray-900">
-                VARK Results + Report Certificate
-              </h3>
-              <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
-              
-              {isPaid ? (
-                <button 
-                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: '#10B981' }}
-                  onClick={handleDownloadCertificate}
-                >
-                  Download Certificate
-                </button>
-              ) : (
-                <button 
-                  onClick={handlePurchaseCertificate}
-                  disabled={isProcessingPayment}
-                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                  style={{ backgroundColor: '#4A47A3' }}
-                >
-                  {isProcessingPayment ? 'Processing...' : 'Get My Certificate'}
-                </button>
-              )}
-              
-              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
-                <Lock className="h-4 w-4" />
-                <span className="text-xs font-medium">100% Secure Payment</span>
-              </div>
-            </div>
-          </div>
+          </div> 
         </div>
       </main>
 
