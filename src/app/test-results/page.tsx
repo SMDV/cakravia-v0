@@ -36,6 +36,21 @@ interface MidtransResult {
   status_message: string;
 }
 
+// Extended API Error for specific error handling
+interface OrderError extends Error {
+  response?: {
+    data?: {
+      code?: string;
+      errors?: {
+        test?: string[];
+      };
+      message?: string;
+      status?: number;
+    };
+    status?: number;
+  };
+}
+
 // Declare global Midtrans types
 declare global {
   interface Window {
@@ -193,23 +208,6 @@ const EnhancedResultsDashboard = () => {
     }
   }, [addPaymentLog, checkPaymentStatus, devMode, devTestId, snapUrl]);
 
-  // Development bypass functions
-  const enableDevMode = useCallback(() => {
-    setDevMode(true);
-    // Set auth token in cookies for API calls
-    document.cookie = `auth_token=${devAuthToken}; path=/; max-age=3600`;
-    addPaymentLog('🔧 Development mode enabled');
-    addPaymentLog(`🔑 Auth token set: ${devAuthToken.slice(0, 20)}...`);
-    
-    // Override URL params for test ID
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.set('testId', devTestId);
-    window.history.replaceState({}, '', newUrl);
-    
-    // Trigger results loading with dev settings
-    loadResultsWithDevSettings();
-  }, [devAuthToken, devTestId, addPaymentLog]);
-
   const loadResultsWithDevSettings = useCallback(async () => {
     try {
       addPaymentLog(`📊 Loading results for test ID: ${devTestId}`);
@@ -239,6 +237,23 @@ const EnhancedResultsDashboard = () => {
       }));
     }
   }, [devTestId, addPaymentLog, checkPaymentStatus]);
+
+  // Development bypass functions
+  const enableDevMode = useCallback(() => {
+    setDevMode(true);
+    // Set auth token in cookies for API calls
+    document.cookie = `auth_token=${devAuthToken}; path=/; max-age=3600`;
+    addPaymentLog('🔧 Development mode enabled');
+    addPaymentLog(`🔑 Auth token set: ${devAuthToken.slice(0, 20)}...`);
+    
+    // Override URL params for test ID
+    const newUrl = new URL(window.location.href);
+    newUrl.searchParams.set('testId', devTestId);
+    window.history.replaceState({}, '', newUrl);
+    
+    // Trigger results loading with dev settings
+    loadResultsWithDevSettings();
+  }, [devAuthToken, devTestId, addPaymentLog, loadResultsWithDevSettings]);
 
   // Remove the mock scores and use real data
   const scoresData = resultsState.resultsData ? {
@@ -348,7 +363,7 @@ const EnhancedResultsDashboard = () => {
     loadResults();
   }, [isAuthenticated, user, devMode, checkPaymentStatus]);
 
-  // Enhanced certificate purchase handler with real API integration
+  // Enhanced certificate purchase handler with existing order check
   const handlePurchaseCertificate = async () => {
     try {
       setIsProcessingPayment(true);
@@ -362,30 +377,93 @@ const EnhancedResultsDashboard = () => {
         throw new Error('Test ID not found. Cannot process payment.');
       }
       
-      addPaymentLog('📦 Creating payment order...');
+      addPaymentLog('🔍 Checking for existing orders...');
       
-      // Initialize payment flow (Order -> Payment Token)
-      const paymentResult = await paymentAPI.initializeVarkPayment(testId);
-      
-      addPaymentLog('✅ Order created successfully');
-      addPaymentLog(`   - Order ID: ${paymentResult.order.id}`);
-      addPaymentLog(`   - Amount: Rp ${paymentResult.order.amount}`);
-      
-      addPaymentLog('💳 Payment token retrieved');
-      addPaymentLog(`   - Snap Token: ${paymentResult.paymentToken.snap_token}`);
-      
-      // Store the snap token for popup use
-      const snapToken = paymentResult.paymentToken.snap_token;
-      
-      // Extract the Snap URL from the response (fallback for new tab)
-      const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
-      const snapUrl = midtransResponse.redirect_url;
-      setSnapUrl(snapUrl);
-      
-      addPaymentLog(`🌐 Payment ready - opening popup`);
-      
-      // Open Midtrans Snap popup instead of new tab
-      openSnapPopup(snapToken);
+      try {
+        // First, try to initialize payment (create new order)
+        addPaymentLog('📦 Attempting to create new payment order...');
+        const paymentResult = await paymentAPI.initializeVarkPayment(testId);
+        
+        addPaymentLog('✅ New order created successfully');
+        addPaymentLog(`   - Order ID: ${paymentResult.order.id}`);
+        addPaymentLog(`   - Amount: Rp ${paymentResult.order.amount}`);
+        
+        const snapToken = paymentResult.paymentToken.snap_token;
+        const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
+        const snapUrl = midtransResponse.redirect_url;
+        setSnapUrl(snapUrl);
+        
+        addPaymentLog('💳 Payment token retrieved for new order');
+        addPaymentLog(`🌐 Payment ready - opening popup`);
+        
+        openSnapPopup(snapToken);
+        
+      } catch (orderError: unknown) {
+        // Type guard to check if it's an error with the expected structure
+        const isOrderError = (error: unknown): error is OrderError => {
+          return typeof error === 'object' && 
+                 error !== null && 
+                 'response' in error;
+        };
+
+        // Check if error is about existing order
+        if (isOrderError(orderError) && 
+            orderError?.response?.data?.code === 'CKV-422' && 
+            orderError?.response?.data?.errors?.test?.includes('already has an order')) {
+          
+          addPaymentLog('ℹ️ Found existing order, retrieving payment token...');
+          
+          try {
+            // Get auth token for direct API call
+            const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+            if (!authToken) {
+              throw new Error('Authentication token not found');
+            }
+            
+            // Call payment token endpoint directly for existing order
+            const tokenResponse = await fetch(
+              `https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders/payment_token`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (!tokenResponse.ok) {
+              const errorData = await tokenResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `Failed to get payment token: ${tokenResponse.status}`);
+            }
+            
+            const tokenData = await tokenResponse.json();
+            
+            addPaymentLog('✅ Payment token retrieved for existing order');
+            addPaymentLog(`   - Snap Token: ${tokenData.data.snap_token}`);
+            addPaymentLog(`   - Amount: Rp ${tokenData.data.amount}`);
+            
+            // Extract snap URL from token response
+            const midtransResponse = JSON.parse(tokenData.data.midtrans_response);
+            const snapUrl = midtransResponse.redirect_url;
+            setSnapUrl(snapUrl);
+            
+            addPaymentLog('🔄 Continuing with existing order payment...');
+            
+            // Open payment popup with existing order token
+            openSnapPopup(tokenData.data.snap_token);
+            
+          } catch (tokenError) {
+            const tokenErrorMessage = tokenError instanceof Error ? tokenError.message : 'Failed to get payment token';
+            addPaymentLog(`❌ Token retrieval failed: ${tokenErrorMessage}`);
+            throw new Error(`Could not retrieve payment token: ${tokenErrorMessage}`);
+          }
+          
+        } else {
+          // Re-throw if it's a different error
+          throw orderError;
+        }
+      }
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
