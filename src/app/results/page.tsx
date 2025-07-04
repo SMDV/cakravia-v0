@@ -133,7 +133,9 @@ const EnhancedResultsDashboard = () => {
 
   // Open Midtrans Snap popup
   const openSnapPopup = useCallback((snapToken: string) => {
+
     if (window.snap) {
+
       window.snap.pay(snapToken, {
         onSuccess: function(result: MidtransResult) {
           console.log('Payment successful:', result);
@@ -807,13 +809,38 @@ const EnhancedResultsDashboard = () => {
                   {highestScore.name} Learning Style ({highestScore.percentage.toFixed(1)}%)
                 </h3>
                 
-                <p className="mb-4 text-gray-700">
-                  You prefer {highestScore.name.toLowerCase()} representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.
-                </p>
+                {/* Dynamic interpretation text based on dominant learning styles */}
+                {resultsState.resultsData?.learning_style_interpretation && 
+                 resultsState.resultsData?.dominant_learning_styles && 
+                 resultsState.resultsData.dominant_learning_styles.length > 0 && (
+                  <div className="mb-4 text-gray-700">
+                    {resultsState.resultsData.dominant_learning_styles.includes('Visual') && (
+                      <p>{resultsState.resultsData.learning_style_interpretation.visual}</p>
+                    )}
+                    {resultsState.resultsData.dominant_learning_styles.includes('Aural') && (
+                      <p>{resultsState.resultsData.learning_style_interpretation.aural}</p>
+                    )}
+                    {resultsState.resultsData.dominant_learning_styles.includes('Read/Write') && (
+                      <p>{resultsState.resultsData.learning_style_interpretation.read_write}</p>
+                    )}
+                    {resultsState.resultsData.dominant_learning_styles.includes('Kinesthetic') && (
+                      <p>{resultsState.resultsData.learning_style_interpretation.kinesthetic}</p>
+                    )}
+                  </div>
+                )}
                 
-                <p className="text-gray-700">
-                  This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
-                </p>
+                {/* Fallback text if no dominant learning styles */}
+                {(!resultsState.resultsData?.dominant_learning_styles || 
+                  resultsState.resultsData.dominant_learning_styles.length === 0) && (
+                  <div className="mb-4 text-gray-700">
+                    <p>
+                      You prefer {highestScore.name.toLowerCase()} representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.
+                    </p>
+                    <p className="mt-4">
+                      This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
+                    </p>
+                  </div>
+                )}
 
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <h4 className="font-semibold text-blue-800 mb-2">Your Primary Score:</h4>
@@ -860,7 +887,7 @@ const EnhancedResultsDashboard = () => {
                 Take Test Again
               </Link>
             </div>
-          </div> 
+          </div>
         </div>
       </main>
 
