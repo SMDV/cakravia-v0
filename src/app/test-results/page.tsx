@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Check, Lock, AlertCircle, User, CreditCard, ExternalLink } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
@@ -29,6 +29,27 @@ interface SmallChartProps {
   color: string;
 }
 
+// Midtrans result types
+interface MidtransResult {
+  transaction_id: string;
+  payment_type: string;
+  status_message: string;
+}
+
+// Declare global Midtrans types
+declare global {
+  interface Window {
+    snap: {
+      pay: (token: string, options: {
+        onSuccess: (result: MidtransResult) => void;
+        onPending: (result: MidtransResult) => void;
+        onError: (result: MidtransResult) => void;
+        onClose: () => void;
+      }) => void;
+    };
+  }
+}
+
 const EnhancedResultsDashboard = () => {
   const { isAuthenticated, user } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
@@ -55,15 +76,125 @@ const EnhancedResultsDashboard = () => {
     email: "dev@test.com"
   });
 
-  // Add payment log function
-  const addPaymentLog = (message: string) => {
+  // Add payment log function with useCallback to prevent re-renders
+  const addPaymentLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setPaymentLogs(prev => [...prev, `${timestamp}: ${message}`]);
     console.log(`Payment: ${message}`);
-  };
+  }, []);
+
+  // Check payment status using API endpoint
+  const checkPaymentStatus = useCallback(async (testId: string) => {
+    try {
+      addPaymentLog('🔍 Checking payment status...');
+      
+      // Get the order information for this test
+      const orderResponse = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders`, {
+        headers: {
+          'Authorization': `Bearer ${document.cookie.split('auth_token=')[1]?.split(';')[0]}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (orderResponse.ok) {
+        const orderData = await orderResponse.json();
+        const order = orderData.data;
+        
+        // Check if payment is completed based on order status
+        const hasValidPayment = order.status === 'paid' && order.can_download_certificate === true;
+        
+        if (hasValidPayment) {
+          addPaymentLog('✅ Payment verified - content unlocked');
+          addPaymentLog(`💳 Payment method: ${order.payment?.payment_method || 'midtrans'}`);
+          addPaymentLog(`📅 Paid at: ${order.payment?.paid_at || 'Unknown'}`);
+          setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+        } else {
+          addPaymentLog(`ℹ️ Payment status: ${order.status} - content locked`);
+          setIsPaid(false);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
+        }
+        
+        return hasValidPayment;
+      } else {
+        addPaymentLog('ℹ️ No order found for this test');
+        return false;
+      }
+    } catch (error) {
+      addPaymentLog('⚠️ Could not verify payment status');
+      console.error('Payment status check failed:', error);
+      return false;
+    }
+  }, [addPaymentLog]);
+
+  // Load Midtrans Snap script
+  useEffect(() => {
+    const loadMidtransScript = () => {
+      if (document.getElementById('midtrans-script')) return;
+      
+      const script = document.createElement('script');
+      script.id = 'midtrans-script';
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      script.setAttribute('data-client-key', 'SB-Mid-client-BnZAW_h-FqRtI-kz'); // Sandbox client key - replace with your production key
+      document.body.appendChild(script);
+      
+      script.onload = () => {
+        addPaymentLog('📦 Midtrans Snap script loaded');
+      };
+      
+      script.onerror = () => {
+        addPaymentLog('❌ Failed to load Midtrans Snap script');
+      };
+    };
+    
+    loadMidtransScript();
+  }, [addPaymentLog]);
+
+  // Open Midtrans Snap popup
+  const openSnapPopup = useCallback((snapToken: string) => {
+
+    if (window.snap) {
+      addPaymentLog('🎯 Opening Midtrans Snap popup');
+
+      window.snap.pay(snapToken, {
+        onSuccess: function(result: MidtransResult) {
+          addPaymentLog('✅ Payment successful!');
+          addPaymentLog(`📝 Transaction ID: ${result.transaction_id}`);
+          addPaymentLog(`💰 Payment Type: ${result.payment_type}`);
+          
+          // Verify payment status with API
+          const urlParams = new URLSearchParams(window.location.search);
+          const testId = devMode ? devTestId : urlParams.get('testId');
+          if (testId) {
+            setTimeout(() => {
+              checkPaymentStatus(testId);
+            }, 2000); // Wait 2 seconds for payment to be processed on server
+          }
+        },
+        onPending: function(result: MidtransResult) {
+          addPaymentLog('⏳ Payment pending...');
+          addPaymentLog(`📝 Transaction ID: ${result.transaction_id}`);
+          addPaymentLog('💡 Please complete your payment');
+        },
+        onError: function(result: MidtransResult) {
+          addPaymentLog('❌ Payment failed');
+          addPaymentLog(`📝 Error: ${result.status_message}`);
+        },
+        onClose: function() {
+          addPaymentLog('🚪 Payment popup closed');
+          addPaymentLog('💡 Payment was not completed');
+        }
+      });
+    } else {
+      addPaymentLog('❌ Midtrans Snap not loaded, opening in new tab');
+      if (snapUrl) {
+        window.open(snapUrl, '_blank');
+      }
+    }
+  }, [addPaymentLog, checkPaymentStatus, devMode, devTestId, snapUrl]);
 
   // Development bypass functions
-  const enableDevMode = () => {
+  const enableDevMode = useCallback(() => {
     setDevMode(true);
     // Set auth token in cookies for API calls
     document.cookie = `auth_token=${devAuthToken}; path=/; max-age=3600`;
@@ -77,9 +208,9 @@ const EnhancedResultsDashboard = () => {
     
     // Trigger results loading with dev settings
     loadResultsWithDevSettings();
-  };
+  }, [devAuthToken, devTestId, addPaymentLog]);
 
-  const loadResultsWithDevSettings = async () => {
+  const loadResultsWithDevSettings = useCallback(async () => {
     try {
       addPaymentLog(`📊 Loading results for test ID: ${devTestId}`);
       setResultsState(prev => ({ ...prev, isLoading: true }));
@@ -90,11 +221,13 @@ const EnhancedResultsDashboard = () => {
       
       addPaymentLog('✅ Results loaded successfully');
       
+      // Check payment status for this test
+      await checkPaymentStatus(devTestId);
+      
       setResultsState(prev => ({
         ...prev,
         isLoading: false,
         resultsData,
-        canDownloadCertificate: false
       }));
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
@@ -105,19 +238,7 @@ const EnhancedResultsDashboard = () => {
         error: errorMessage
       }));
     }
-  };
-
-  // Check payment status on mount
-  useEffect(() => {
-    const checkPaymentStatus = () => {
-      const savedPaymentStatus = localStorage.getItem('vark_payment_status');
-      if (savedPaymentStatus === 'paid') {
-        setIsPaid(true);
-        setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
-      }
-    };
-    checkPaymentStatus();
-  }, []);
+  }, [devTestId, addPaymentLog, checkPaymentStatus]);
 
   // Remove the mock scores and use real data
   const scoresData = resultsState.resultsData ? {
@@ -205,11 +326,13 @@ const EnhancedResultsDashboard = () => {
         
         console.log('Loaded results data:', resultsData);
         
+        // Check payment status for this test
+        await checkPaymentStatus(testId);
+        
         setResultsState(prev => ({
           ...prev,
           isLoading: false,
           resultsData,
-          canDownloadCertificate: false // Will be determined by payment status
         }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
@@ -223,7 +346,7 @@ const EnhancedResultsDashboard = () => {
     };
 
     loadResults();
-  }, [isAuthenticated, user, devMode]);
+  }, [isAuthenticated, user, devMode, checkPaymentStatus]);
 
   // Enhanced certificate purchase handler with real API integration
   const handlePurchaseCertificate = async () => {
@@ -251,33 +374,18 @@ const EnhancedResultsDashboard = () => {
       addPaymentLog('💳 Payment token retrieved');
       addPaymentLog(`   - Snap Token: ${paymentResult.paymentToken.snap_token}`);
       
-      // Extract the Snap URL from the response
+      // Store the snap token for popup use
+      const snapToken = paymentResult.paymentToken.snap_token;
+      
+      // Extract the Snap URL from the response (fallback for new tab)
       const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
       const snapUrl = midtransResponse.redirect_url;
+      setSnapUrl(snapUrl);
       
-      if (snapUrl) {
-        setSnapUrl(snapUrl);
-        addPaymentLog(`🌐 Payment URL ready`);
-        
-        // Open payment page in new tab
-        window.open(snapUrl, '_blank');
-        addPaymentLog('🎯 Opened payment page in new tab');
-        
-        // For now, simulate successful payment after opening
-        // In production, you'd handle the callback from Midtrans
-        setTimeout(() => {
-          localStorage.setItem('vark_payment_status', 'paid');
-          setIsPaid(true);
-          setResultsState(prev => ({ 
-            ...prev, 
-            canDownloadCertificate: true 
-          }));
-          addPaymentLog('✅ Payment completed successfully!');
-          addPaymentLog('🎉 Certificate is now available for download');
-        }, 5000);
-      } else {
-        throw new Error('Payment URL not available');
-      }
+      addPaymentLog(`🌐 Payment ready - opening popup`);
+      
+      // Open Midtrans Snap popup instead of new tab
+      openSnapPopup(snapToken);
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
@@ -286,6 +394,77 @@ const EnhancedResultsDashboard = () => {
       alert(`Payment failed: ${errorMessage}`);
     } finally {
       setIsProcessingPayment(false);
+    }
+  };
+
+  // Certificate download handler
+  const handleDownloadCertificate = async () => {
+    try {
+      addPaymentLog('📄 Starting certificate download...');
+      
+      // Get the test ID from URL params or dev mode
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = devMode ? devTestId : urlParams.get('testId');
+      
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot download certificate.');
+      }
+      
+      // Get auth token from cookie
+      const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+      if (!authToken) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+      
+      addPaymentLog('🔐 Authenticating download request...');
+      
+      // Make API call to download certificate
+      const response = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders/download_certificate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Download failed with status: ${response.status}`);
+      }
+      
+      addPaymentLog('✅ Certificate download initiated');
+      
+      // Check if response is a PDF file
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/pdf')) {
+        // Handle PDF download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `VARK_Certificate_${testId.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        
+        addPaymentLog('📁 Certificate downloaded successfully');
+      } else {
+        // Handle other response types (e.g., JSON with download URL)
+        const data = await response.json();
+        if (data.download_url) {
+          window.open(data.download_url, '_blank');
+          addPaymentLog('🌐 Certificate opened in new tab');
+        } else {
+          throw new Error('Invalid response format for certificate download');
+        }
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download certificate';
+      addPaymentLog(`❌ Download failed: ${errorMessage}`);
+      console.error('Certificate download error:', error);
+      alert(`Download failed: ${errorMessage}`);
     }
   };
 
@@ -344,8 +523,7 @@ const EnhancedResultsDashboard = () => {
           useSeriesColors: true,
           offsetX: -8,
           fontSize: "16px",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter: (seriesName: string, opts: any) => 
+          formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => 
             seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%",
         },
       },
@@ -684,7 +862,7 @@ const EnhancedResultsDashboard = () => {
                 Payment Integration (DEV MODE)
               </h3>
               
-              <div className="flex flex-wrap items-center gap-3 mb-4">
+                              <div className="flex flex-wrap items-center gap-3 mb-4">
                 <button
                   onClick={handlePurchaseCertificate}
                   disabled={isProcessingPayment || isPaid}
@@ -698,6 +876,14 @@ const EnhancedResultsDashboard = () => {
                   className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
                 >
                   Reset Payment
+                </button>
+
+                <button
+                  onClick={handleDownloadCertificate}
+                  disabled={!isPaid}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                >
+                  Test Download Certificate
                 </button>
 
                 {snapUrl && (
@@ -813,17 +999,17 @@ const EnhancedResultsDashboard = () => {
 
                 {/* Download PDF Button */}
                 <div className="mt-8">
-                  {resultsState.canDownloadCertificate ? (
+                  {isPaid ? (
                     <button 
                       className="w-full py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
                       style={{ backgroundColor: '#4A47A3' }}
-                      onClick={() => alert('Certificate download feature coming soon!')}
+                      onClick={handleDownloadCertificate}
                     >
                       Download PDF Certificate
                     </button>
                   ) : (
                     <button 
-                      className="w-full py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                      className="w-full py-3 rounded-lg text-white font-medium cursor-not-allowed"
                       style={{ backgroundColor: '#6B7280' }}
                       disabled
                     >
@@ -868,46 +1054,51 @@ const EnhancedResultsDashboard = () => {
             {/* Primary Learning Style - Highest Score */}
             <div className="flex flex-row gap-8 items-center mb-12">
               <div className="w-1/2 flex justify-center">
-                <div className="rounded-xl overflow-hidden shadow-lg">
-                  <div 
-                    className="text-white text-center py-3 font-bold text-lg"
-                    style={{ backgroundColor: '#8BC34A' }}
-                  >
-                    {highestScore.name} Score: {highestScore.score}
-                  </div>
-                  <div className="p-6 bg-gray-50">
-                    <div className="w-48 h-48 mx-auto relative flex items-center justify-center">
-                      <svg className="transform -rotate-90" width="192" height="192" viewBox="0 0 100 100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="8"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke={highestScore.color}
-                          strokeWidth="8"
-                          strokeDasharray={`${(highestScore.percentage / 100) * 251.2} 251.2`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl font-bold" style={{ color: '#2A3262' }}>{highestScore.score}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <Card className="rounded-lg overflow-hidden border-none shadow-lg">
+                  <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-4">
+                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>
+                      {highestScore.name} Learning Style
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 bg-[#F0F2F5]">
+                    {/* Primary Learning Style Chart - Only show the highest score */}
+                    <ApexCharts
+                      options={{
+                        ...learningChartOptions,
+                        colors: ["#8979FF", "#FF928A", "#3CC3DF", "#FFAE4C"], // Keep all colors
+                        plotOptions: {
+                          ...learningChartOptions.plotOptions,
+                          radialBar: {
+                            ...learningChartOptions.plotOptions.radialBar,
+                            barLabels: {
+                              enabled: true,
+                              useSeriesColors: true,
+                              offsetX: -8,
+                              fontSize: "16px",
+                              formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => {
+                                const value = opts.w.globals.series[opts.seriesIndex];
+                                return value > 0 ? `${seriesName}: ${value}%` : `${seriesName}: 0%`;
+                              },
+                            },
+                          },
+                        },
+                      }}
+                      series={[
+                        highestScore.name === 'Visual' ? highestScore.percentage : 0,
+                        highestScore.name === 'Auditory' ? highestScore.percentage : 0,
+                        highestScore.name === 'Reading' ? highestScore.percentage : 0,
+                        highestScore.name === 'Kinesthetic' ? highestScore.percentage : 0,
+                      ]}
+                      type="radialBar"
+                      height={390}
+                    />
+                  </CardContent>
+                </Card>
               </div>
               
               <div className="w-1/2">
                 <h3 className="text-xl font-bold mb-4" style={{ color: '#4A47A3' }}>
-                  {highestScore.name} Learning Style
+                  {highestScore.name} Learning Style ({highestScore.percentage.toFixed(1)}%)
                 </h3>
                 
                 <p className="mb-4 text-gray-700">
@@ -917,6 +1108,16 @@ const EnhancedResultsDashboard = () => {
                 <p className="text-gray-700">
                   This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
                 </p>
+
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">Your Primary Score:</h4>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {highestScore.score} points ({highestScore.percentage.toFixed(1)}%)
+                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    This represents your strongest learning preference
+                  </p>
+                </div>
               </div>
             </div>
 
