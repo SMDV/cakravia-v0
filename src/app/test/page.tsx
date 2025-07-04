@@ -293,10 +293,10 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-xl shadow-lg"> {/* Much longer: max-w-4xl (896px) */}
-        <div className="flex justify-between text-sm text-white/90 mb-6 font-medium px-8"> {/* Even more padding for better spacing across the longer width */}
-          <span>Strongly Disagree</span>
-          <span>Strongly Agree</span>
+      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-xl shadow-lg">
+        <div className="flex justify-between text-sm text-white/90 mb-6 font-medium px-12"> {/* Increased padding even more for better separation */}
+          <span>Disagree</span> {/* Shortened text */}
+          <span>Agree</span> {/* Shortened text */}
         </div>
         
         {/* Enhanced slider track */}
@@ -328,19 +328,19 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-lg border border-gray-100"> {/* Keep input normal size */}
-        <div className="flex justify-between text-sm text-gray-600 mb-6 font-medium">
+      <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100"> {/* Reduced padding from p-6 to p-4 */}
+        <div className="flex justify-between text-sm text-gray-600 mb-4 font-medium"> {/* Reduced margin from mb-6 to mb-4 */}
           <span className="flex items-center">
             <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
-            Strongly Disagree
+            Disagree {/* Shortened text */}
           </span>
           <span className="flex items-center">
             <span className="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
-            Strongly Agree
+            Agree {/* Shortened text */}
           </span>
         </div>
         
-        <div className="relative px-4 mb-6">
+        <div className="relative px-4 mb-4"> {/* Reduced margin from mb-6 to mb-4 */}
           {/* Enhanced slider with gradient track and better dragging */}
           <input
             type="range"
@@ -362,13 +362,13 @@ const TestInterface = () => {
         
         {/* Enhanced display */}
         <div className="text-center">
-          <div className="text-3xl font-bold mb-2" style={{ color: '#2A3262' }}>
+          <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}> {/* Reduced margin from mb-2 to mb-1 */}
             {value}%
           </div>
-          <div className="text-lg text-gray-600 mb-1">
+          <div className="text-base text-gray-600 mb-1"> {/* Reduced text size from text-lg */}
             {actualPoints} / {maxWeight} points
           </div>
-          <div className="text-sm text-gray-500">
+          <div className="text-xs text-gray-500"> {/* Reduced text size from text-sm */}
             Category: {currentQuestion?.category.name || 'Unknown'}
           </div>
         </div>
@@ -528,9 +528,9 @@ const TestInterface = () => {
 
           {testState.step === 'testing' && (
             <>
-              {/* Chat History Container */}
+              {/* Chat History Container - Made taller */}
               <div 
-                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-64 sm:h-96 overflow-y-auto p-4 sm:p-6"
+                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-80 sm:h-[500px] overflow-y-auto p-4 sm:p-6" 
                 ref={chatContainerRef}
               >
                 <div className="space-y-4 sm:space-y-6">
@@ -586,8 +586,8 @@ const TestInterface = () => {
                 </div>
               </div>
 
-              {/* Current Answer Input */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+              {/* Current Answer Input - Made shorter */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 mb-4 sm:mb-6"> {/* Reduced padding */}
                 <div className="flex items-center justify-center">
                   <SliderInput 
                     value={currentSliderValue}
