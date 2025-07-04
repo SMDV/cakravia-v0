@@ -293,28 +293,35 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-xl shadow-lg">
-        <div className="flex justify-between text-sm text-white/90 mb-6 font-medium px-12"> {/* Increased padding even more for better separation */}
-          <span>Disagree</span> {/* Shortened text */}
-          <span>Agree</span> {/* Shortened text */}
+      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg"> {/* Reduced padding from p-6 to p-4 (-25% height) */}
+        {/* Fixed labels with proper separation like SliderInput */}
+        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium"> {/* Reduced margin from mb-6 to mb-4 */}
+          <span className="flex items-center">
+            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span> {/* Added visual indicator */}
+            Disagree
+          </span>
+          <span className="flex items-center">
+            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span> {/* Added visual indicator */}
+            Agree
+          </span>
         </div>
         
         {/* Enhanced slider track */}
-        <div className="relative h-4 bg-white/20 rounded-full mb-6">
+        <div className="relative h-3 bg-white/20 rounded-full mb-4"> {/* Reduced height from h-4 and margin from mb-6 to mb-4 */}
           <div
             className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
             style={{ width: `${value}%` }}
           />
           <div
-            className="absolute -top-1 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
-            style={{ left: `calc(${value}% - 12px)` }}
+            className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
+            style={{ left: `calc(${value}% - 10px)` }}
           />
         </div>
         
-        {/* Display both percentage and actual points with better spacing */}
-        <div className="text-center text-white space-y-2">
-          <div className="text-2xl font-bold">{value}%</div>
-          <div className="text-base opacity-90">{actualPoints}/{maxWeight} points</div>
+        {/* Display both percentage and actual points with reduced spacing */}
+        <div className="text-center text-white space-y-1"> {/* Reduced from space-y-2 to space-y-1 */}
+          <div className="text-xl font-bold">{value}%</div> {/* Reduced from text-2xl to text-xl */}
+          <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div> {/* Reduced from text-base to text-sm */}
         </div>
       </div>
     );
@@ -528,9 +535,9 @@ const TestInterface = () => {
 
           {testState.step === 'testing' && (
             <>
-              {/* Chat History Container - Made taller */}
+              {/* Chat History Container - Made even taller (+10%) */}
               <div 
-                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-80 sm:h-[500px] overflow-y-auto p-4 sm:p-6" 
+                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-96 sm:h-[550px] overflow-y-auto p-4 sm:p-6"
                 ref={chatContainerRef}
               >
                 <div className="space-y-4 sm:space-y-6">
