@@ -306,9 +306,9 @@ const EnhancedProfilePage = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header currentPage="profile" />
-        <div className="py-16 px-6 flex items-center justify-center">
+        <div className="flex-1 py-16 px-6 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600">Loading profile...</p>
@@ -319,28 +319,28 @@ const EnhancedProfilePage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+    <div className="min-h-screen bg-gray-50 flex flex-col" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Header */}
       <Header currentPage="profile" />
 
-      <div className="py-8 px-6 max-w-6xl mx-auto">
+      <div className="flex-1 py-4 sm:py-8 px-4 sm:px-6 max-w-6xl mx-auto w-full">
         {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2" style={{ color: '#2A3262' }}>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2" style={{ color: '#2A3262' }}>
             My Profile
           </h1>
-          <p className="text-gray-600">Manage your account settings and view your test history</p>
+          <p className="text-sm sm:text-base text-gray-600">Manage your account settings and view your test history</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
           {/* Profile Information Section */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="xl:col-span-1 order-2 xl:order-1">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
               {/* Profile Picture */}
-              <div className="text-center mb-6">
+              <div className="text-center mb-4 sm:mb-6">
                 <div className="relative inline-block">
                   {previewUrl || user?.avatar_url ? (
-                    <div className="w-24 h-24 rounded-full overflow-hidden border-4 border-gray-200">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-gray-200">
                       <Image
                         src={previewUrl || user?.avatar_url || ''}
                         alt="Profile"
@@ -351,16 +351,16 @@ const EnhancedProfilePage = () => {
                     </div>
                   ) : (
                     <div 
-                      className="w-24 h-24 mx-auto rounded-full flex items-center justify-center border-4 border-gray-200"
+                      className="w-20 h-20 sm:w-24 sm:h-24 mx-auto rounded-full flex items-center justify-center border-4 border-gray-200"
                       style={{ backgroundColor: '#2A3262' }}
                     >
-                      <User className="w-12 h-12 text-white" />
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                     </div>
                   )}
                   
                   {isEditing && (
-                    <label className="absolute -bottom-2 -right-2 w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
-                      <Edit className="w-4 h-4 text-white" />
+                    <label className="absolute -bottom-1 -right-1 sm:-bottom-2 sm:-right-2 w-6 h-6 sm:w-8 sm:h-8 bg-blue-500 rounded-full flex items-center justify-center cursor-pointer hover:bg-blue-600 transition-colors">
+                      <Edit className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                       <input
                         type="file"
                         accept="image/*"
@@ -374,10 +374,10 @@ const EnhancedProfilePage = () => {
                 {!isEditing && (
                   <button 
                     onClick={() => setIsEditing(true)}
-                    className="mt-3 text-sm font-medium hover:underline flex items-center gap-1 mx-auto"
+                    className="mt-2 sm:mt-3 text-xs sm:text-sm font-medium hover:underline flex items-center gap-1 mx-auto"
                     style={{ color: '#2A3262' }}
                   >
-                    <Edit className="w-4 h-4" />
+                    <Edit className="w-3 h-3 sm:w-4 sm:h-4" />
                     Edit Profile
                   </button>
                 )}
@@ -387,17 +387,17 @@ const EnhancedProfilePage = () => {
               {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center gap-2 text-red-600">
-                    <AlertCircle className="w-4 h-4" />
-                    <span className="text-sm">{errors.general}</span>
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span className="text-xs sm:text-sm">{errors.general}</span>
                   </div>
                 </div>
               )}
 
               {/* Profile Form */}
-              <div className="space-y-4">
+              <div className="space-y-3 sm:space-y-4">
                 {/* Name Field */}
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#2A3262' }}>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: '#2A3262' }}>
                     Full Name
                   </label>
                   {isEditing ? (
@@ -405,23 +405,23 @@ const EnhancedProfilePage = () => {
                       type="text"
                       value={profileData.name}
                       onChange={(e) => handleInputChange('name', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors ${
+                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors ${
                         errors.name ? 'border-red-300' : 'border-gray-300'
                       }`}
                       style={{ backgroundColor: '#F8F9FA' }}
                     />
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <User className="w-4 h-4 text-gray-500" />
-                      <span>{profileData.name || 'Not provided'}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <User className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm truncate">{profileData.name || 'Not provided'}</span>
                     </div>
                   )}
-                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
+                  {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
                 </div>
 
                 {/* Email Field */}
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#2A3262' }}>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: '#2A3262' }}>
                     Email Address
                   </label>
                   {isEditing ? (
@@ -429,23 +429,23 @@ const EnhancedProfilePage = () => {
                       type="email"
                       value={profileData.email}
                       onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors ${
+                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors ${
                         errors.email ? 'border-red-300' : 'border-gray-300'
                       }`}
                       style={{ backgroundColor: '#F8F9FA' }}
                     />
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <Mail className="w-4 h-4 text-gray-500" />
-                      <span>{profileData.email || 'Not provided'}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm truncate">{profileData.email || 'Not provided'}</span>
                     </div>
                   )}
-                  {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
 
                 {/* Phone Field */}
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#2A3262' }}>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: '#2A3262' }}>
                     Phone Number
                   </label>
                   {isEditing ? (
@@ -453,21 +453,21 @@ const EnhancedProfilePage = () => {
                       type="tel"
                       value={profileData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
                       style={{ backgroundColor: '#F8F9FA' }}
                       placeholder="Enter phone number"
                     />
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <Phone className="w-4 h-4 text-gray-500" />
-                      <span>{profileData.phone || 'Not provided'}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <Phone className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm truncate">{profileData.phone || 'Not provided'}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Birthday Field */}
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#2A3262' }}>
+                  <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: '#2A3262' }}>
                     Birthday
                   </label>
                   {isEditing ? (
@@ -475,13 +475,13 @@ const EnhancedProfilePage = () => {
                       type="date"
                       value={profileData.birthday}
                       onChange={(e) => handleInputChange('birthday', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors"
                       style={{ backgroundColor: '#F8F9FA' }}
                     />
                   ) : (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                      <Calendar className="w-4 h-4 text-gray-500" />
-                      <span>{profileData.birthday || 'Not provided'}</span>
+                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                      <span className="text-sm truncate">{profileData.birthday || 'Not provided'}</span>
                     </div>
                   )}
                 </div>
@@ -489,11 +489,11 @@ const EnhancedProfilePage = () => {
 
               {/* Action Buttons */}
               {isEditing && (
-                <div className="mt-6 flex gap-3">
+                <div className="mt-4 sm:mt-6 flex flex-col sm:flex-row gap-2 sm:gap-3">
                   <button 
                     onClick={handleSaveProfile}
                     disabled={isSaving}
-                    className="flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
+                    className="flex-1 flex items-center justify-center gap-2 py-2 sm:py-3 text-sm rounded-lg text-white font-medium hover:opacity-90 transition-opacity disabled:opacity-50"
                     style={{ backgroundColor: '#2A3262' }}
                   >
                     <Save className="w-4 h-4" />
@@ -502,9 +502,10 @@ const EnhancedProfilePage = () => {
                   <button 
                     onClick={handleCancelEdit}
                     disabled={isSaving}
-                    className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    className="sm:w-auto px-4 py-2 sm:py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 text-sm flex items-center justify-center"
                   >
                     <X className="w-4 h-4" />
+                    <span className="sm:hidden ml-2">Cancel</span>
                   </button>
                 </div>
               )}
@@ -512,96 +513,67 @@ const EnhancedProfilePage = () => {
           </div>
 
           {/* Test History Section */}
-          <div className="lg:col-span-2">
+          <div className="xl:col-span-2 order-1 xl:order-2">
             <div className="bg-white rounded-lg shadow-lg">
               {/* Header */}
-              <div className="p-6 border-b border-gray-200">
+              <div className="p-4 sm:p-6 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h2 className="text-xl font-bold" style={{ color: '#2A3262' }}>
+                    <h2 className="text-lg sm:text-xl font-bold" style={{ color: '#2A3262' }}>
                       Test History
                     </h2>
-                    <p className="text-gray-600 text-sm">Your VARK learning style assessment history</p>
+                    <p className="text-gray-600 text-xs sm:text-sm">Your VARK learning style assessment history</p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Activity className="w-5 h-5 text-blue-500" />
-                    <span className="text-sm font-medium text-gray-600">
-                      {testHistory.length} test{testHistory.length !== 1 ? 's' : ''} taken
+                    <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-600">
+                      {testHistory.length} test{testHistory.length !== 1 ? 's' : ''}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Test History Table */}
-              <div className="overflow-x-auto">
+              {/* Test History Content */}
+              <div>
                 {testHistory.length === 0 ? (
-                  <div className="p-8 text-center">
-                    <FileText className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">No tests taken yet</h3>
-                    <p className="text-gray-600 mb-4">Start your learning journey by taking your first VARK assessment</p>
+                  <div className="p-6 sm:p-8 text-center">
+                    <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No tests taken yet</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">Start your learning journey by taking your first VARK assessment</p>
                     <Link
                       href="/test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
                     >
                       <Play className="w-4 h-4" />
                       Take Your First Test
                     </Link>
                   </div>
                 ) : (
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-gray-50 border-b border-gray-200">
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Test Info
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Status & Timer
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Results
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Payment & Certificate
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          Actions
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                      {testHistory.map((test) => {
-                        const testStatus = getTestStatus(test);
-                        
-                        return (
-                          <tr key={test.id} className="hover:bg-gray-50 transition-colors">
-                            {/* Test Info */}
-                            <td className="px-6 py-4">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">
-                                  {test.question_set.name}
+                  <>
+                    {/* Mobile Card View */}
+                    <div className="block md:hidden">
+                      <div className="divide-y divide-gray-200">
+                        {testHistory.map((test) => {
+                          const testStatus = getTestStatus(test);
+                          
+                          return (
+                            <div key={test.id} className="p-4 space-y-3">
+                              {/* Test Info Header */}
+                              <div className="flex justify-between items-start">
+                                <div className="flex-1 min-w-0">
+                                  <h3 className="text-sm font-medium text-gray-900 truncate">
+                                    {test.question_set.name}
+                                  </h3>
+                                  <p className="text-xs text-gray-500">
+                                    Version {test.question_set.version} • ID: {test.id.slice(0, 8)}...
+                                  </p>
+                                  <p className="text-xs text-gray-400">
+                                    Started: {formatDate(test.started_at)}
+                                  </p>
                                 </div>
-                                <div className="text-sm text-gray-500">
-                                  Version {test.question_set.version}
-                                </div>
-                                <div className="text-xs text-gray-400">
-                                  Started: {formatDate(test.started_at)}
-                                </div>
-                                {test.completed_at && (
-                                  <div className="text-xs text-gray-400">
-                                    Completed: {formatDate(test.completed_at)}
-                                  </div>
-                                )}
-                                <div className="text-xs text-blue-600 font-mono">
-                                  ID: {test.id.slice(0, 8)}...
-                                </div>
-                              </div>
-                            </td>
-
-                            {/* Status & Timer */}
-                            <td className="px-6 py-4">
-                              <div className="space-y-2">
-                                {/* Main Test Status */}
-                                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(testStatus)}`}>
+                                
+                                {/* Main Status Badge */}
+                                <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusBadge(testStatus)}`}>
                                   {testStatus === 'completed' ? (
                                     <CheckCircle className="w-3 h-3 mr-1" />
                                   ) : testStatus === 'expired' ? (
@@ -612,189 +584,370 @@ const EnhancedProfilePage = () => {
                                   {testStatus === 'completed' ? 'Completed' : 
                                    testStatus === 'expired' ? 'Expired' : 'In Progress'}
                                 </span>
-                                
-                                {/* Time Remaining Info */}
-                                {test.status === 'in_progress' && (
-                                  <div className="text-xs">
-                                    {test.is_expired ? (
-                                      <span className="text-red-600 font-medium">
-                                        ⚠️ Time Expired
-                                      </span>
-                                    ) : test.time_remaining > 0 ? (
-                                      <span className="text-blue-600">
-                                        ⏱️ {formatTimeRemaining(test.time_remaining)}
-                                      </span>
-                                    ) : (
-                                      <span className="text-gray-500">
-                                        No time limit
-                                      </span>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {/* Expired Badge */}
-                                {test.is_expired && (
-                                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 border border-red-200">
-                                    🚫 Expired
-                                  </span>
-                                )}
                               </div>
-                            </td>
 
-                            {/* Results */}
-                            <td className="px-6 py-4">
-                              {test.results ? (
-                                <div className="space-y-1">
-                                  <div className="text-sm font-medium text-gray-900">
-                                    <Trophy className="w-4 h-4 inline mr-1 text-yellow-500" />
-                                    Score: {getTotalScore(test.results)}
-                                  </div>
-                                  <div className="text-xs text-gray-600">
-                                    Dominant: {test.results.dominant_learning_styles.join(', ')}
-                                  </div>
-                                  <div className="text-xs text-gray-500">
-                                    V:{test.results.visual_score} A:{test.results.aural_score} R:{test.results.read_score} K:{test.results.kinesthetic_score}
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="space-y-1">
-                                  <span className="text-sm text-gray-400">No results yet</span>
-                                  {test.status === 'in_progress' && !test.is_expired && (
-                                    <div className="text-xs text-blue-600">
-                                      📝 Test in progress
-                                    </div>
-                                  )}
-                                  {test.is_expired && (
-                                    <div className="text-xs text-red-600">
-                                      ❌ Test expired before completion
-                                    </div>
+                              {/* Time Info */}
+                              {test.status === 'in_progress' && (
+                                <div className="text-xs">
+                                  {test.is_expired ? (
+                                    <span className="text-red-600 font-medium">⚠️ Time Expired</span>
+                                  ) : test.time_remaining > 0 ? (
+                                    <span className="text-blue-600">⏱️ {formatTimeRemaining(test.time_remaining)}</span>
+                                  ) : (
+                                    <span className="text-gray-500">No time limit</span>
                                   )}
                                 </div>
                               )}
-                            </td>
 
-                            {/* Payment & Certificate */}
-                            <td className="px-6 py-4">
-                              <div className="space-y-2">
-                                {/* Payment Status */}
-                                {test.payment ? (
-                                  <div>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.payment.status)}`}>
-                                      {test.payment.status === 'settlement' ? '💳 Paid' : '⏳ Pending Payment'}
-                                    </span>
-                                    {test.payment.paid_at && (
-                                      <div className="text-xs text-gray-500 mt-1">
-                                        Paid: {formatDate(test.payment.paid_at)}
-                                      </div>
-                                    )}
-                                  </div>
-                                ) : test.order ? (
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-100 text-orange-800 border-orange-200">
-                                    💰 Payment Required
-                                  </span>
-                                ) : (
-                                  <span className="text-xs text-gray-400">No payment info</span>
-                                )}
-
-                                {/* Certificate Status */}
-                                {test.order && (
-                                  <div>
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.order.certificate_status)}`}>
-                                      {test.order.certificate_status === 'generated' ? '📜 Available' : 
-                                       test.order.certificate_status === 'generation_failed' ? '❌ Failed' : 
-                                       test.order.certificate_status === 'not_generated' ? '⏳ Not Generated' : '🔄 Processing'}
-                                    </span>
-                                    <div className="text-xs text-gray-500 mt-1">
-                                      Rp {parseFloat(test.order.amount).toLocaleString('id-ID')}
+                              {/* Results Info */}
+                              <div>
+                                {test.results ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                      <Trophy className="w-4 h-4 text-yellow-500" />
+                                      <span className="text-sm font-medium">Score: {getTotalScore(test.results)}</span>
                                     </div>
+                                    <p className="text-xs text-gray-600">
+                                      Dominant: {test.results.dominant_learning_styles.join(', ')}
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                      V:{test.results.visual_score} A:{test.results.aural_score} R:{test.results.read_score} K:{test.results.kinesthetic_score}
+                                    </p>
                                   </div>
-                                )}
-
-                                {/* No Order/Payment Info */}
-                                {!test.order && !test.payment && test.status === 'completed' && (
-                                  <div className="text-xs text-gray-500">
-                                    🆓 Free assessment
+                                ) : (
+                                  <div className="text-sm text-gray-400">
+                                    {test.status === 'in_progress' && !test.is_expired ? (
+                                      <span>📝 Test in progress</span>
+                                    ) : test.is_expired ? (
+                                      <span className="text-red-600">❌ Test expired before completion</span>
+                                    ) : (
+                                      <span>No results yet</span>
+                                    )}
                                   </div>
                                 )}
                               </div>
-                            </td>
 
-                            {/* Actions */}
-                            <td className="px-6 py-4">
-                              <div className="flex flex-col gap-2">
-                                {/* View Results */}
-                                {test.status === 'completed' && test.results ? (
+                              {/* Payment & Certificate Info */}
+                              <div className="flex flex-wrap gap-2 text-xs">
+                                {test.payment ? (
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full font-medium border ${getStatusBadge(test.payment.status)}`}>
+                                    {test.payment.status === 'settlement' ? '💳 Paid' : '⏳ Pending'}
+                                  </span>
+                                ) : test.order ? (
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full font-medium border bg-orange-100 text-orange-800 border-orange-200">
+                                    💰 Payment Required
+                                  </span>
+                                ) : null}
+
+                                {test.order && (
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full font-medium border ${getStatusBadge(test.order.certificate_status)}`}>
+                                    {test.order.certificate_status === 'generated' ? '📜' : 
+                                     test.order.certificate_status === 'generation_failed' ? '❌' : '⏳'} 
+                                    Certificate
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex flex-wrap gap-2">
+                                {test.status === 'completed' && test.results && (
                                   <Link
                                     href={`/results?testId=${test.id}`}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors"
+                                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors"
                                   >
                                     <Eye className="w-3 h-3" />
                                     View Results
                                   </Link>
-                                ) : null}
+                                )}
 
-                                {/* Continue Test */}
-                                {test.status === 'in_progress' && !test.is_expired ? (
+                                {test.status === 'in_progress' && !test.is_expired && (
                                   <Link
                                     href={`/test?resumeTestId=${test.id}`}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors"
+                                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors"
                                   >
                                     <Play className="w-3 h-3" />
                                     Continue
                                   </Link>
-                                ) : null}
+                                )}
 
-                                {/* Retake Expired Test */}
-                                {test.is_expired && test.status === 'in_progress' ? (
+                                {test.is_expired && test.status === 'in_progress' && (
                                   <Link
                                     href="/test"
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors"
+                                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors"
                                   >
                                     <Play className="w-3 h-3" />
                                     Retake
                                   </Link>
-                                ) : null}
+                                )}
 
-                                {/* Download Certificate */}
                                 {test.order?.can_download_certificate && (
                                   <button
                                     onClick={() => {
-                                      // Handle certificate download
                                       window.open(`https://api.cakravia.com/api/v1/users/vark_tests/${test.id}/orders/download_certificate`, '_blank');
                                     }}
-                                    className="inline-flex items-center gap-1 px-3 py-1 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
+                                    className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
                                   >
                                     <Download className="w-3 h-3" />
                                     Certificate
                                   </button>
                                 )}
-
-                                {/* No Actions Available */}
-                                {!test.results && 
-                                 test.status !== 'in_progress' && 
-                                 !test.order?.can_download_certificate && (
-                                  <span className="text-xs text-gray-400 italic">
-                                    No actions available
-                                  </span>
-                                )}
                               </div>
-                            </td>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="bg-gray-50 border-b border-gray-200">
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Test Info
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Status & Timer
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Results
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Payment & Certificate
+                            </th>
+                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Actions
+                            </th>
                           </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {testHistory.map((test) => {
+                            const testStatus = getTestStatus(test);
+                            
+                            return (
+                              <tr key={test.id} className="hover:bg-gray-50 transition-colors">
+                                {/* Test Info */}
+                                <td className="px-4 lg:px-6 py-4">
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">
+                                      {test.question_set.name}
+                                    </div>
+                                    <div className="text-sm text-gray-500">
+                                      Version {test.question_set.version}
+                                    </div>
+                                    <div className="text-xs text-gray-400">
+                                      Started: {formatDate(test.started_at)}
+                                    </div>
+                                    {test.completed_at && (
+                                      <div className="text-xs text-gray-400">
+                                        Completed: {formatDate(test.completed_at)}
+                                      </div>
+                                    )}
+                                    <div className="text-xs text-blue-600 font-mono">
+                                      ID: {test.id.slice(0, 8)}...
+                                    </div>
+                                  </div>
+                                </td>
+
+                                {/* Status & Timer */}
+                                <td className="px-4 lg:px-6 py-4">
+                                  <div className="space-y-2">
+                                    {/* Main Test Status */}
+                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(testStatus)}`}>
+                                      {testStatus === 'completed' ? (
+                                        <CheckCircle className="w-3 h-3 mr-1" />
+                                      ) : testStatus === 'expired' ? (
+                                        <AlertCircle className="w-3 h-3 mr-1" />
+                                      ) : (
+                                        <Clock className="w-3 h-3 mr-1" />
+                                      )}
+                                      {testStatus === 'completed' ? 'Completed' : 
+                                       testStatus === 'expired' ? 'Expired' : 'In Progress'}
+                                    </span>
+                                    
+                                    {/* Time Remaining Info */}
+                                    {test.status === 'in_progress' && (
+                                      <div className="text-xs">
+                                        {test.is_expired ? (
+                                          <span className="text-red-600 font-medium">
+                                            ⚠️ Time Expired
+                                          </span>
+                                        ) : test.time_remaining > 0 ? (
+                                          <span className="text-blue-600">
+                                            ⏱️ {formatTimeRemaining(test.time_remaining)}
+                                          </span>
+                                        ) : (
+                                          <span className="text-gray-500">
+                                            No time limit
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                    
+                                    {/* Expired Badge */}
+                                    {test.is_expired && (
+                                      <span className="inline-flex items-center px-2 py-0.5 rounded text-xs bg-red-100 text-red-800 border border-red-200">
+                                        🚫 Expired
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Results */}
+                                <td className="px-4 lg:px-6 py-4">
+                                  {test.results ? (
+                                    <div className="space-y-1">
+                                      <div className="text-sm font-medium text-gray-900">
+                                        <Trophy className="w-4 h-4 inline mr-1 text-yellow-500" />
+                                        Score: {getTotalScore(test.results)}
+                                      </div>
+                                      <div className="text-xs text-gray-600">
+                                        Dominant: {test.results.dominant_learning_styles.join(', ')}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        V:{test.results.visual_score} A:{test.results.aural_score} R:{test.results.read_score} K:{test.results.kinesthetic_score}
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-1">
+                                      <span className="text-sm text-gray-400">No results yet</span>
+                                      {test.status === 'in_progress' && !test.is_expired && (
+                                        <div className="text-xs text-blue-600">
+                                          📝 Test in progress
+                                        </div>
+                                      )}
+                                      {test.is_expired && (
+                                        <div className="text-xs text-red-600">
+                                          ❌ Test expired before completion
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+
+                                {/* Payment & Certificate */}
+                                <td className="px-4 lg:px-6 py-4">
+                                  <div className="space-y-2">
+                                    {/* Payment Status */}
+                                    {test.payment ? (
+                                      <div>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.payment.status)}`}>
+                                          {test.payment.status === 'settlement' ? '💳 Paid' : '⏳ Pending Payment'}
+                                        </span>
+                                        {test.payment.paid_at && (
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            Paid: {formatDate(test.payment.paid_at)}
+                                          </div>
+                                        )}
+                                      </div>
+                                    ) : test.order ? (
+                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-100 text-orange-800 border-orange-200">
+                                        💰 Payment Required
+                                      </span>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">No payment info</span>
+                                    )}
+
+                                    {/* Certificate Status */}
+                                    {test.order && (
+                                      <div>
+                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.order.certificate_status)}`}>
+                                          {test.order.certificate_status === 'generated' ? '📜 Available' : 
+                                           test.order.certificate_status === 'generation_failed' ? '❌ Failed' : 
+                                           test.order.certificate_status === 'not_generated' ? '⏳ Not Generated' : '🔄 Processing'}
+                                        </span>
+                                        <div className="text-xs text-gray-500 mt-1">
+                                          Rp {parseFloat(test.order.amount).toLocaleString('id-ID')}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {/* No Order/Payment Info */}
+                                    {!test.order && !test.payment && test.status === 'completed' && (
+                                      <div className="text-xs text-gray-500">
+                                        🆓 Free assessment
+                                      </div>
+                                    )}
+                                  </div>
+                                </td>
+
+                                {/* Actions */}
+                                <td className="px-4 lg:px-6 py-4">
+                                  <div className="flex flex-col gap-2">
+                                    {/* View Results */}
+                                    {test.status === 'completed' && test.results ? (
+                                      <Link
+                                        href={`/results?testId=${test.id}`}
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-blue-500 text-white text-xs rounded-lg hover:bg-blue-600 transition-colors"
+                                      >
+                                        <Eye className="w-3 h-3" />
+                                        View Results
+                                      </Link>
+                                    ) : null}
+
+                                    {/* Continue Test */}
+                                    {test.status === 'in_progress' && !test.is_expired ? (
+                                      <Link
+                                        href={`/test?resumeTestId=${test.id}`}
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors"
+                                      >
+                                        <Play className="w-3 h-3" />
+                                        Continue
+                                      </Link>
+                                    ) : null}
+
+                                    {/* Retake Expired Test */}
+                                    {test.is_expired && test.status === 'in_progress' ? (
+                                      <Link
+                                        href="/test"
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors"
+                                      >
+                                        <Play className="w-3 h-3" />
+                                        Retake
+                                      </Link>
+                                    ) : null}
+
+                                    {/* Download Certificate */}
+                                    {test.order?.can_download_certificate && (
+                                      <button
+                                        onClick={() => {
+                                          window.open(`https://api.cakravia.com/api/v1/users/vark_tests/${test.id}/orders/download_certificate`, '_blank');
+                                        }}
+                                        className="inline-flex items-center gap-1 px-3 py-1 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
+                                      >
+                                        <Download className="w-3 h-3" />
+                                        Certificate
+                                      </button>
+                                    )}
+
+                                    {/* No Actions Available */}
+                                    {!test.results && 
+                                     test.status !== 'in_progress' && 
+                                     !test.order?.can_download_certificate && (
+                                      <span className="text-xs text-gray-400 italic">
+                                        No actions available
+                                      </span>
+                                    )}
+                                  </div>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
 
               {/* Footer with action to take new test */}
               {testHistory.length > 0 && (
-                <div className="p-6 border-t border-gray-200 text-center">
+                <div className="p-4 sm:p-6 border-t border-gray-200 text-center">
                   <Link
                     href="/test"
-                    className="inline-flex items-center gap-2 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium"
+                    className="inline-flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm sm:text-base"
                   >
-                    <Play className="w-5 h-5" />
+                    <Play className="w-4 h-4 sm:w-5 sm:h-5" />
                     Take Another Test
                   </Link>
                 </div>
@@ -804,7 +957,7 @@ const EnhancedProfilePage = () => {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* Footer - will stick to bottom */}
       <Footer />
     </div>
   );
