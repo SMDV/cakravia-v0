@@ -309,7 +309,7 @@ const EnhancedResultsDashboard = () => {
           </div>
           
           <Link 
-            href="/test-vark" 
+            href="/test" 
             className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
           >
             Take Test
@@ -576,7 +576,7 @@ const EnhancedResultsDashboard = () => {
                 Learning styles can evolve over time. Take the test again to see if your preferences have changed.
               </p>
               <Link
-                href="/test-vark"
+                href="/test"
                 className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium"
               >
                 Take Test Again

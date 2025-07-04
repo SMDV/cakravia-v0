@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { varkAPI } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { VarkQuestionSet, VarkTest, VarkAnswer } from '@/lib/types';
@@ -31,14 +31,14 @@ const VarkTestFlow = () => {
   const [currentSliderValue, setCurrentSliderValue] = useState(50);
   const [logs, setLogs] = useState<string[]>([]);
 
-  const addLog = (message: string) => {
+  const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `${timestamp}: ${message}`]);
     console.log(`VARK Test: ${message}`);
-  };
+  }, []);
 
   // Initialize test flow
-  const initializeTest = async () => {
+  const initializeTest = useCallback(async () => {
     if (!isAuthenticated) {
       setTestState(prev => ({ 
         ...prev, 
@@ -84,69 +84,10 @@ const VarkTestFlow = () => {
         error: errorMessage 
       }));
     }
-  };
-
-  // Start the actual test
-  const startTest = () => {
-    addLog('▶️ Starting test...');
-    setTestState(prev => ({ ...prev, step: 'testing' }));
-  };
-
-  // Handle answer submission for current question
-  const submitCurrentAnswer = () => {
-    const { test, currentQuestionIndex } = testState;
-    if (!test) return;
-
-    const currentQuestion = test.questions[currentQuestionIndex];
-    const answer: VarkAnswer = {
-      question_id: currentQuestion.id,
-      category_id: currentQuestion.category.id,
-      point: Math.round((currentSliderValue / 100) * currentQuestion.max_weight) // Convert slider to points
-    };
-
-    setTestState(prev => ({
-      ...prev,
-      answers: {
-        ...prev.answers,
-        [currentQuestion.id]: answer
-      }
-    }));
-
-    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${answer.point}/${currentQuestion.max_weight} points`);
-
-    // Move to next question or finish
-    if (currentQuestionIndex < test.questions.length - 1) {
-      setTestState(prev => ({ 
-        ...prev, 
-        currentQuestionIndex: prev.currentQuestionIndex + 1 
-      }));
-      setCurrentSliderValue(50); // Reset slider
-    } else {
-      // All questions answered, ready to submit
-      addLog('🏁 All questions answered, ready to submit!');
-    }
-  };
-
-  // Go back to previous question
-  const goToPreviousQuestion = () => {
-    if (testState.currentQuestionIndex > 0) {
-      setTestState(prev => ({ 
-        ...prev, 
-        currentQuestionIndex: prev.currentQuestionIndex - 1 
-      }));
-      
-      // Restore previous answer if exists
-      const prevQuestion = testState.test!.questions[testState.currentQuestionIndex - 1];
-      const prevAnswer = testState.answers[prevQuestion.id];
-      if (prevAnswer) {
-        const sliderValue = (prevAnswer.point / prevQuestion.max_weight) * 100;
-        setCurrentSliderValue(sliderValue);
-      }
-    }
-  };
+  }, [isAuthenticated, addLog]);
 
   // Submit all answers
-  const submitAllAnswers = async () => {
+  const submitAllAnswers = useCallback(async () => {
     const { test, answers } = testState;
     if (!test) return;
 
@@ -180,10 +121,69 @@ const VarkTestFlow = () => {
         error: errorMessage 
       }));
     }
-  };
+  }, [testState, addLog]);
+
+  // Start the actual test
+  const startTest = useCallback(() => {
+    addLog('▶️ Starting test...');
+    setTestState(prev => ({ ...prev, step: 'testing' }));
+  }, [addLog]);
+
+  // Handle answer submission for current question
+  const submitCurrentAnswer = useCallback(() => {
+    const { test, currentQuestionIndex } = testState;
+    if (!test) return;
+
+    const currentQuestion = test.questions[currentQuestionIndex];
+    const answer: VarkAnswer = {
+      question_id: currentQuestion.id,
+      category_id: currentQuestion.category.id,
+      point: Math.round((currentSliderValue / 100) * currentQuestion.max_weight) // Convert slider to points
+    };
+
+    setTestState(prev => ({
+      ...prev,
+      answers: {
+        ...prev.answers,
+        [currentQuestion.id]: answer
+      }
+    }));
+
+    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${answer.point}/${currentQuestion.max_weight} points`);
+
+    // Move to next question or finish
+    if (currentQuestionIndex < test.questions.length - 1) {
+      setTestState(prev => ({ 
+        ...prev, 
+        currentQuestionIndex: prev.currentQuestionIndex + 1 
+      }));
+      setCurrentSliderValue(50); // Reset slider
+    } else {
+      // All questions answered, ready to submit
+      addLog('🏁 All questions answered, ready to submit!');
+    }
+  }, [testState, currentSliderValue, addLog]);
+
+  // Go back to previous question
+  const goToPreviousQuestion = useCallback(() => {
+    if (testState.currentQuestionIndex > 0) {
+      setTestState(prev => ({ 
+        ...prev, 
+        currentQuestionIndex: prev.currentQuestionIndex - 1 
+      }));
+      
+      // Restore previous answer if exists
+      const prevQuestion = testState.test!.questions[testState.currentQuestionIndex - 1];
+      const prevAnswer = testState.answers[prevQuestion.id];
+      if (prevAnswer) {
+        const sliderValue = (prevAnswer.point / prevQuestion.max_weight) * 100;
+        setCurrentSliderValue(sliderValue);
+      }
+    }
+  }, [testState]);
 
   // Reset test
-  const resetTest = () => {
+  const resetTest = useCallback(() => {
     setTestState({
       step: 'loading',
       questionSet: null,
@@ -195,14 +195,14 @@ const VarkTestFlow = () => {
     });
     setCurrentSliderValue(50);
     setLogs([]);
-  };
+  }, []);
 
   // Auto-initialize on mount
   useEffect(() => {
     if (isAuthenticated) {
       initializeTest();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, initializeTest]);
 
   // Render current question
   const renderCurrentQuestion = () => {

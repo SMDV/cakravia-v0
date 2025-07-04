@@ -18,7 +18,7 @@ const EnhancedHomepage = () => {
       title: "Visual, Auditory, Reading, Kinesthetic",
       subtitle: "VARK Learning Style Assessment",
       buttonText: "Start Exam",
-      href: "/test-vark",
+      href: "/test",
       description: "Discover how you learn best through our comprehensive VARK assessment"
     },
     {
@@ -151,7 +151,7 @@ const EnhancedHomepage = () => {
               <div className="flex gap-4">
                 {isAuthenticated ? (
                   <Link 
-                    href="/test-vark"
+                    href="/test"
                     className="inline-flex items-center px-8 py-4 bg-white rounded-lg font-semibold text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl"
                     style={{ color: '#2A3262' }}
                   >
@@ -286,7 +286,7 @@ const EnhancedHomepage = () => {
               </span>
               {isAuthenticated ? (
                 <Link 
-                  href="/test-vark"
+                  href="/test"
                   className="ml-2 px-4 py-2 rounded-full font-semibold text-white hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: '#ABD305' }}
                 >
