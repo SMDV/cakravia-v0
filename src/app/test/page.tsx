@@ -285,7 +285,7 @@ const TestInterface = () => {
     }
   }, [isAuthenticated, initializeTest]);
 
-  // Slider Answer Component - Enhanced design
+  // Slider Answer Component - Enhanced design (this is for the ANSWER in chat)
   const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
     // Get current question to show actual point value
     const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
@@ -293,14 +293,14 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-lg"> {/* Expanded from max-w-sm to max-w-lg */}
-        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium px-2"> {/* Better spacing and readability */}
+      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-6 rounded-xl shadow-lg"> {/* Much longer: max-w-4xl (896px) */}
+        <div className="flex justify-between text-sm text-white/90 mb-6 font-medium px-8"> {/* Even more padding for better spacing across the longer width */}
           <span>Strongly Disagree</span>
           <span>Strongly Agree</span>
         </div>
         
         {/* Enhanced slider track */}
-        <div className="relative h-4 bg-white/20 rounded-full mb-6"> {/* Increased height and margin */}
+        <div className="relative h-4 bg-white/20 rounded-full mb-6">
           <div
             className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
             style={{ width: `${value}%` }}
@@ -312,15 +312,15 @@ const TestInterface = () => {
         </div>
         
         {/* Display both percentage and actual points with better spacing */}
-        <div className="text-center text-white space-y-2"> {/* Added space-y-2 for better spacing */}
-          <div className="text-2xl font-bold">{value}%</div> {/* Larger text */}
-          <div className="text-base opacity-90">{actualPoints}/{maxWeight} points</div> {/* Larger text and better opacity */}
+        <div className="text-center text-white space-y-2">
+          <div className="text-2xl font-bold">{value}%</div>
+          <div className="text-base opacity-90">{actualPoints}/{maxWeight} points</div>
         </div>
       </div>
     );
   }, [testState.test]);
 
-  // Slider Input Component - Enhanced design with better dragging
+  // Slider Input Component - Keep this normal size for input
   const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
     // Get current question to show max weight
     const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
@@ -328,7 +328,7 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-lg border border-gray-100">
+      <div className="w-full max-w-md bg-white p-6 rounded-xl shadow-lg border border-gray-100"> {/* Keep input normal size */}
         <div className="flex justify-between text-sm text-gray-600 mb-6 font-medium">
           <span className="flex items-center">
             <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
@@ -340,7 +340,7 @@ const TestInterface = () => {
           </span>
         </div>
         
-        <div className="relative px-4 mb-6"> {/* Added more padding */}
+        <div className="relative px-4 mb-6">
           {/* Enhanced slider with gradient track and better dragging */}
           <input
             type="range"
@@ -564,7 +564,7 @@ const TestInterface = () => {
                       )}
 
                       {message.type === "slider_answer" && (
-                        <div className="max-w-[85%] sm:max-w-[70%]">
+                        <div className="max-w-[90%] sm:max-w-[80%] p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#2A3262' }}>
                           <SliderAnswer value={message.sliderValue!} questionId={message.questionId} />
                         </div>
                       )}
