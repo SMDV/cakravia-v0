@@ -10,9 +10,9 @@ const TestPaymentPage = () => {
   const [snapToken, setSnapToken] = useState<string | null>(null);
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
 
-  // Test data - these will be used for testing
-  const TEST_TOKEN = 'eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZTc4Zjc5ODAtZTQ2OC00ZGI1LWE0ZTEtNjRkOWJjOTcwODQzIiwiZXhwIjoxNzUxNjAwMzM1fQ.rmbHfDo6n6KeVbwsDzit8fFMVs58Ltjd_N1jf-owarE';
-  const TEST_ID = '822bbdce-ea25-4c63-95e9-9630bbaac6a6';
+  // Editable test data
+  const [testToken, setTestToken] = useState('eyJhbGciOiJIUzI1NiJ9.eyJ1c2VyX2lkIjoiZTc4Zjc5ODAtZTQ2OC00ZGI1LWE0ZTEtNjRkOWJjOTcwODQzIiwiZXhwIjoxNzUxNjAwMzM1fQ.rmbHfDo6n6KeVbwsDzit8fFMVs58Ltjd_N1jf-owarE');
+  const [testId, setTestId] = useState('822bbdce-ea25-4c63-95e9-9630bbaac6a6');
 
   const addResult = (message: string) => {
     setTestResults(prev => [...prev, `${new Date().toLocaleTimeString()}: ${message}`]);
@@ -20,8 +20,8 @@ const TestPaymentPage = () => {
 
   const setTestTokenManually = () => {
     // Set the test token in cookies for API calls
-    document.cookie = `auth_token=${TEST_TOKEN}; path=/; max-age=3600`;
-    addResult(`✅ Set test token: ${TEST_TOKEN.slice(0, 20)}...`);
+    document.cookie = `auth_token=${testToken}; path=/; max-age=3600`;
+    addResult(`✅ Set test token: ${testToken.slice(0, 20)}...`);
   };
 
   const testCreateOrder = async () => {
@@ -29,7 +29,7 @@ const TestPaymentPage = () => {
     addResult('🔄 Testing order creation...');
     
     try {
-      const response = await paymentAPI.createVarkOrder(TEST_ID);
+      const response = await paymentAPI.createVarkOrder(testId);
       
       addResult(`✅ Order created successfully:`);
       addResult(`   - Order ID: ${response.data.id}`);
@@ -51,7 +51,7 @@ const TestPaymentPage = () => {
     addResult('🔄 Testing payment token retrieval...');
     
     try {
-      const response = await paymentAPI.getVarkPaymentToken(TEST_ID);
+      const response = await paymentAPI.getVarkPaymentToken(testId);
       
       addResult(`✅ Payment token retrieved:`);
       addResult(`   - Token ID: ${response.data.id}`);
@@ -86,7 +86,7 @@ const TestPaymentPage = () => {
     addResult('🚀 Testing full payment flow (Order -> Payment)...');
     
     try {
-      const result = await paymentAPI.initializeVarkPayment(TEST_ID);
+      const result = await paymentAPI.initializeVarkPayment(testId);
       
       addResult(`✅ Full payment flow completed:`);
       addResult(`📦 Order Details:`);
@@ -140,12 +140,39 @@ const TestPaymentPage = () => {
           Payment Flow Test Page
         </h1>
         
-        {/* Test Data Info */}
+        {/* Test Data Info - Now Editable */}
         <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <h2 className="text-lg font-semibold mb-2 text-blue-800">Test Data</h2>
-          <div className="space-y-1 text-sm">
-            <p><strong>Test ID:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{TEST_ID}</code></p>
-            <p><strong>Auth Token:</strong> <code className="bg-blue-100 px-2 py-1 rounded">{TEST_TOKEN.slice(0, 30)}...</code></p>
+          <h2 className="text-lg font-semibold mb-4 text-blue-800">Test Data (Editable)</h2>
+          
+          {/* Test ID Input */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-blue-700 mb-2">
+              Test ID:
+            </label>
+            <input
+              type="text"
+              value={testId}
+              onChange={(e) => setTestId(e.target.value)}
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono"
+              placeholder="Enter test ID"
+            />
+          </div>
+
+          {/* Auth Token Input */}
+          <div>
+            <label className="block text-sm font-medium text-blue-700 mb-2">
+              Auth Token:
+            </label>
+            <textarea
+              value={testToken}
+              onChange={(e) => setTestToken(e.target.value)}
+              rows={3}
+              className="w-full px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm font-mono resize-none"
+              placeholder="Enter JWT token"
+            />
+            <p className="text-xs text-blue-600 mt-1">
+              Token preview: {testToken.slice(0, 30)}...
+            </p>
           </div>
         </div>
 
@@ -153,31 +180,32 @@ const TestPaymentPage = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
           <button
             onClick={setTestTokenManually}
-            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 text-sm"
+            disabled={!testToken.trim()}
+            className="px-4 py-2 bg-purple-500 text-white rounded hover:bg-purple-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
-            Set Test Token
+            Set Auth Token
           </button>
           
           <button
             onClick={testCreateOrder}
-            disabled={isLoading}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 text-sm"
+            disabled={isLoading || !testId.trim()}
+            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             1. Create Order
           </button>
           
           <button
             onClick={testGetPaymentToken}
-            disabled={isLoading}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 text-sm"
+            disabled={isLoading || !testId.trim()}
+            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             2. Get Payment Token
           </button>
           
           <button
             onClick={testFullPaymentFlow}
-            disabled={isLoading}
-            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 text-sm"
+            disabled={isLoading || !testId.trim()}
+            className="px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
           >
             Full Flow (1+2)
           </button>
@@ -246,11 +274,12 @@ const TestPaymentPage = () => {
         <div className="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
           <h4 className="font-semibold text-yellow-800 mb-2">Testing Instructions:</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
-            <li><strong>1. Set Test Token:</strong> Sets the auth token in cookies for API authentication</li>
-            <li><strong>2. Create Order:</strong> Calls the order creation endpoint for VARK test</li>
-            <li><strong>3. Get Payment Token:</strong> Retrieves the Midtrans snap token for payment</li>
-            <li><strong>4. Full Flow:</strong> Runs both order creation and payment token retrieval</li>
-            <li><strong>5. Open Payment:</strong> Opens the Midtrans Snap payment page</li>
+            <li><strong>1. Edit Test Data:</strong> Update the Test ID and Auth Token fields above as needed</li>
+            <li><strong>2. Set Auth Token:</strong> Sets the auth token in cookies for API authentication</li>
+            <li><strong>3. Create Order:</strong> Calls the order creation endpoint for VARK test</li>
+            <li><strong>4. Get Payment Token:</strong> Retrieves the Midtrans snap token for payment</li>
+            <li><strong>5. Full Flow:</strong> Runs both order creation and payment token retrieval</li>
+            <li><strong>6. Open Payment:</strong> Opens the Midtrans Snap payment page</li>
           </ul>
         </div>
 
