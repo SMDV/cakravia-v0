@@ -813,18 +813,18 @@ const EnhancedResultsDashboard = () => {
                 {resultsState.resultsData?.learning_style_interpretation && 
                  resultsState.resultsData?.dominant_learning_styles && 
                  resultsState.resultsData.dominant_learning_styles.length > 0 && (
-                  <div className="mb-4 text-gray-700">
+                  <div className="mb-4 prose prose-gray prose-sm max-w-none">
                     {resultsState.resultsData.dominant_learning_styles.includes('Visual') && (
-                      <p>{resultsState.resultsData.learning_style_interpretation.visual}</p>
+                      <p className="text-gray-700 leading-relaxed">{resultsState.resultsData.learning_style_interpretation.visual}</p>
                     )}
                     {resultsState.resultsData.dominant_learning_styles.includes('Aural') && (
-                      <p>{resultsState.resultsData.learning_style_interpretation.aural}</p>
+                      <p className="text-gray-700 leading-relaxed">{resultsState.resultsData.learning_style_interpretation.aural}</p>
                     )}
                     {resultsState.resultsData.dominant_learning_styles.includes('Read/Write') && (
-                      <p>{resultsState.resultsData.learning_style_interpretation.read_write}</p>
+                      <p className="text-gray-700 leading-relaxed">{resultsState.resultsData.learning_style_interpretation.read_write}</p>
                     )}
                     {resultsState.resultsData.dominant_learning_styles.includes('Kinesthetic') && (
-                      <p>{resultsState.resultsData.learning_style_interpretation.kinesthetic}</p>
+                      <p className="text-gray-700 leading-relaxed">{resultsState.resultsData.learning_style_interpretation.kinesthetic}</p>
                     )}
                   </div>
                 )}
