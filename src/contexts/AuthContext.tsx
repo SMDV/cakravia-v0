@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import { User, AuthResponse, LoginData, RegisterData } from '@/lib/types';
+import { User, AuthResponse, LoginData, RegisterData, GoogleAuthResponse, CrossAuthResponse } from '@/lib/types';
 import { authAPI } from '@/lib/api';
 
 interface AuthContextType {
@@ -10,9 +10,14 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (credentials: LoginData) => Promise<void>;
+  googleLogin: (idToken: string) => Promise<void>; // NEW
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
   updateUser: (userData: User) => void;
+  // Cross-authentication state
+  requiresGoogleAuth: boolean; // NEW
+  googleAuthMessage: string; // NEW
+  clearGoogleAuthState: () => void; // NEW
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -20,6 +25,9 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // NEW: Cross-authentication state
+  const [requiresGoogleAuth, setRequiresGoogleAuth] = useState(false);
+  const [googleAuthMessage, setGoogleAuthMessage] = useState('');
 
   // Check if user is authenticated on mount
   useEffect(() => {
@@ -44,18 +52,61 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
+  // Enhanced login with cross-authentication support
   const login = async (credentials: LoginData) => {
     try {
-      const response: AuthResponse = await authAPI.login(credentials);
+      // Clear any previous Google auth state
+      setRequiresGoogleAuth(false);
+      setGoogleAuthMessage('');
+      
+      const response: CrossAuthResponse = await authAPI.login(credentials);
+      
+      if (response.success && response.token && response.user) {
+        // Store token and user data
+        Cookies.set('auth_token', response.token, { expires: 7 }); // 7 days
+        Cookies.set('user_data', JSON.stringify(response.user), { expires: 7 });
+        
+        setUser(response.user);
+      } else if (response.requiresGoogleAuth) {
+        // Handle cross-authentication scenario
+        setRequiresGoogleAuth(true);
+        setGoogleAuthMessage(response.message || 'This account requires Google Sign-In.');
+        throw new Error(response.message || 'Please use Google Sign-In to continue.');
+      } else {
+        throw new Error(response.error || 'Login failed');
+      }
+    } catch (loginError: unknown) {
+      const errorMessage = loginError instanceof Error ? loginError.message : 'Login failed';
+      throw new Error(errorMessage);
+    }
+  };
+
+  // NEW: Google authentication
+  const googleLogin = async (idToken: string) => {
+    try {
+      setIsLoading(true);
+      // Clear any previous auth state
+      setRequiresGoogleAuth(false);
+      setGoogleAuthMessage('');
+      
+      const response: GoogleAuthResponse = await authAPI.googleLogin(idToken);
       
       // Store token and user data
       Cookies.set('auth_token', response.data.token, { expires: 7 }); // 7 days
       Cookies.set('user_data', JSON.stringify(response.data.user), { expires: 7 });
       
       setUser(response.data.user);
-    } catch (loginError: unknown) {
-      const errorMessage = loginError instanceof Error ? loginError.message : 'Login failed';
+      
+      // Show success message if account was linked
+      if (response.message) {
+        console.log('✅ Google Auth Success:', response.message);
+        // You could show a toast notification here
+      }
+    } catch (googleError: unknown) {
+      const errorMessage = googleError instanceof Error ? googleError.message : 'Google authentication failed';
       throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -77,6 +128,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = () => {
     authAPI.logout();
     setUser(null);
+    // Clear Google auth state
+    setRequiresGoogleAuth(false);
+    setGoogleAuthMessage('');
     // Redirect to login page
     window.location.href = '/login';
   };
@@ -86,14 +140,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     Cookies.set('user_data', JSON.stringify(userData), { expires: 7 });
   };
 
+  // NEW: Clear Google auth state
+  const clearGoogleAuthState = () => {
+    setRequiresGoogleAuth(false);
+    setGoogleAuthMessage('');
+  };
+
   const value = {
     user,
     isLoading,
     isAuthenticated: !!user,
     login,
+    googleLogin, // NEW
     register,
     logout,
     updateUser,
+    // NEW: Cross-authentication state
+    requiresGoogleAuth,
+    googleAuthMessage,
+    clearGoogleAuthState,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

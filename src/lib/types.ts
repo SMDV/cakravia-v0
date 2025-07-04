@@ -149,3 +149,112 @@ export interface ApiError {
   errors?: Record<string, string[]>;
   status: number;
 }
+
+// Add these to your existing src/lib/types.ts file
+
+// Extend your existing User interface with Google fields
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string | null;
+  birthday?: string | null;
+  avatar_url?: string | null;
+  password_digest?: string; // Only in register response
+  created_at?: string;
+  updated_at: string;
+  // NEW: Google-specific fields
+  google_id?: string;
+  google_email?: string;
+  google_name?: string;
+  google_picture?: string;
+  auth_provider?: 'email' | 'google' | 'both'; // Indicates how user can authenticate
+}
+
+// NEW: Google Authentication Response
+export interface GoogleAuthResponse {
+  data: {
+    token: string;
+    user: User;
+  };
+  status: string;
+  error: boolean;
+  message?: string; // For success messages like "Account linked successfully"
+}
+
+// NEW: Cross-Authentication Response (for enhanced email login)
+export interface CrossAuthResponse {
+  success: boolean;
+  requiresGoogleAuth?: boolean;
+  message?: string;
+  error?: string;
+  token?: string;
+  user?: User;
+}
+
+// NEW: Google ID Token Payload (what we receive from Google)
+export interface GoogleTokenPayload {
+  iss: string;
+  azp: string;
+  aud: string;
+  sub: string;
+  email: string;
+  email_verified: boolean;
+  name: string;
+  picture: string;
+  given_name: string;
+  family_name: string;
+  iat: number;
+  exp: number;
+}
+
+// NEW: Google SDK Types
+declare global {
+  interface Window {
+    google?: {
+      accounts: {
+        id: {
+          initialize: (config: GoogleInitConfig) => void;
+          prompt: (callback?: (notification: PromptMomentNotification) => void) => void;
+          renderButton: (element: HTMLElement, config: GoogleButtonConfig) => void;
+          disableAutoSelect: () => void;
+          cancel: () => void;
+        };
+      };
+    };
+  }
+}
+
+export interface GoogleInitConfig {
+  client_id: string;
+  callback: (response: GoogleCredentialResponse) => void;
+  auto_select?: boolean;
+  cancel_on_tap_outside?: boolean;
+  context?: 'signin' | 'signup' | 'use';
+}
+
+export interface GoogleCredentialResponse {
+  credential: string;
+  select_by: string;
+}
+
+export interface GoogleButtonConfig {
+  type?: 'standard' | 'icon';
+  theme?: 'outline' | 'filled_blue' | 'filled_black';
+  size?: 'large' | 'medium' | 'small';
+  text?: 'signin_with' | 'signup_with' | 'continue_with' | 'signin';
+  shape?: 'rectangular' | 'pill' | 'circle' | 'square';
+  logo_alignment?: 'left' | 'center';
+  width?: number;
+  locale?: string;
+}
+
+export interface PromptMomentNotification {
+  isDisplayed: () => boolean;
+  isNotDisplayed: () => boolean;
+  getNotDisplayedReason: () => string;
+  isSkippedMoment: () => boolean;
+  getSkippedReason: () => string;
+  isDismissedMoment: () => boolean;
+  getDismissedReason: () => string;
+}
