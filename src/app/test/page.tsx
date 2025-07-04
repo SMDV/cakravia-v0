@@ -43,21 +43,15 @@ const TestInterface = () => {
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
-  const addLog = (message: string) => {
+  // Memoized logging function
+  const addLog = useCallback((message: string) => {
     const timestamp = new Date().toLocaleTimeString();
     setLogs(prev => [...prev, `${timestamp}: ${message}`]);
     console.log(`VARK Test: ${message}`);
-  };
-
-  // Auto-scroll chat to bottom
-  useEffect(() => {
-    if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [chatHistory]);
+  }, []);
 
   // Initialize test flow
-  const initializeTest = async () => {
+  const initializeTest = useCallback(async () => {
     if (!isAuthenticated) {
       setTestState(prev => ({ 
         ...prev, 
@@ -103,10 +97,10 @@ const TestInterface = () => {
         error: errorMessage 
       }));
     }
-  };
+  }, [isAuthenticated, addLog]);
 
   // Start the actual test
-  const startTest = () => {
+  const startTest = useCallback(() => {
     if (!testState.test) return;
     
     addLog('▶️ Starting test...');
@@ -120,54 +114,17 @@ const TestInterface = () => {
       text: firstQuestion.body,
       questionId: firstQuestion.id
     }]);
-  };
+  }, [testState.test, addLog]);
 
-  // Timer countdown (only during testing)
-  useEffect(() => {
-    if (testState.step !== 'testing' || testState.timeLeft <= 0) return;
+  // Format time helper
+  const formatTime = useCallback((seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+  }, []);
 
-    const timer = setInterval(() => {
-      setTestState(prev => {
-        if (prev.timeLeft <= 1) {
-          clearInterval(timer);
-          // Auto-submit when time is up using current state
-          const { test, answers } = prev;
-          if (test) {
-            const submission = { answers: Object.values(answers) };
-            varkAPI.submitAnswers(test.id, submission)
-              .then(() => {
-                addLog('✅ Time up - answers submitted successfully!');
-                setTestState(current => ({ ...current, step: 'completed' }));
-                setTimeout(() => {
-                  window.location.href = `/results?testId=${test.id}`;
-                }, 3000);
-              })
-              .catch((error) => {
-                const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
-                addLog(`❌ Time up submission failed: ${errorMessage}`);
-                setTestState(current => ({ 
-                  ...current, 
-                  step: 'error', 
-                  error: errorMessage 
-                }));
-              });
-          }
-          return { ...prev, timeLeft: 0 };
-        }
-        return { ...prev, timeLeft: prev.timeLeft - 1 };
-      });
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [testState.step, testState.timeLeft, addLog]);
-
-  // Auto-initialize on mount
-  useEffect(() => {
-    if (isAuthenticated) {
-      initializeTest();
-    }
-  }, [isAuthenticated, initializeTest]);
-
+  // Handle next question and submission
   const handleNextQuestion = useCallback(async () => {
     const { test, currentQuestionIndex } = testState;
     if (!test) return;
@@ -256,55 +213,61 @@ const TestInterface = () => {
     }
   }, [testState, currentSliderValue, addLog]);
 
-  const formatTime = (seconds: number) => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const remainingSeconds = seconds % 60;
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
-  };
-
-  const submitAllAnswers = async () => {
-    const { test, answers } = testState;
-    if (!test) return;
-
-    try {
-      addLog('📤 Submitting all answers...');
-      setTestState(prev => ({ ...prev, step: 'submitting' }));
-
-      const submission = {
-        answers: Object.values(answers)
-      };
-
-      addLog(`📊 Submitting ${submission.answers.length} answers`);
-      await varkAPI.submitAnswers(test.id, submission);
-      
-      addLog('✅ Answers submitted successfully!');
-      setTestState(prev => ({ ...prev, step: 'completed' }));
-      
-      // Add completion message to chat
-      setChatHistory(prev => [...prev, {
-        sender: "ai",
-        type: "text",
-        text: "🎉 Congratulations! You have completed the VARK Learning Style Assessment. Your results are being processed..."
-      }]);
-      
-      // Redirect to results page after a short delay
-      setTimeout(() => {
-        window.location.href = `/results?testId=${test.id}`;
-      }, 3000);
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
-      addLog(`❌ Submission failed: ${errorMessage}`);
-      setTestState(prev => ({ 
-        ...prev, 
-        step: 'error', 
-        error: errorMessage 
-      }));
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
-  };
+  }, [chatHistory]);
 
-  const SliderAnswer = ({ value }: { value: number }) => (
+  // Timer countdown (only during testing)
+  useEffect(() => {
+    if (testState.step !== 'testing' || testState.timeLeft <= 0) return;
+
+    const timer = setInterval(() => {
+      setTestState(prev => {
+        if (prev.timeLeft <= 1) {
+          clearInterval(timer);
+          // Auto-submit when time is up using current state
+          const { test, answers } = prev;
+          if (test) {
+            const submission = { answers: Object.values(answers) };
+            varkAPI.submitAnswers(test.id, submission)
+              .then(() => {
+                addLog('✅ Time up - answers submitted successfully!');
+                setTestState(current => ({ ...current, step: 'completed' }));
+                setTimeout(() => {
+                  window.location.href = `/results?testId=${test.id}`;
+                }, 3000);
+              })
+              .catch((error) => {
+                const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
+                addLog(`❌ Time up submission failed: ${errorMessage}`);
+                setTestState(current => ({ 
+                  ...current, 
+                  step: 'error', 
+                  error: errorMessage 
+                }));
+              });
+          }
+          return { ...prev, timeLeft: 0 };
+        }
+        return { ...prev, timeLeft: prev.timeLeft - 1 };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [testState.step, testState.timeLeft, addLog]);
+
+  // Auto-initialize on mount
+  useEffect(() => {
+    if (isAuthenticated) {
+      initializeTest();
+    }
+  }, [isAuthenticated, initializeTest]);
+
+  // Slider Answer Component
+  const SliderAnswer = useCallback(({ value }: { value: number }) => (
     <div className="w-full max-w-sm">
       <div className="flex justify-between text-xs text-white mb-2">
         <span>Strongly Disagree</span>
@@ -322,9 +285,10 @@ const TestInterface = () => {
       </div>
       <div className="text-center text-sm font-semibold mt-3 text-white">{value}</div>
     </div>
-  );
+  ), []);
 
-  const SliderInput = ({ value, onChange }: { value: number; onChange: (value: number) => void }) => (
+  // Slider Input Component
+  const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => (
     <div className="w-full max-w-md">
       <div className="flex justify-between text-sm text-gray-600 mb-4">
         <span>Strongly Disagree</span>
@@ -362,7 +326,7 @@ const TestInterface = () => {
         }
       `}</style>
     </div>
-  );
+  ), []);
 
   // Don't render if not authenticated
   if (!isAuthenticated) {
