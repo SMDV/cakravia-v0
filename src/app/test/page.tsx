@@ -293,34 +293,34 @@ const TestInterface = () => {
     const actualPoints = Math.round((value / 100) * maxWeight);
 
     return (
-      <div className="w-full max-w-sm bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
-        <div className="flex justify-between text-xs text-white/80 mb-3 font-medium">
+      <div className="w-full max-w-lg"> {/* Expanded from max-w-sm to max-w-lg */}
+        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium px-2"> {/* Better spacing and readability */}
           <span>Strongly Disagree</span>
           <span>Strongly Agree</span>
         </div>
         
         {/* Enhanced slider track */}
-        <div className="relative h-3 bg-white/20 rounded-full mb-4">
+        <div className="relative h-4 bg-white/20 rounded-full mb-6"> {/* Increased height and margin */}
           <div
             className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
             style={{ width: `${value}%` }}
           />
           <div
-            className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
-            style={{ left: `calc(${value}% - 10px)` }}
+            className="absolute -top-1 w-6 h-6 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
+            style={{ left: `calc(${value}% - 12px)` }}
           />
         </div>
         
-        {/* Display both percentage and actual points */}
-        <div className="text-center text-white">
-          <div className="text-lg font-bold">{value}%</div>
-          <div className="text-sm opacity-80">{actualPoints}/{maxWeight} points</div>
+        {/* Display both percentage and actual points with better spacing */}
+        <div className="text-center text-white space-y-2"> {/* Added space-y-2 for better spacing */}
+          <div className="text-2xl font-bold">{value}%</div> {/* Larger text */}
+          <div className="text-base opacity-90">{actualPoints}/{maxWeight} points</div> {/* Larger text and better opacity */}
         </div>
       </div>
     );
   }, [testState.test]);
 
-  // Slider Input Component - Enhanced design
+  // Slider Input Component - Enhanced design with better dragging
   const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
     // Get current question to show max weight
     const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
@@ -340,26 +340,24 @@ const TestInterface = () => {
           </span>
         </div>
         
-        <div className="relative px-2 mb-6">
-          {/* Enhanced slider with gradient track */}
-          <div className="relative h-4 bg-gradient-to-r from-red-100 via-yellow-100 to-green-100 rounded-full">
-            <div
-              className="absolute h-full bg-gradient-to-r from-red-400 via-yellow-400 to-green-400 rounded-full transition-all duration-300"
-              style={{ width: `${value}%` }}
-            />
-            <input
-              type="range"
-              min="0"
-              max="100"
-              value={value}
-              onChange={(e) => onChange(parseInt(e.target.value))}
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-            />
-            <div
-              className="absolute -top-1 w-6 h-6 bg-white rounded-full shadow-lg border-3 border-blue-500 cursor-pointer transition-all duration-200 hover:scale-110"
-              style={{ left: `calc(${value}% - 12px)` }}
-            />
-          </div>
+        <div className="relative px-4 mb-6"> {/* Added more padding */}
+          {/* Enhanced slider with gradient track and better dragging */}
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={value}
+            onChange={(e) => onChange(parseInt(e.target.value))}
+            className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
+            style={{
+              background: `linear-gradient(to right, 
+                #f87171 0%, 
+                #fbbf24 ${value/2}%, 
+                #34d399 ${value}%, 
+                #e5e7eb ${value}%, 
+                #e5e7eb 100%)`
+            }}
+          />
         </div>
         
         {/* Enhanced display */}
@@ -374,6 +372,58 @@ const TestInterface = () => {
             Category: {currentQuestion?.category.name || 'Unknown'}
           </div>
         </div>
+
+        {/* Custom slider styles */}
+        <style jsx>{`
+          .slider::-webkit-slider-thumb {
+            appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #2A3262;
+            cursor: grab;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+            transition: all 0.2s ease-in-out;
+          }
+          
+          .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+          }
+          
+          .slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
+          }
+          
+          .slider::-moz-range-thumb {
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #2A3262;
+            cursor: grab;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+            transition: all 0.2s ease-in-out;
+          }
+          
+          .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+          }
+          
+          .slider::-moz-range-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+          }
+          
+          .slider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
+          }
+        `}</style>
       </div>
     );
   }, [testState.test, testState.currentQuestionIndex]);
@@ -514,7 +564,7 @@ const TestInterface = () => {
                       )}
 
                       {message.type === "slider_answer" && (
-                        <div className="max-w-[85%] sm:max-w-[70%] p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#2A3262' }}>
+                        <div className="max-w-[85%] sm:max-w-[70%]">
                           <SliderAnswer value={message.sliderValue!} questionId={message.questionId} />
                         </div>
                       )}
