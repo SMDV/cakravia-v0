@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { User, TrendingUp, Target, Users, Award, BookOpen, CheckCircle, ArrowRight } from 'lucide-react';
+import { Target, Users, Award, BookOpen, CheckCircle, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -35,13 +35,6 @@ const AboutUsPage = () => {
       title: "Continuous Growth",
       description: "Track your progress and adapt your learning strategies as you grow and develop new skills."
     }
-  ];
-
-  const stats = [
-    { number: "10K+", label: "Students Helped" },
-    { number: "95%", label: "Success Rate" },
-    { number: "4", label: "Assessment Types" },
-    { number: "24/7", label: "Support Available" }
   ];
 
   const values = [
@@ -81,9 +74,9 @@ const AboutUsPage = () => {
               <h1 className="text-5xl font-bold mb-6 text-white leading-tight">
                 Empowering Your <span style={{ color: '#ABD305' }}>Learning Journey</span>
               </h1>
-              <p className="text-xl mb-8 text-blue-100 leading-relaxed">
-                We're dedicated to helping individuals discover their unique learning preferences and unlock their full potential through scientifically-backed assessments and personalized insights.
-              </p>
+                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                  We&#39;re more than just an assessment platform. We&#39;re your partner in understanding and optimizing your learning journey. Here&#39;s what makes us different:
+                </p>
               <div className="flex flex-wrap gap-4">
                 {isAuthenticated ? (
                   <Link 
@@ -168,7 +161,7 @@ const AboutUsPage = () => {
                 Why Choose Cakravia?
               </h2>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                We're more than just an assessment platform. We're your partner in understanding and optimizing your learning journey. Here's what makes us different:
+                We&#39re more than just an assessment platform. We&#39re your partner in understanding and optimizing your learning journey. Here&#39s what makes us different:
               </p>
               
               <div className="space-y-6">
