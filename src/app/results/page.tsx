@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState, useEffect } from 'react';
-import { Check, Lock, AlertCircle, User} from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Check, Lock, AlertCircle, User } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { varkAPI } from '@/lib/api';
+import { varkAPI, paymentAPI } from '@/lib/api';
 import { VarkTest, VarkTestResults } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
@@ -29,6 +29,42 @@ interface SmallChartProps {
   color: string;
 }
 
+// Midtrans result types
+interface MidtransResult {
+  transaction_id: string;
+  payment_type: string;
+  status_message: string;
+}
+
+// Extended API Error for specific error handling
+interface OrderError extends Error {
+  response?: {
+    data?: {
+      code?: string;
+      errors?: {
+        test?: string[];
+      };
+      message?: string;
+      status?: number;
+    };
+    status?: number;
+  };
+}
+
+// Declare global Midtrans types
+declare global {
+  interface Window {
+    snap: {
+      pay: (token: string, options: {
+        onSuccess: (result: MidtransResult) => void;
+        onPending: (result: MidtransResult) => void;
+        onError: (result: MidtransResult) => void;
+        onClose: () => void;
+      }) => void;
+    };
+  }
+}
+
 const EnhancedResultsDashboard = () => {
   const { isAuthenticated, user } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
@@ -39,20 +75,247 @@ const EnhancedResultsDashboard = () => {
     canDownloadCertificate: false
   });
 
-  // Payment state - stored locally for now
+  // Enhanced payment state
   const [isPaid, setIsPaid] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [snapUrl, setSnapUrl] = useState<string | null>(null);
 
-  // Check payment status on mount
-  useEffect(() => {
-    const checkPaymentStatus = () => {
-      const savedPaymentStatus = localStorage.getItem('vark_payment_status');
-      if (savedPaymentStatus === 'paid') {
-        setIsPaid(true);
-        setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+  // Check payment status using API endpoint
+  const checkPaymentStatus = useCallback(async (testId: string) => {
+    try {
+      // Get the order information for this test
+      const orderResponse = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders`, {
+        headers: {
+          'Authorization': `Bearer ${document.cookie.split('auth_token=')[1]?.split(';')[0]}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (orderResponse.ok) {
+        const orderData = await orderResponse.json();
+        const order = orderData.data;
+        
+        // Check if payment is completed based on order status
+        const hasValidPayment = order.status === 'paid' && order.can_download_certificate === true;
+        
+        if (hasValidPayment) {
+          setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+        } else {
+          setIsPaid(false);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
+        }
+        
+        return hasValidPayment;
+      } else {
+        return false;
       }
-    };
-    checkPaymentStatus();
+    } catch (error) {
+      console.error('Payment status check failed:', error);
+      return false;
+    }
   }, []);
+
+  // Load Midtrans Snap script
+  useEffect(() => {
+    const loadMidtransScript = () => {
+      if (document.getElementById('midtrans-script')) return;
+      
+      const script = document.createElement('script');
+      script.id = 'midtrans-script';
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
+      script.setAttribute('data-client-key', 'SB-Mid-client-BnZAW_h-FqRtI-kz'); // Sandbox client key - replace with your production key
+      document.body.appendChild(script);
+    };
+    
+    loadMidtransScript();
+  }, []);
+
+  // Open Midtrans Snap popup
+  const openSnapPopup = useCallback((snapToken: string) => {
+    if (window.snap) {
+      window.snap.pay(snapToken, {
+        onSuccess: function(result: MidtransResult) {
+          console.log('Payment successful:', result);
+          
+          // Verify payment status with API
+          const urlParams = new URLSearchParams(window.location.search);
+          const testId = urlParams.get('testId');
+          if (testId) {
+            setTimeout(() => {
+              checkPaymentStatus(testId);
+            }, 2000); // Wait 2 seconds for payment to be processed on server
+          }
+        },
+        onPending: function(result: MidtransResult) {
+          console.log('Payment pending:', result);
+        },
+        onError: function(result: MidtransResult) {
+          console.error('Payment failed:', result);
+        },
+        onClose: function() {
+          console.log('Payment popup closed');
+        }
+      });
+    } else {
+      console.log('Midtrans Snap not loaded, opening in new tab');
+      if (snapUrl) {
+        window.open(snapUrl, '_blank');
+      }
+    }
+  }, [checkPaymentStatus, snapUrl]);
+
+  // Enhanced certificate purchase handler with existing order check
+  const handlePurchaseCertificate = async () => {
+    try {
+      setIsProcessingPayment(true);
+      
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+      
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot process payment.');
+      }
+      
+      try {
+        // First, try to initialize payment (create new order)
+        const paymentResult = await paymentAPI.initializeVarkPayment(testId);
+        
+        const snapToken = paymentResult.paymentToken.snap_token;
+        const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
+        const snapUrl = midtransResponse.redirect_url;
+        setSnapUrl(snapUrl);
+        
+        openSnapPopup(snapToken);
+        
+      } catch (orderError: unknown) {
+        // Type guard to check if it's an error with the expected structure
+        const isOrderError = (error: unknown): error is OrderError => {
+          return typeof error === 'object' && 
+                 error !== null && 
+                 'response' in error;
+        };
+
+        // Check if error is about existing order
+        if (isOrderError(orderError) && 
+            orderError?.response?.data?.code === 'CKV-422' && 
+            orderError?.response?.data?.errors?.test?.includes('already has an order')) {
+          
+          try {
+            // Get auth token for direct API call
+            const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+            if (!authToken) {
+              throw new Error('Authentication token not found');
+            }
+            
+            // Call payment token endpoint directly for existing order
+            const tokenResponse = await fetch(
+              `https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders/payment_token`,
+              {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${authToken}`,
+                  'Content-Type': 'application/json'
+                }
+              }
+            );
+            
+            if (!tokenResponse.ok) {
+              const errorData = await tokenResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `Failed to get payment token: ${tokenResponse.status}`);
+            }
+            
+            const tokenData = await tokenResponse.json();
+            
+            // Extract snap URL from token response
+            const midtransResponse = JSON.parse(tokenData.data.midtrans_response);
+            const snapUrl = midtransResponse.redirect_url;
+            setSnapUrl(snapUrl);
+            
+            // Open payment popup with existing order token
+            openSnapPopup(tokenData.data.snap_token);
+            
+          } catch (tokenError) {
+            const tokenErrorMessage = tokenError instanceof Error ? tokenError.message : 'Failed to get payment token';
+            throw new Error(`Could not retrieve payment token: ${tokenErrorMessage}`);
+          }
+          
+        } else {
+          // Re-throw if it's a different error
+          throw orderError;
+        }
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
+      console.error('Payment error:', error);
+      alert(`Payment failed: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Certificate download handler
+  const handleDownloadCertificate = async () => {
+    try {
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+      
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot download certificate.');
+      }
+      
+      // Get auth token from cookie
+      const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+      if (!authToken) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+      
+      // Make API call to download certificate
+      const response = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders/download_certificate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Download failed with status: ${response.status}`);
+      }
+      
+      // Check if response is a PDF file
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/pdf')) {
+        // Handle PDF download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `VARK_Certificate_${testId.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Handle other response types (e.g., JSON with download URL)
+        const data = await response.json();
+        if (data.download_url) {
+          window.open(data.download_url, '_blank');
+        } else {
+          throw new Error('Invalid response format for certificate download');
+        }
+      }
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download certificate';
+      console.error('Certificate download error:', error);
+      alert(`Download failed: ${errorMessage}`);
+    }
+  };
 
   // Remove the mock scores and use real data
   const scoresData = resultsState.resultsData ? {
@@ -70,31 +333,31 @@ const EnhancedResultsDashboard = () => {
   // Get percentage data from API
   const percentageData = resultsState.resultsData?.scores_breakdown || [];
   
-  // Create organized data with both scores and percentages
+  // Create organized data with both scores and percentages - Updated colors
   const organizedScores = [
     { 
       name: 'Visual', 
       score: scoresData.visual, 
       percentage: percentageData.find(item => item.code === 'V')?.percentage || 0,
-      color: '#8B5CF6' 
+      color: '#8979FF' 
     },
     { 
       name: 'Auditory', 
       score: scoresData.auditory, 
       percentage: percentageData.find(item => item.code === 'A')?.percentage || 0,
-      color: '#EF4444' 
+      color: '#FF928A' 
     },
     { 
       name: 'Reading', 
       score: scoresData.reading, 
       percentage: percentageData.find(item => item.code === 'R')?.percentage || 0,
-      color: '#06B6D4' 
+      color: '#3CC3DF' 
     },
     { 
       name: 'Kinesthetic', 
       score: scoresData.kinesthetic, 
       percentage: percentageData.find(item => item.code === 'K')?.percentage || 0,
-      color: '#10B981' 
+      color: '#FFAE4C' 
     }
   ];
 
@@ -103,7 +366,7 @@ const EnhancedResultsDashboard = () => {
   const highestScore = sortedScores[0];
   const otherScores = sortedScores.slice(1);
 
-  // Handle certificate purchase
+  // Load results data
   useEffect(() => {
     const loadResults = async () => {
       if (!isAuthenticated) {
@@ -137,11 +400,13 @@ const EnhancedResultsDashboard = () => {
         
         console.log('Loaded results data:', resultsData);
         
+        // Check payment status for this test
+        await checkPaymentStatus(testId);
+        
         setResultsState(prev => ({
           ...prev,
           isLoading: false,
           resultsData,
-          canDownloadCertificate: false // Will be determined by payment status
         }));
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
@@ -155,31 +420,15 @@ const EnhancedResultsDashboard = () => {
     };
 
     loadResults();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, checkPaymentStatus]);
 
-  // Handle certificate purchase
-  const handlePurchaseCertificate = async () => {
-    try {
-      console.log('Initiating certificate purchase...');
-      
-      // Simulate payment process - replace with real payment integration
-      // For now, we'll just simulate a successful payment
-      alert('Payment successful! Content unlocked.');
-      
-      // Store payment status locally
-      localStorage.setItem('vark_payment_status', 'paid');
-      setIsPaid(true);
-      setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
-      console.error('Payment error:', error);
-      alert(`Payment failed: ${errorMessage}`);
-    }
-  };
-
-  // Data for ApexCharts Radial Bar Chart (Learning Preferences)
-  const learningChartSeries = [scoresData.visual, scoresData.auditory, scoresData.reading, scoresData.kinesthetic];
+  // Data for ApexCharts Radial Bar Chart (Learning Preferences) - Using percentages
+  const learningChartSeries = [
+    organizedScores.find(item => item.name === 'Visual')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Auditory')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Reading')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Kinesthetic')?.percentage || 0
+  ];
 
   const learningChartOptions = {
     chart: {
@@ -200,6 +449,11 @@ const EnhancedResultsDashboard = () => {
           background: "transparent",
           image: undefined,
         },
+        track: {
+          background: '#E5E7EB', // Grey color for unfilled portions
+          strokeWidth: '100%',
+          margin: 5,
+        },
         dataLabels: {
           name: {
             show: false,
@@ -213,13 +467,12 @@ const EnhancedResultsDashboard = () => {
           useSeriesColors: true,
           offsetX: -8,
           fontSize: "16px",
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          formatter: (seriesName: string, opts: any) => 
-            seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
+          formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => 
+            seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%",
         },
       },
     },
-    colors: ["#1ab7ea", "#0084ff", "#39539E", "#0077B5"],
+    colors: ["#8979FF", "#FF928A", "#3CC3DF", "#FFAE4C"], // Updated color scheme
     labels: ["Visual", "Auditory", "Reading", "Kinesthetic"],
     responsive: [
       {
@@ -236,9 +489,52 @@ const EnhancedResultsDashboard = () => {
     },
   };
 
-  // Individual scores component - Updated to use percentage for chart
+  // Individual scores component - Updated to use ApexCharts for single values
   const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => {
     const percentage = organizedScores.find(item => item.name === name)?.percentage || 0;
+    
+    const singleChartOptions = {
+      chart: {
+        height: 200,
+        type: "radialBar" as const,
+        toolbar: {
+          show: false,
+        },
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -90,
+          endAngle: 90,
+          hollow: {
+            margin: 5,
+            size: "50%",
+            background: "transparent",
+          },
+          track: {
+            background: '#E5E7EB', // Grey color for unfilled portions
+            strokeWidth: '100%',
+            margin: 5,
+          },
+          dataLabels: {
+            name: {
+              show: false,
+            },
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontWeight: "bold",
+              color: "#2A3262",
+              formatter: () => `${percentage.toFixed(1)}%`,
+            },
+          },
+        },
+      },
+      colors: [color],
+      labels: [name],
+      stroke: {
+        lineCap: "round" as const,
+      },
+    };
     
     return (
       <div className="rounded-xl overflow-hidden shadow-lg">
@@ -248,32 +544,13 @@ const EnhancedResultsDashboard = () => {
         >
           {name} Score: {score}
         </div>
-        <div className="p-6 bg-gray-50 flex justify-center">
-          <div className="w-32 h-32 relative flex items-center justify-center">
-            <svg className="transform -rotate-90" width="128" height="128" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke="#E5E7EB"
-                strokeWidth="8"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke={color}
-                strokeWidth="8"
-                strokeDasharray={`${(percentage / 100) * 251.2} 251.2`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-lg font-bold" style={{ color: '#2A3262' }}>{score}</span>
-            </div>
-          </div>
+        <div className="p-6 bg-gray-50">
+          <ApexCharts
+            options={singleChartOptions}
+            series={[percentage]}
+            type="radialBar"
+            height={200}
+          />
         </div>
       </div>
     );
@@ -369,7 +646,7 @@ const EnhancedResultsDashboard = () => {
               <div className="w-1/2 flex justify-center">
                 <Card className="rounded-lg overflow-hidden border-none shadow-lg">
                   <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-4">
-                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>Total Learning Score</CardTitle>
+                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>Total Learning Percentage</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 bg-[#F0F2F5]">
                     {/* ApexCharts component */}
@@ -428,17 +705,17 @@ const EnhancedResultsDashboard = () => {
 
                 {/* Download PDF Button */}
                 <div className="mt-8">
-                  {resultsState.canDownloadCertificate ? (
+                  {isPaid ? (
                     <button 
                       className="w-full py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
                       style={{ backgroundColor: '#4A47A3' }}
-                      onClick={() => alert('Certificate download feature coming soon!')}
+                      onClick={handleDownloadCertificate}
                     >
                       Download PDF Certificate
                     </button>
                   ) : (
                     <button 
-                      className="w-full py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity"
+                      className="w-full py-3 rounded-lg text-white font-medium cursor-not-allowed"
                       style={{ backgroundColor: '#6B7280' }}
                       disabled
                     >
@@ -462,10 +739,11 @@ const EnhancedResultsDashboard = () => {
                   <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
                   <button 
                     onClick={handlePurchaseCertificate}
-                    className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                    disabled={isProcessingPayment}
+                    className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                     style={{ backgroundColor: '#4A47A3' }}
                   >
-                    Get My Results
+                    {isProcessingPayment ? 'Processing...' : 'Get My Results'}
                   </button>
                   <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
                     <Lock className="h-4 w-4" />
@@ -482,46 +760,51 @@ const EnhancedResultsDashboard = () => {
             {/* Primary Learning Style - Highest Score */}
             <div className="flex flex-row gap-8 items-center mb-12">
               <div className="w-1/2 flex justify-center">
-                <div className="rounded-xl overflow-hidden shadow-lg">
-                  <div 
-                    className="text-white text-center py-3 font-bold text-lg"
-                    style={{ backgroundColor: '#8BC34A' }}
-                  >
-                    {highestScore.name} Score: {highestScore.score}
-                  </div>
-                  <div className="p-6 bg-gray-50">
-                    <div className="w-48 h-48 mx-auto relative flex items-center justify-center">
-                      <svg className="transform -rotate-90" width="192" height="192" viewBox="0 0 100 100">
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke="#E5E7EB"
-                          strokeWidth="8"
-                        />
-                        <circle
-                          cx="50"
-                          cy="50"
-                          r="40"
-                          fill="none"
-                          stroke={highestScore.color}
-                          strokeWidth="8"
-                          strokeDasharray={`${(highestScore.percentage / 100) * 251.2} 251.2`}
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-2xl font-bold" style={{ color: '#2A3262' }}>{highestScore.score}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <Card className="rounded-lg overflow-hidden border-none shadow-lg">
+                  <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-4">
+                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>
+                      {highestScore.name} Learning Style
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 bg-[#F0F2F5]">
+                    {/* Primary Learning Style Chart - Only show the highest score */}
+                    <ApexCharts
+                      options={{
+                        ...learningChartOptions,
+                        colors: ["#8979FF", "#FF928A", "#3CC3DF", "#FFAE4C"], // Keep all colors
+                        plotOptions: {
+                          ...learningChartOptions.plotOptions,
+                          radialBar: {
+                            ...learningChartOptions.plotOptions.radialBar,
+                            barLabels: {
+                              enabled: true,
+                              useSeriesColors: true,
+                              offsetX: -8,
+                              fontSize: "16px",
+                              formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => {
+                                const value = opts.w.globals.series[opts.seriesIndex];
+                                return value > 0 ? `${seriesName}: ${value}%` : `${seriesName}: 0%`;
+                              },
+                            },
+                          },
+                        },
+                      }}
+                      series={[
+                        highestScore.name === 'Visual' ? highestScore.percentage : 0,
+                        highestScore.name === 'Auditory' ? highestScore.percentage : 0,
+                        highestScore.name === 'Reading' ? highestScore.percentage : 0,
+                        highestScore.name === 'Kinesthetic' ? highestScore.percentage : 0,
+                      ]}
+                      type="radialBar"
+                      height={390}
+                    />
+                  </CardContent>
+                </Card>
               </div>
               
               <div className="w-1/2">
                 <h3 className="text-xl font-bold mb-4" style={{ color: '#4A47A3' }}>
-                  {highestScore.name} Learning Style
+                  {highestScore.name} Learning Style ({highestScore.percentage.toFixed(1)}%)
                 </h3>
                 
                 <p className="mb-4 text-gray-700">
@@ -531,6 +814,16 @@ const EnhancedResultsDashboard = () => {
                 <p className="text-gray-700">
                   This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
                 </p>
+
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 mb-2">Your Primary Score:</h4>
+                  <div className="text-2xl font-bold text-blue-600">
+                    {highestScore.score} points ({highestScore.percentage.toFixed(1)}%)
+                  </div>
+                  <p className="text-sm text-blue-700 mt-1">
+                    This represents your strongest learning preference
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -581,21 +874,22 @@ const EnhancedResultsDashboard = () => {
               </h3>
               <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               
-              {resultsState.canDownloadCertificate ? (
+              {isPaid ? (
                 <button 
                   className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: '#10B981' }}
-                  onClick={() => alert('Certificate download feature coming soon!')}
+                  onClick={handleDownloadCertificate}
                 >
                   Download Certificate
                 </button>
               ) : (
                 <button 
                   onClick={handlePurchaseCertificate}
-                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
+                  disabled={isProcessingPayment}
+                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
                   style={{ backgroundColor: '#4A47A3' }}
                 >
-                  Get My Certificate
+                  {isProcessingPayment ? 'Processing...' : 'Get My Certificate'}
                 </button>
               )}
               
