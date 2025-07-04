@@ -439,14 +439,12 @@ const EnhancedResultsDashboard = () => {
               Take Test
             </Link>
             
-            {process.env.NODE_ENV === 'development' && (
-              <button
-                onClick={() => setDevMode(true)}
-                className="block w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
-              >
-                Enable Development Mode
-              </button>
-            )}
+            <button
+              onClick={() => setDevMode(true)}
+              className="block w-full px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600"
+            >
+              Enable Development Mode
+            </button>
           </div>
         </div>
       </div>
