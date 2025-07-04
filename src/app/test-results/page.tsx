@@ -135,31 +135,31 @@ const EnhancedResultsDashboard = () => {
   // Get percentage data from API
   const percentageData = resultsState.resultsData?.scores_breakdown || [];
   
-  // Create organized data with both scores and percentages
+  // Create organized data with both scores and percentages - Updated colors
   const organizedScores = [
     { 
       name: 'Visual', 
       score: scoresData.visual, 
       percentage: percentageData.find(item => item.code === 'V')?.percentage || 0,
-      color: '#8B5CF6' 
+      color: '#8979FF' 
     },
     { 
       name: 'Auditory', 
       score: scoresData.auditory, 
       percentage: percentageData.find(item => item.code === 'A')?.percentage || 0,
-      color: '#EF4444' 
+      color: '#FF928A' 
     },
     { 
       name: 'Reading', 
       score: scoresData.reading, 
       percentage: percentageData.find(item => item.code === 'R')?.percentage || 0,
-      color: '#06B6D4' 
+      color: '#3CC3DF' 
     },
     { 
       name: 'Kinesthetic', 
       score: scoresData.kinesthetic, 
       percentage: percentageData.find(item => item.code === 'K')?.percentage || 0,
-      color: '#10B981' 
+      color: '#FFAE4C' 
     }
   ];
 
@@ -326,6 +326,11 @@ const EnhancedResultsDashboard = () => {
           background: "transparent",
           image: undefined,
         },
+        track: {
+          background: '#E5E7EB', // Grey color for unfilled portions
+          strokeWidth: '100%',
+          margin: 5,
+        },
         dataLabels: {
           name: {
             show: false,
@@ -341,11 +346,11 @@ const EnhancedResultsDashboard = () => {
           fontSize: "16px",
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           formatter: (seriesName: string, opts: any) => 
-            seriesName + ":  " + opts.w.globals.series[opts.seriesIndex],
+            seriesName + ":  " + opts.w.globals.series[opts.seriesIndex] + "%",
         },
       },
     },
-    colors: ["#1ab7ea", "#0084ff", "#39539E", "#0077B5"],
+    colors: ["#8979FF", "#FF928A", "#3CC3DF", "#FFAE4C"], // Updated color scheme
     labels: ["Visual", "Auditory", "Reading", "Kinesthetic"],
     responsive: [
       {
@@ -382,6 +387,11 @@ const EnhancedResultsDashboard = () => {
             margin: 5,
             size: "50%",
             background: "transparent",
+          },
+          track: {
+            background: '#E5E7EB', // Grey color for unfilled portions
+            strokeWidth: '100%',
+            margin: 5,
           },
           dataLabels: {
             name: {
