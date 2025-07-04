@@ -299,8 +299,13 @@ const EnhancedResultsDashboard = () => {
     setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
   };
 
-  // Data for ApexCharts Radial Bar Chart (Learning Preferences)
-  const learningChartSeries = [scoresData.visual, scoresData.auditory, scoresData.reading, scoresData.kinesthetic];
+  // Data for ApexCharts Radial Bar Chart (Learning Preferences) - Using percentages
+  const learningChartSeries = [
+    organizedScores.find(item => item.name === 'Visual')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Auditory')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Reading')?.percentage || 0,
+    organizedScores.find(item => item.name === 'Kinesthetic')?.percentage || 0
+  ];
 
   const learningChartOptions = {
     chart: {
@@ -357,9 +362,47 @@ const EnhancedResultsDashboard = () => {
     },
   };
 
-  // Individual scores component - Updated to use percentage for chart
+  // Individual scores component - Updated to use ApexCharts for single values
   const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => {
     const percentage = organizedScores.find(item => item.name === name)?.percentage || 0;
+    
+    const singleChartOptions = {
+      chart: {
+        height: 200,
+        type: "radialBar" as const,
+        toolbar: {
+          show: false,
+        },
+      },
+      plotOptions: {
+        radialBar: {
+          startAngle: -90,
+          endAngle: 90,
+          hollow: {
+            margin: 5,
+            size: "50%",
+            background: "transparent",
+          },
+          dataLabels: {
+            name: {
+              show: false,
+            },
+            value: {
+              show: true,
+              fontSize: "24px",
+              fontWeight: "bold",
+              color: "#2A3262",
+              formatter: () => `${percentage.toFixed(1)}%`,
+            },
+          },
+        },
+      },
+      colors: [color],
+      labels: [name],
+      stroke: {
+        lineCap: "round" as const,
+      },
+    };
     
     return (
       <div className="rounded-xl overflow-hidden shadow-lg">
@@ -369,32 +412,13 @@ const EnhancedResultsDashboard = () => {
         >
           {name} Score: {score}
         </div>
-        <div className="p-6 bg-gray-50 flex justify-center">
-          <div className="w-32 h-32 relative flex items-center justify-center">
-            <svg className="transform -rotate-90" width="128" height="128" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke="#E5E7EB"
-                strokeWidth="8"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="40"
-                fill="none"
-                stroke={color}
-                strokeWidth="8"
-                strokeDasharray={`${(percentage / 100) * 251.2} 251.2`}
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-lg font-bold" style={{ color: '#2A3262' }}>{score}</span>
-            </div>
-          </div>
+        <div className="p-6 bg-gray-50">
+          <ApexCharts
+            options={singleChartOptions}
+            series={[percentage]}
+            type="radialBar"
+            height={200}
+          />
         </div>
       </div>
     );
@@ -720,7 +744,7 @@ const EnhancedResultsDashboard = () => {
               <div className="w-1/2 flex justify-center">
                 <Card className="rounded-lg overflow-hidden border-none shadow-lg">
                   <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-4">
-                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>Total Learning Score</CardTitle>
+                    <CardTitle className="text-center text-2xl font-bold" style={{ color: '#24348C' }}>Total Learning Percentage</CardTitle>
                   </CardHeader>
                   <CardContent className="p-6 bg-[#F0F2F5]">
                     {/* ApexCharts component */}
@@ -918,44 +942,6 @@ const EnhancedResultsDashboard = () => {
               >
                 Take Test Again
               </Link>
-            </div>
-          </div>
-
-          {/* Bottom Section: Get to know more in detail */}
-          <div className="text-center py-12">
-            <h2 className="text-3xl md:text-4xl font-bold mb-8" style={{ color: '#4A47A3' }}>
-              Get to know more in detail
-            </h2>
-            
-            <div className="bg-white p-6 text-center border-2 shadow-md rounded-xl max-w-md mx-auto" style={{ borderColor: '#4A47A3' }}>
-              <h3 className="text-xl font-bold mb-2 text-gray-900">
-                VARK Results + Report Certificate
-              </h3>
-              <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
-              
-              {resultsState.canDownloadCertificate ? (
-                <button 
-                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity"
-                  style={{ backgroundColor: '#10B981' }}
-                  onClick={() => alert('Certificate download feature coming soon!')}
-                >
-                  Download Certificate
-                </button>
-              ) : (
-                <button 
-                  onClick={handlePurchaseCertificate}
-                  disabled={isProcessingPayment}
-                  className="w-full py-3 text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                  style={{ backgroundColor: '#4A47A3' }}
-                >
-                  {isProcessingPayment ? 'Processing...' : 'Get My Certificate'}
-                </button>
-              )}
-              
-              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
-                <Lock className="h-4 w-4" />
-                <span className="text-xs font-medium">100% Secure Payment</span>
-              </div>
             </div>
           </div>
         </div>
