@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -26,6 +27,34 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
+  };
+
+  // Helper function to get the full avatar URL
+  const getAvatarUrl = (avatarUrl: string | null | undefined) => {
+    if (!avatarUrl) return null;
+    return avatarUrl.startsWith('http') ? avatarUrl : `https://api.cakravia.com${avatarUrl}`;
+  };
+
+  // Avatar component for reuse
+  const UserAvatar = ({ size = 'sm', className = '' }: { size?: 'sm' | 'md'; className?: string }) => {
+    const avatarUrl = getAvatarUrl(user?.avatar_url);
+    const sizeClasses = size === 'sm' ? 'w-8 h-8' : 'w-10 h-10';
+    
+    return avatarUrl ? (
+      <div className={`${sizeClasses} rounded-full overflow-hidden border-2 border-gray-200 ${className}`}>
+        <Image
+          src={avatarUrl}
+          alt={user?.name || 'User'}
+          width={size === 'sm' ? 32 : 40}
+          height={size === 'sm' ? 32 : 40}
+          className="w-full h-full object-cover"
+        />
+      </div>
+    ) : (
+      <div className={`${sizeClasses} bg-blue-100 rounded-full flex items-center justify-center ${className}`}>
+        <User className={`${size === 'sm' ? 'w-5 h-5' : 'w-6 h-6'} text-blue-600`} />
+      </div>
+    );
   };
 
   return (
@@ -60,9 +89,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
             <div className="flex items-center space-x-6">
               {/* User Info */}
               <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                  <User className="w-5 h-5 text-blue-600" />
-                </div>
+                <UserAvatar size="sm" />
                 <div className="hidden lg:block">
                   <span className="text-sm font-medium text-gray-700">
                     Hi, {user?.name || 'User'}
@@ -144,9 +171,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
                 {/* User Info Section */}
                 <div className="px-3 py-3 border-t border-gray-200">
                   <div className="flex items-center space-x-3 mb-3">
-                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="w-6 h-6 text-blue-600" />
-                    </div>
+                    <UserAvatar size="md" />
                     <div>
                       <p className="text-sm font-medium text-gray-900">
                         {user?.name || 'User'}
