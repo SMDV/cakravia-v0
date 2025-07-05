@@ -9,6 +9,33 @@ interface ApiErrorResponse {
   auth_required?: string; // For cross-authentication scenarios
 }
 
+// NEW: Password reset types
+interface PasswordResetResponse {
+  data: {
+    message: string;
+  };
+  status: string;
+  error: boolean;
+}
+
+interface PasswordResetConfirmResponse {
+  data: {
+    message: string;
+    token: string;
+    user: User;
+  };
+  status: string;
+  error: boolean;
+}
+
+interface PasswordChangeResponse {
+  data: {
+    message: string;
+  };
+  status: string;
+  error: boolean;
+}
+
 export const authAPI = {
   // Register new user
   register: async (userData: RegisterData): Promise<AuthResponse> => {
@@ -164,6 +191,140 @@ export const authAPI = {
         throw new Error(axiosError.message);
       } else {
         throw new Error('Google authentication failed. Please try again.');
+      }
+    }
+  },
+
+  // NEW: Request password reset
+  requestPasswordReset: async (email: string): Promise<PasswordResetResponse> => {
+    try {
+      console.log('🔄 Requesting password reset for:', email);
+      
+      const response = await apiClient.post('/users/password_reset', { email });
+      
+      console.log('✅ Password reset request response:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Password reset request error:', error);
+      
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      
+      if (axiosError.response?.data?.errors) {
+        // Handle validation errors
+        const errors = axiosError.response.data.errors;
+        const firstError = Object.values(errors)[0] as string[];
+        throw new Error(firstError[0] || 'Invalid email address');
+      } else if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else if (axiosError.response?.status === 422) {
+        throw new Error('Please enter a valid email address.');
+      } else if (axiosError.message) {
+        throw new Error(axiosError.message);
+      } else {
+        throw new Error('Failed to send reset email. Please try again.');
+      }
+    }
+  },
+
+  // NEW: Confirm password reset
+  confirmPasswordReset: async (
+    token: string, 
+    password: string, 
+    passwordConfirmation: string
+  ): Promise<PasswordResetConfirmResponse> => {
+    try {
+      console.log('🔄 Confirming password reset with token');
+      
+      const response = await apiClient.post('/users/password_reset_confirm', {
+        token,
+        password,
+        password_confirmation: passwordConfirmation
+      });
+      
+      console.log('✅ Password reset confirm response:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Password reset confirm error:', error);
+      
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      
+      if (axiosError.response?.data?.errors) {
+        // Handle validation errors
+        const errors = axiosError.response.data.errors;
+        
+        // Check for specific error types
+        if (errors.token) {
+          throw new Error('Reset link is invalid or expired. Please request a new one.');
+        } else if (errors.password) {
+          throw new Error(errors.password[0] || 'Password is invalid');
+        } else if (errors.password_confirmation) {
+          throw new Error(errors.password_confirmation[0] || 'Passwords do not match');
+        } else {
+          const firstError = Object.values(errors)[0] as string[];
+          throw new Error(firstError[0] || 'Password reset failed');
+        }
+      } else if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else if (axiosError.response?.status === 422) {
+        throw new Error('Invalid reset data. Please check your information.');
+      } else if (axiosError.message) {
+        throw new Error(axiosError.message);
+      } else {
+        throw new Error('Password reset failed. Please try again.');
+      }
+    }
+  },
+
+  // NEW: Change password for authenticated users
+  changePassword: async (
+    currentPassword: string,
+    newPassword: string,
+    newPasswordConfirmation: string
+  ): Promise<PasswordChangeResponse> => {
+    try {
+      console.log('🔄 Changing password for authenticated user');
+      
+      const response = await apiClient.patch('/users/password_change', {
+        current_password: currentPassword,
+        new_password: newPassword,
+        new_password_confirmation: newPasswordConfirmation
+      });
+      
+      console.log('✅ Password change response:', response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Password change error:', error);
+      
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      
+      if (axiosError.response?.data?.errors) {
+        // Handle validation errors
+        const errors = axiosError.response.data.errors;
+        
+        // Check for specific error types
+        if (errors.current_password) {
+          throw new Error('Current password is incorrect');
+        } else if (errors.new_password) {
+          throw new Error(errors.new_password[0] || 'New password is invalid');
+        } else if (errors.new_password_confirmation) {
+          throw new Error(errors.new_password_confirmation[0] || 'New passwords do not match');
+        } else {
+          const firstError = Object.values(errors)[0] as string[];
+          throw new Error(firstError[0] || 'Password change failed');
+        }
+      } else if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else if (axiosError.response?.status === 401) {
+        throw new Error('Please log in again to change your password');
+      } else if (axiosError.response?.status === 422) {
+        throw new Error('Invalid password data. Please check your information.');
+      } else if (axiosError.message) {
+        throw new Error(axiosError.message);
+      } else {
+        throw new Error('Password change failed. Please try again.');
       }
     }
   },
