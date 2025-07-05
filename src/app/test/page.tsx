@@ -1,13 +1,21 @@
 "use client"
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { User, Check, Clock, AlertCircle, ArrowRight } from 'lucide-react';
-import Link from 'next/link';
+import { 
+  User, 
+  Check, 
+  Clock, 
+  AlertCircle, 
+  ArrowRight 
+} from 'lucide-react';
 import Image from 'next/image';
+import Link from 'next/link';
+import Header from '@/components/Header';
+import CrossDeviceWarning from '@/components/CrossDeviceWarning';
 import { useAuth } from '@/contexts/AuthContext';
 import { varkAPI } from '@/lib/api';
 import { VarkQuestionSet, VarkTest, VarkAnswer } from '@/lib/types';
-import Header from '@/components/Header';
+import { TestProgressManager, TestProgress } from '@/lib/testProgress';
 
 // Import the background image
 import TestChatBg from '@/assets/background/TestChatbg.png';
@@ -31,7 +39,8 @@ interface TestState {
 }
 
 const TestInterface = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  
   const [testState, setTestState] = useState<TestState>({
     step: 'loading',
     questionSet: null,
@@ -45,6 +54,8 @@ const TestInterface = () => {
   const [currentSliderValue, setCurrentSliderValue] = useState(50);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
+  const [showCrossDeviceWarning, setShowCrossDeviceWarning] = useState(false);
+  const [pendingTestId, setPendingTestId] = useState<string | null>(null);
   
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -55,7 +66,97 @@ const TestInterface = () => {
     console.log(`VARK Test: ${message}`);
   }, []);
 
-  // Initialize test flow
+  // Auto-save progress to localStorage
+  const saveProgressToStorage = useCallback(() => {
+    if (!testState.test || !user || testState.step !== 'testing') return;
+
+    const progress: TestProgress = {
+      testId: testState.test.id,
+      userId: user.id,
+      questionSetId: testState.questionSet?.id || '',
+      questionSetName: testState.questionSet?.name || 'VARK Assessment',
+      currentQuestionIndex: testState.currentQuestionIndex,
+      answers: testState.answers,
+      startedAt: testState.test.started_at,
+      lastSavedAt: new Date().toISOString(),
+      timeLeft: testState.timeLeft,
+      chatHistory: chatHistory,
+      isCompleted: false,
+      version: 1
+    };
+
+    TestProgressManager.saveProgress(progress);
+  }, [testState, chatHistory, user]);
+
+  // Handle cross-device warning actions
+  const handleContinueWithoutProgress = useCallback(async () => {
+    setShowCrossDeviceWarning(false);
+    
+    if (!pendingTestId) return;
+
+    try {
+      const testResponse = await varkAPI.getTest(pendingTestId);
+      const test = testResponse.data;
+      
+      if (test.status !== 'in_progress' || new Date(test.expires_at) < new Date()) {
+        throw new Error('Test is no longer available');
+      }
+
+      // Create basic question set
+      const questionSet: VarkQuestionSet = {
+        id: '',
+        version: 1,
+        name: 'VARK Assessment',
+        active: true,
+        created_at: test.started_at,
+        updated_at: test.started_at,
+        time_limit: test.time_limit,
+        questions: test.questions
+      };
+
+      // Start fresh
+      setTestState(prev => ({
+        ...prev,
+        step: 'testing',
+        questionSet: questionSet,
+        test: test,
+        currentQuestionIndex: 0,
+        answers: {},
+        timeLeft: test.time_limit,
+        error: null
+      }));
+
+      // Add first question to chat
+      setChatHistory([{
+        sender: "ai",
+        type: "text",
+        text: test.questions[0].body,
+        questionId: test.questions[0].id
+      }]);
+
+      addLog('🔄 Started test without saved progress');
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to start test';
+      addLog(`❌ Failed to start test: ${errorMessage}`);
+      setTestState(prev => ({ 
+        ...prev, 
+        step: 'error', 
+        error: 'Failed to start test. Please try again.' 
+      }));
+    }
+    
+    setPendingTestId(null);
+  }, [pendingTestId, addLog]);
+
+  const handleStartNewTest = useCallback(() => {
+    setShowCrossDeviceWarning(false);
+    setPendingTestId(null);
+    TestProgressManager.clearProgress();
+    window.location.href = '/test';
+  }, []);
+
+  // Initialize test flow with resume capability
   const initializeTest = useCallback(async () => {
     if (!isAuthenticated) {
       setTestState(prev => ({ 
@@ -70,29 +171,114 @@ const TestInterface = () => {
       addLog('🚀 Starting VARK test initialization...');
       setTestState(prev => ({ ...prev, step: 'loading' }));
 
-      // Step 1: Get active question set
-      addLog('📝 Fetching active question set...');
+      // Check for resume parameter
+      const urlParams = new URLSearchParams(window.location.search);
+      const resumeTestId = urlParams.get('resumeTestId');
+
+      if (resumeTestId) {
+        // Check if we have saved progress for this test
+        const savedProgress = TestProgressManager.loadProgress(resumeTestId);
+        
+        if (!savedProgress) {
+          // No saved progress found - show cross-device warning
+          addLog(`⚠️ No saved progress found for test: ${resumeTestId}`);
+          setPendingTestId(resumeTestId);
+          setShowCrossDeviceWarning(true);
+          setTestState(prev => ({ ...prev, step: 'ready' }));
+          return;
+        }
+
+        // Saved progress found - resume the test
+        addLog(`🔄 Resuming test from localStorage: ${resumeTestId}`);
+        
+        try {
+          const testResponse = await varkAPI.getTest(resumeTestId);
+          const test = testResponse.data;
+          
+          if (test.status !== 'in_progress') {
+            throw new Error('Test is no longer in progress');
+          }
+
+          if (new Date(test.expires_at) < new Date()) {
+            throw new Error('Test has expired');
+          }
+
+          // Create question set from saved progress
+          const questionSet: VarkQuestionSet = {
+            id: savedProgress.questionSetId,
+            version: 1,
+            name: savedProgress.questionSetName,
+            active: true,
+            created_at: savedProgress.startedAt,
+            updated_at: savedProgress.lastSavedAt,
+            time_limit: savedProgress.timeLeft,
+            questions: test.questions
+          };
+
+          // Restore state from localStorage
+          setTestState(prev => ({
+            ...prev,
+            step: 'testing',
+            questionSet: questionSet,
+            test: test,
+            currentQuestionIndex: savedProgress.currentQuestionIndex,
+            answers: savedProgress.answers,
+            timeLeft: savedProgress.timeLeft,
+            error: null
+          }));
+
+          setChatHistory(savedProgress.chatHistory);
+          
+          // Set slider to current question's saved answer if exists
+          const currentQuestion = test.questions[savedProgress.currentQuestionIndex];
+          const savedAnswer = savedProgress.answers[currentQuestion?.id];
+          if (savedAnswer && currentQuestion) {
+            const sliderValue = (savedAnswer.point / currentQuestion.max_weight) * 100;
+            setCurrentSliderValue(sliderValue);
+          }
+
+          addLog(`✅ Test resumed from question ${savedProgress.currentQuestionIndex + 1}`);
+          return;
+          
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          addLog(`⚠️ Saved test is no longer valid: ${errorMessage}`);
+          TestProgressManager.clearProgress();
+          setTestState(prev => ({ 
+            ...prev, 
+            step: 'error', 
+            error: 'The test you\'re trying to resume is no longer available or has expired. Please start a new test.' 
+          }));
+          return;
+        }
+      }
+
+      // Check for existing progress when visiting /test directly
+      const existingProgress = TestProgressManager.loadProgress();
+      if (existingProgress && !existingProgress.isCompleted) {
+        addLog(`ℹ️ Found existing progress for test: ${existingProgress.testId}`);
+        window.location.href = `/test?resumeTestId=${existingProgress.testId}`;
+        return;
+      }
+
+      // Create new test (existing logic)
       const questionSetResponse = await varkAPI.getActiveQuestionSet();
       const questionSet = questionSetResponse.data;
-      addLog(`✅ Got question set: ${questionSet.name} (${questionSet.questions.length} questions)`);
-
-      // Step 2: Create test
-      addLog('🔨 Creating new test instance...');
+      
       const testResponse = await varkAPI.createTest(questionSet.id);
       const test = testResponse.data;
-      addLog(`✅ Test created with ID: ${test.id}`);
 
-      // Update state
       setTestState(prev => ({
         ...prev,
         step: 'ready',
         questionSet,
         test,
-        timeLeft: test.time_limit === 0 ? 3600 : test.time_limit, // 60 minutes if 0, otherwise use API value
+        timeLeft: test.time_limit === 0 ? 3600 : test.time_limit,
         error: null
       }));
 
-      addLog('🎯 Test ready to start!');
+      addLog('🎯 New test ready to start!');
+      
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize test';
       addLog(`❌ Initialization failed: ${errorMessage}`);
@@ -102,7 +288,7 @@ const TestInterface = () => {
         error: errorMessage 
       }));
     }
-  }, [isAuthenticated, addLog]);
+  }, [isAuthenticated, addLog, user]);
 
   // Start the actual test
   const startTest = useCallback(() => {
@@ -129,7 +315,7 @@ const TestInterface = () => {
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
   }, []);
 
-  // Format duration for display (e.g., "60 minutes" or "1 hour 30 minutes")
+  // Format duration for display
   const formatDuration = useCallback((seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -143,95 +329,249 @@ const TestInterface = () => {
     }
   }, []);
 
-// Updated handleNextQuestion function - modify the answer calculation
-const handleNextQuestion = useCallback(async () => {
-  const { test, currentQuestionIndex } = testState;
-  if (!test) return;
+  // Handle next question with localStorage saving
+  const handleNextQuestion = useCallback(async () => {
+    const { test, currentQuestionIndex } = testState;
+    if (!test) return;
 
-  const currentQuestion = test.questions[currentQuestionIndex];
-  
-  // Convert slider value (0-100) to 1-5 scale, then calculate points
-  const scaledValue = Math.max(1, Math.round((currentSliderValue / 100) * 4) + 1); // Maps 0-100 to 1-5
-  const answer: VarkAnswer = {
-    question_id: currentQuestion.id,
-    category_id: currentQuestion.category.id,
-    point: Math.round((scaledValue / 5) * currentQuestion.max_weight)
-  };
-
-  // Add user's slider answer to chat history
-  setChatHistory(prev => [...prev, { 
-    sender: "user", 
-    type: "slider_answer", 
-    sliderValue: currentSliderValue,
-    questionId: currentQuestion.id
-  }]);
-
-  // Store answer
-  const newAnswers = {
-    ...testState.answers,
-    [currentQuestion.id]: answer
-  };
-
-  setTestState(prev => ({
-    ...prev,
-    answers: newAnswers
-  }));
-
-  addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${scaledValue}/5 (${answer.point}/${currentQuestion.max_weight} points)`);
-
-  const nextIndex = currentQuestionIndex + 1;
-  
-  if (nextIndex < test.questions.length) {
-    // Add next question to chat history
-    const nextQuestion = test.questions[nextIndex];
-    setChatHistory(prev => [...prev, { 
-      sender: "ai", 
-      type: "text", 
-      text: nextQuestion.body,
-      questionId: nextQuestion.id
-    }]);
+    const currentQuestion = test.questions[currentQuestionIndex];
     
-    setTestState(prev => ({ 
-      ...prev, 
-      currentQuestionIndex: nextIndex 
-    }));
-    setCurrentSliderValue(50); // Reset slider to middle (3/5) for next question
-  } else {
-    // All questions completed, submit answers directly
-    addLog('🏁 All questions answered, submitting...');
-    setTestState(prev => ({ ...prev, step: 'submitting' }));
+    // Convert slider value to answer
+    const scaledValue = Math.max(1, Math.round((currentSliderValue / 100) * 4) + 1);
+    const answer: VarkAnswer = {
+      question_id: currentQuestion.id,
+      category_id: currentQuestion.category.id,
+      point: Math.round((scaledValue / 5) * currentQuestion.max_weight)
+    };
 
-    try {
-      const submission = { answers: Object.values(newAnswers) };
-      addLog(`📊 Submitting ${submission.answers.length} answers`);
-      await varkAPI.submitAnswers(test.id, submission);
-      
-      addLog('✅ Answers submitted successfully!');
-      setTestState(prev => ({ ...prev, step: 'completed' }));
-      
-      // Add completion message to chat
-      setChatHistory(prev => [...prev, {
-        sender: "ai",
-        type: "text",
-        text: "🎉 Congratulations! You have completed the VARK Learning Style Assessment. Your results are being processed..."
+    // Add user's slider answer to chat history
+    setChatHistory(prev => [...prev, { 
+      sender: "user", 
+      type: "slider_answer", 
+      sliderValue: currentSliderValue,
+      questionId: currentQuestion.id
+    }]);
+
+    // Store answer
+    const newAnswers = {
+      ...testState.answers,
+      [currentQuestion.id]: answer
+    };
+
+    setTestState(prev => ({
+      ...prev,
+      answers: newAnswers
+    }));
+
+    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${scaledValue}/5 (${answer.point}/${currentQuestion.max_weight} points)`);
+
+    const nextIndex = currentQuestionIndex + 1;
+    
+    if (nextIndex < test.questions.length) {
+      // Add next question to chat history
+      const nextQuestion = test.questions[nextIndex];
+      setChatHistory(prev => [...prev, { 
+        sender: "ai", 
+        type: "text", 
+        text: nextQuestion.body,
+        questionId: nextQuestion.id
       }]);
       
-      // Redirect to results page after a short delay
-      setTimeout(() => {
-        window.location.href = `/results?testId=${test.id}`;
-      }, 3000);
-      
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
-      addLog(`❌ Submission failed: ${errorMessage}`);
       setTestState(prev => ({ 
         ...prev, 
-        step: 'error', 
-        error: errorMessage 
+        currentQuestionIndex: nextIndex 
       }));
+      setCurrentSliderValue(50);
+    } else {
+      // All questions completed, submit answers
+      addLog('🏁 All questions answered, submitting...');
+      setTestState(prev => ({ ...prev, step: 'submitting' }));
+
+      try {
+        const submission = { answers: Object.values(newAnswers) };
+        addLog(`📊 Submitting ${submission.answers.length} answers`);
+        await varkAPI.submitAnswers(test.id, submission);
+        
+        addLog('✅ Answers submitted successfully!');
+        setTestState(prev => ({ ...prev, step: 'completed' }));
+        
+        // Add completion message to chat
+        setChatHistory(prev => [...prev, {
+          sender: "ai",
+          type: "text",
+          text: "🎉 Congratulations! You have completed the VARK Learning Style Assessment. Your results are being processed..."
+        }]);
+        
+        // Redirect to results page after a short delay
+        setTimeout(() => {
+          window.location.href = `/results?testId=${test.id}`;
+        }, 3000);
+        
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
+        addLog(`❌ Submission failed: ${errorMessage}`);
+        setTestState(prev => ({ 
+          ...prev, 
+          step: 'error', 
+          error: errorMessage 
+        }));
+      }
     }
-  }
-}, [testState, currentSliderValue, addLog]);
+  }, [testState, currentSliderValue, addLog]);
+
+  // SliderAnswer Component for displaying answers in chat
+  const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
+    const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
+    const maxWeight = currentQuestion?.max_weight || 5;
+    
+    const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1);
+    const actualPoints = Math.round((scaledValue / 5) * maxWeight);
+
+    return (
+      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
+        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium">
+          <span className="flex items-center">
+            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
+            Strongly Disagree
+          </span>
+          <span className="flex items-center">
+            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
+            Strongly Agree
+          </span>
+        </div>
+        
+        <div className="relative h-3 bg-white/20 rounded-full mb-4">
+          <div
+            className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
+            style={{ width: `${((scaledValue - 1) / 4) * 100}%` }}
+          />
+          <div
+            className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
+            style={{ left: `calc(${((scaledValue - 1) / 4) * 100}% - 10px)` }}
+          />
+        </div>
+        
+        <div className="text-center text-white space-y-1">
+          <div className="text-xl font-bold">{scaledValue}/5</div>
+          <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div>
+        </div>
+      </div>
+    );
+  }, [testState.test]);
+
+  // SliderInput Component for user input
+  const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
+    const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
+    const maxWeight = currentQuestion?.max_weight || 5;
+    
+    const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1);
+    const actualPoints = Math.round((scaledValue / 5) * maxWeight);
+
+    return (
+      <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+        <div className="flex justify-between text-sm text-gray-600 mb-4 font-medium">
+          <span className="flex items-center">
+            <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
+            Strongly Disagree
+          </span>
+          <span className="flex items-center">
+            <span className="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
+            Strongly Agree
+          </span>
+        </div>
+        
+        <div className="relative px-4 mb-4">
+          <input
+            type="range"
+            min="0"
+            max="100"
+            value={value}
+            onChange={(e) => onChange(parseInt(e.target.value))}
+            className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
+            style={{
+              background: `linear-gradient(to right, 
+                #f87171 0%, 
+                #fbbf24 ${value/2}%, 
+                #34d399 ${value}%, 
+                #e5e7eb ${value}%, 
+                #e5e7eb 100%)`
+            }}
+          />
+          
+          <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+            <span>1</span>
+            <span>2</span>
+            <span>3</span>
+            <span>4</span>
+            <span>5</span>
+          </div>
+        </div>
+        
+        <div className="text-center">
+          <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}>
+            {scaledValue}/5
+          </div>
+          <div className="text-base text-gray-600 mb-1">
+            {actualPoints} / {maxWeight} points
+          </div>
+          <div className="text-xs text-gray-500">
+            Category: {currentQuestion?.category.name || 'Unknown'}
+          </div>
+        </div>
+
+        <style jsx>{`
+          .slider::-webkit-slider-thumb {
+            appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #2A3262;
+            cursor: grab;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+            transition: all 0.2s ease-in-out;
+          }
+          
+          .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+          }
+          
+          .slider::-webkit-slider-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+            box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
+          }
+          
+          .slider::-moz-range-thumb {
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #2A3262;
+            cursor: grab;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+            transition: all 0.2s ease-in-out;
+          }
+          
+          .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+          }
+          
+          .slider::-moz-range-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+          }
+          
+          .slider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
+          }
+        `}</style>
+      </div>
+    );
+  }, [testState.test, testState.currentQuestionIndex]);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -248,7 +588,7 @@ const handleNextQuestion = useCallback(async () => {
       setTestState(prev => {
         if (prev.timeLeft <= 1) {
           clearInterval(timer);
-          // Auto-submit when time is up using current state
+          // Auto-submit when time is up
           const { test, answers } = prev;
           if (test) {
             const submission = { answers: Object.values(answers) };
@@ -279,170 +619,26 @@ const handleNextQuestion = useCallback(async () => {
     return () => clearInterval(timer);
   }, [testState.step, testState.timeLeft, addLog]);
 
+  // Auto-save progress whenever state changes during testing
+  useEffect(() => {
+    if (testState.step === 'testing') {
+      saveProgressToStorage();
+    }
+  }, [testState.currentQuestionIndex, testState.answers, testState.step, saveProgressToStorage]);
+
+  // Clear progress when test completes
+  useEffect(() => {
+    if (testState.step === 'completed') {
+      TestProgressManager.clearProgress();
+    }
+  }, [testState.step]);
+
   // Auto-initialize on mount
   useEffect(() => {
     if (isAuthenticated) {
       initializeTest();
     }
   }, [isAuthenticated, initializeTest]);
-
-// Updated SliderAnswer Component - for displaying the answer in chat
-const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
-  // Get current question to show actual point value
-  const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
-  const maxWeight = currentQuestion?.max_weight || 5;
-  
-  // Convert 0-100 percentage to 1-5 range for display
-  const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1); // Maps 0-100 to 1-5
-  const actualPoints = Math.round((scaledValue / 5) * maxWeight);
-
-  return (
-    <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
-      <div className="flex justify-between text-sm text-white/90 mb-4 font-medium">
-        <span className="flex items-center">
-          <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-          Strongly Disagree
-        </span>
-        <span className="flex items-center">
-          <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-          Strongly Agree
-        </span>
-      </div>
-      
-      <div className="relative h-3 bg-white/20 rounded-full mb-4">
-        <div
-          className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
-          style={{ width: `${((scaledValue - 1) / 4) * 100}%` }}
-        />
-        <div
-          className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
-          style={{ left: `calc(${((scaledValue - 1) / 4) * 100}% - 10px)` }}
-        />
-      </div>
-      
-      <div className="text-center text-white space-y-1">
-        <div className="text-xl font-bold">{scaledValue}/5</div>
-        <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div>
-      </div>
-    </div>
-  );
-}, [testState.test]);
-
-// Updated SliderInput Component - for user input
-const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
-  const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
-  const maxWeight = currentQuestion?.max_weight || 5;
-  
-  // Convert 0-100 percentage to 1-5 range for display
-  const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1); // Maps 0-100 to 1-5
-  const actualPoints = Math.round((scaledValue / 5) * maxWeight);
-
-  return (
-    <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
-      <div className="flex justify-between text-sm text-gray-600 mb-4 font-medium">
-        <span className="flex items-center">
-          <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
-          Strongly Disagree
-        </span>
-        <span className="flex items-center">
-          <span className="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
-          Strongly Agree
-        </span>
-      </div>
-      
-      <div className="relative px-4 mb-4">
-        <input
-          type="range"
-          min="0"
-          max="100"
-          value={value}
-          onChange={(e) => onChange(parseInt(e.target.value))}
-          className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
-          style={{
-            background: `linear-gradient(to right, 
-              #f87171 0%, 
-              #fbbf24 ${value/2}%, 
-              #34d399 ${value}%, 
-              #e5e7eb ${value}%, 
-              #e5e7eb 100%)`
-          }}
-        />
-        
-        {/* Add scale markers */}
-        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
-          <span>1</span>
-          <span>2</span>
-          <span>3</span>
-          <span>4</span>
-          <span>5</span>
-        </div>
-      </div>
-      
-      <div className="text-center">
-        <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}>
-          {scaledValue}/5
-        </div>
-        <div className="text-base text-gray-600 mb-1">
-          {actualPoints} / {maxWeight} points
-        </div>
-        <div className="text-xs text-gray-500">
-          Category: {currentQuestion?.category.name || 'Unknown'}
-        </div>
-      </div>
-
-      <style jsx>{`
-        .slider::-webkit-slider-thumb {
-          appearance: none;
-          height: 28px;
-          width: 28px;
-          border-radius: 50%;
-          background: #2A3262;
-          cursor: grab;
-          border: 4px solid #ffffff;
-          box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
-          transition: all 0.2s ease-in-out;
-        }
-        
-        .slider::-webkit-slider-thumb:hover {
-          transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
-        }
-        
-        .slider::-webkit-slider-thumb:active {
-          cursor: grabbing;
-          transform: scale(1.15);
-          box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
-        }
-        
-        .slider::-moz-range-thumb {
-          height: 28px;
-          width: 28px;
-          border-radius: 50%;
-          background: #2A3262;
-          cursor: grab;
-          border: 4px solid #ffffff;
-          box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
-          transition: all 0.2s ease-in-out;
-        }
-        
-        .slider::-moz-range-thumb:hover {
-          transform: scale(1.1);
-          box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
-        }
-        
-        .slider::-moz-range-thumb:active {
-          cursor: grabbing;
-          transform: scale(1.15);
-        }
-        
-        .slider::-moz-range-track {
-          height: 8px;
-          border-radius: 4px;
-        }
-      `}</style>
-    </div>
-  );
-}, [testState.test, testState.currentQuestionIndex]);
 
   // Don't render if not authenticated
   if (!isAuthenticated) {
@@ -465,6 +661,18 @@ const SliderInput = useCallback(({ value, onChange }: { value: number; onChange:
 
   return (
     <div className="min-h-screen relative" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+      {/* Cross-Device Warning Modal */}
+      <CrossDeviceWarning
+        isOpen={showCrossDeviceWarning}
+        onClose={() => setShowCrossDeviceWarning(false)}
+        onContinueAnyway={handleContinueWithoutProgress}
+        onStartNew={handleStartNewTest}
+        testInfo={testState.questionSet ? {
+          questionSetName: testState.questionSet.name,
+          timeLimit: testState.questionSet.time_limit
+        } : undefined}
+      />
+
       {/* Background with Color */}
       <div className="fixed inset-0 z-0" style={{ backgroundColor: '#DFE4FF' }}>
         <Image
@@ -544,7 +752,7 @@ const SliderInput = useCallback(({ value, onChange }: { value: number; onChange:
 
           {testState.step === 'testing' && (
             <>
-              {/* Chat History Container - Made even taller (+10%) */}
+              {/* Chat History Container */}
               <div 
                 className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-96 sm:h-[550px] overflow-y-auto p-4 sm:p-6"
                 ref={chatContainerRef}
@@ -602,8 +810,8 @@ const SliderInput = useCallback(({ value, onChange }: { value: number; onChange:
                 </div>
               </div>
 
-              {/* Current Answer Input - Made shorter */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 mb-4 sm:mb-6"> {/* Reduced padding */}
+              {/* Current Answer Input */}
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 mb-4 sm:mb-6">
                 <div className="flex items-center justify-center">
                   <SliderInput 
                     value={currentSliderValue}
