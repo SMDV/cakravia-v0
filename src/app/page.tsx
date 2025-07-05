@@ -182,13 +182,13 @@ const EnhancedHomepage = () => {
                 </div>
                 
                 <div className="flex-grow">
-                  <h3 className="text-white font-bold mb-2 text-base sm:text-lg leading-tight">
+                  <h3 className="text-white font-bold mb-2 text-lg sm:text-lg leading-tight">
                     {card.subtitle}
                   </h3>
-                  <h4 className="text-white font-medium mb-3 sm:mb-4 text-sm leading-tight opacity-90">
+                  <h4 className="text-white text-base font-medium mb-3 sm:mb-4 text-sm leading-tight opacity-90">
                     {card.title}
                   </h4>
-                  <p className="text-white text-xs sm:text-sm mb-4 sm:mb-6 opacity-80 leading-relaxed">
+                  <p className="text-white text-base sm:text-sm mb-4 sm:mb-6 opacity-80 leading-relaxed">
                     {card.description}
                   </p>
                   {!card.available && (
