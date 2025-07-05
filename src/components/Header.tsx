@@ -123,7 +123,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
             <Link 
               href="/" 
               className={`block px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${
-                isCurrentPage('home') ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600' : ''
+                isCurrentPage('home') ? 'bg-blue-50 text-blue-600' : ''
               }`}
               onClick={closeMobileMenu}
             >
@@ -132,7 +132,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
             <Link 
               href="/about" 
               className={`block px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${
-                isCurrentPage('about') ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600' : ''
+                isCurrentPage('about') ? 'bg-blue-50 text-blue-600' : ''
               }`}
               onClick={closeMobileMenu}
             >
@@ -162,7 +162,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
                 <Link 
                   href="/profile" 
                   className={`block px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${
-                    isCurrentPage('profile') ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600' : ''
+                    isCurrentPage('profile') ? 'bg-blue-50 text-blue-600' : ''
                   }`}
                   onClick={closeMobileMenu}
                 >
@@ -190,7 +190,7 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
               <Link 
                 href="/login" 
                 className={`block px-3 py-3 rounded-lg text-gray-700 hover:bg-gray-100 transition-colors ${
-                  isCurrentPage('login') ? 'bg-blue-50 text-blue-600 border-l-4 border-blue-600' : ''
+                  isCurrentPage('login') ? 'bg-blue-50 text-blue-600' : ''
                 }`}
                 onClick={closeMobileMenu}
               >
