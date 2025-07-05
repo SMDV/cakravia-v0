@@ -292,10 +292,14 @@ const EnhancedProfilePage = () => {
 
   // Get comprehensive test status
   const getTestStatus = (test: VarkTestHistory) => {
-    if (test.is_expired) return 'expired';
+    // For completed tests, always show completed regardless of time
     if (test.status === 'completed') return 'completed';
-    if (test.status === 'in_progress') return 'in_progress';
-    return 'unknown';
+    
+    // For in-progress tests, show expired if time is up
+    if (test.status === 'in_progress' && test.is_expired) return 'expired';
+    
+    // Otherwise use the API status
+    return test.status;
   };
 
   // Calculate total score for a test
