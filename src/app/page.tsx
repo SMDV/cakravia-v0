@@ -1,4 +1,4 @@
-// src/app/page.tsx - Updated to use Header and Footer components
+// src/app/page.tsx - Updated to show development status for tests
 
 "use client"
 
@@ -21,29 +21,33 @@ const EnhancedHomepage = () => {
       title: "Visual, Auditory, Reading, Kinesthetic",
       subtitle: "VARK Learning Style Assessment",
       buttonText: "Start Exam",
-      href: "/test", // Updated to use /test instead of /test-vark
-      description: "Discover how you learn best through our comprehensive VARK assessment"
+      href: "/test",
+      description: "Discover how you learn best through our comprehensive VARK assessment",
+      available: true
     },
     {
       title: "AI Knowledge",
       subtitle: "Artificial Intelligence Assessment",
-      buttonText: "Start Exam",
-      href: "/test",
-      description: "Test your understanding of AI concepts and technologies"
+      buttonText: "Coming Soon",
+      href: "#",
+      description: "Test your understanding of AI concepts and technologies",
+      available: false
     },
     {
       title: "Learning Behavior",
       subtitle: "Behavioral Learning Patterns",
-      buttonText: "Start Exam", 
-      href: "/test",
-      description: "Analyze your learning behaviors and study patterns"
+      buttonText: "Coming Soon", 
+      href: "#",
+      description: "Analyze your learning behaviors and study patterns",
+      available: false
     },
     {
       title: "Additional Measurement",
       subtitle: "Comprehensive Assessment",
-      buttonText: "Start Exam",
-      href: "/test",
-      description: "Additional metrics to understand your learning profile"
+      buttonText: "Coming Soon",
+      href: "#",
+      description: "Additional metrics to understand your learning profile",
+      available: false
     }
   ];
 
@@ -97,7 +101,7 @@ const EnhancedHomepage = () => {
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
                 {isAuthenticated ? (
                   <Link 
-                    href="/test" // Updated to use /test
+                    href="/test"
                     className="w-full sm:w-auto inline-flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-100 transition-all duration-300 shadow-lg hover:shadow-xl"
                     style={{ color: '#2A3262' }}
                   >
@@ -187,25 +191,39 @@ const EnhancedHomepage = () => {
                   <p className="text-white text-xs sm:text-sm mb-4 sm:mb-6 opacity-80 leading-relaxed">
                     {card.description}
                   </p>
+                  {!card.available && (
+                    <p className="text-white text-xs font-semibold opacity-90 mb-2">
+                      🚧 In Development
+                    </p>
+                  )}
                 </div>
                 
                 <div className="mt-auto">
-                  {isAuthenticated ? (
-                    <Link
-                      href={card.href}
-                      className="block w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
-                      style={{ color: '#2A3262' }}
+                  {card.available ? (
+                    isAuthenticated ? (
+                      <Link
+                        href={card.href}
+                        className="block w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                        style={{ color: '#2A3262' }}
+                      >
+                        {card.buttonText}
+                      </Link>
+                    ) : (
+                      <Link
+                        href="/login"
+                        className="block w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                        style={{ color: '#2A3262' }}
+                      >
+                        Login to Start
+                      </Link>
+                    )
+                  ) : (
+                    <button
+                      disabled
+                      className="w-full py-2 sm:py-3 bg-gray-300 rounded-lg font-semibold text-sm sm:text-base cursor-not-allowed text-gray-500"
                     >
                       {card.buttonText}
-                    </Link>
-                  ) : (
-                    <Link
-                      href="/login"
-                      className="block w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
-                      style={{ color: '#2A3262' }}
-                    >
-                      Login to Start
-                    </Link>
+                    </button>
                   )}
                 </div>
               </div>
@@ -216,11 +234,11 @@ const EnhancedHomepage = () => {
           <div className="text-center">
             <div className="inline-flex flex-col sm:flex-row items-center gap-3 sm:gap-2 px-4 sm:px-6 py-3 bg-white rounded-full shadow-lg">
               <span className="text-sm sm:text-base font-medium text-center" style={{ color: '#2A3262' }}>
-                ✨ Start with our most popular VARK assessment
+                ✨ Start with our available VARK assessment
               </span>
               {isAuthenticated ? (
                 <Link 
-                  href="/test" // Updated to use /test
+                  href="/test"
                   className="px-4 py-2 rounded-full font-semibold text-white text-sm sm:text-base hover:opacity-90 transition-opacity"
                   style={{ backgroundColor: '#ABD305' }}
                 >
@@ -300,26 +318,19 @@ const EnhancedHomepage = () => {
                   </div>
                 </div>
                 
-                {isAuthenticated ? (
-                  <button 
-                    onClick={() => alert('TPA test will be available soon!')}
-                    className="w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 shadow-md"
-                    style={{ color: '#2A3262' }}
-                  >
-                    Start Test Now
-                  </button>
-                ) : (
-                  <Link
-                    href="/login"
-                    className="block w-full py-2 sm:py-3 bg-white rounded-lg font-semibold text-sm sm:text-base hover:bg-gray-100 transition-all duration-300 shadow-md"
-                    style={{ color: '#2A3262' }}
-                  >
-                    Login to Start
-                  </Link>
-                )}
+                <p className="text-white text-xs font-semibold opacity-90 mb-4">
+                  🚧 In Development
+                </p>
+                
+                <button 
+                  disabled
+                  className="w-full py-2 sm:py-3 bg-gray-300 rounded-lg font-semibold text-sm sm:text-base cursor-not-allowed text-gray-500 shadow-md"
+                >
+                  Coming Soon
+                </button>
                 
                 <p className="text-white text-xs mt-3 opacity-80">
-                  Coming Soon - Advanced Assessment
+                  Advanced Assessment - Stay Tuned
                 </p>
               </div>
             </div>
