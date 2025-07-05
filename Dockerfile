@@ -6,14 +6,22 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install ALL dependencies (including devDependencies for build)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application
-RUN npm run build
+# Create missing asset directories
+RUN mkdir -p src/assets/images/hero
+
+# Use Docker-specific config and build the application  
+RUN cp next.config.docker.ts next.config.ts && \
+    npm run build || (echo "Build failed, checking errors..." && \
+    ls -la src/assets/images/hero/ && \
+    ls -la src/components/ && \
+    ls -la src/contexts/ && \
+    npm run build)
 
 # Production stage
 FROM node:18-alpine AS runner

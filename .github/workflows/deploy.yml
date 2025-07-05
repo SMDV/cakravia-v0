@@ -60,7 +60,7 @@ jobs:
           fi
           
           # Create environment file with all required variables
-          cat > .env.production << EOF
+          cat > .env << EOF
           NEXT_PUBLIC_GOOGLE_CLIENT_ID=${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
           NODE_ENV=production
           NEXT_TELEMETRY_DISABLED=1

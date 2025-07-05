@@ -31,21 +31,21 @@ if [ ! -f "docker-compose.yml" ]; then
     exit 1
 fi
 
-# Check if .env.production exists
-if [ ! -f .env.production ]; then
-    echo -e "${YELLOW}⚠️  .env.production not found. Creating from template...${NC}"
+# Check if .env exists
+if [ ! -f .env ]; then
+    echo -e "${YELLOW}⚠️  .env not found. Creating from template...${NC}"
     if [ -f .env.example ]; then
-        cp .env.example .env.production
-        echo -e "${RED}❌ Please update .env.production with your environment variables and run again.${NC}"
+        cp .env.example .env
+        echo -e "${RED}❌ Please update .env with your environment variables and run again.${NC}"
         exit 1
     else
-        # Create basic .env.production
-        cat > .env.production << EOF
+        # Create basic .env
+        cat > .env << EOF
 NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
 NODE_ENV=production
 NEXT_TELEMETRY_DISABLED=1
 EOF
-        echo -e "${RED}❌ Created .env.production template. Please update with your environment variables and run again.${NC}"
+        echo -e "${RED}❌ Created .env template. Please update with your environment variables and run again.${NC}"
         exit 1
     fi
 fi
