@@ -25,6 +25,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
 import { authAPI } from '@/lib/api';
+import ChangePasswordComponent from '@/components/ChangePasswordComponent'; 
 
 interface VarkTestHistory {
   id: string;
@@ -511,6 +512,8 @@ const EnhancedProfilePage = () => {
                 </div>
               )}
             </div>
+            {/* Password Change Component - NEW */}
+            <ChangePasswordComponent />
           </div>
 
           {/* Test History Section - Rest of the component remains the same */}
