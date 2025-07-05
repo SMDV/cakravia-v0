@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, Lock, AlertCircle, User } from 'lucide-react';
+import { Check, Lock, AlertCircle, User, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
@@ -13,6 +13,8 @@ import Footer from '@/components/Footer';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
+// Add state for dialog in your main component
+const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
 interface ResultsState {
   isLoading: boolean;
@@ -80,7 +82,111 @@ const EnhancedResultsDashboard = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
 
-// Enhanced checkPaymentStatus function to get single order
+
+// Payment Success Dialog Component
+interface PaymentSuccessDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onDownloadCertificate: () => void;
+}
+
+const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({ 
+  isOpen, 
+  onClose, 
+  onDownloadCertificate 
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+      
+      {/* Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+        {/* Success Header */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-8 text-center">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2">
+            Payment Successful!
+          </h3>
+          <p className="text-green-100 text-sm">
+            Your transaction has been completed
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-6">
+          <div className="text-center mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">
+              🎉 Congratulations!
+            </h4>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              You now have access to your complete VARK Learning Style Assessment results and can download your official certificate.
+            </p>
+          </div>
+
+          {/* Features Unlocked */}
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <h5 className="font-semibold text-blue-800 mb-3 text-sm">
+              ✨ Features Now Available:
+            </h5>
+            <ul className="space-y-2 text-sm text-blue-700">
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Detailed learning style analysis
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Complete score breakdown
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Official PDF certificate
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Personalized recommendations
+              </li>
+            </ul>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onDownloadCertificate}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span>📄</span>
+              Download Certificate
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200"
+            >
+              Continue Reading
+            </button>
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200"
+          >
+            <X className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Updated checkPaymentStatus function with dialog instead of alert
 const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
   try {
     console.log(`🔍 Checking payment status for test ${testId}${isAutoCheck ? ' (auto-check)' : ''}`);
@@ -114,9 +220,9 @@ const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = fals
         setIsPaid(true);
         setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
         
-        // Show success message if this was an auto-check after payment
+        // Show success dialog if this was an auto-check after payment
         if (isAutoCheck) {
-          alert('🎉 Payment successful! You can now access all features and download your certificate.');
+          setShowPaymentSuccessDialog(true);
         }
       } else {
         console.log('❌ Payment not completed yet. Status:', order.status);
@@ -1056,6 +1162,16 @@ const openSnapPopup = useCallback((snapToken: string) => {
 
       {/* Footer */}
       <Footer className="relative z-10" />
+
+      {/* Payment Success Dialog */}
+      <PaymentSuccessDialog
+        isOpen={showPaymentSuccessDialog}
+        onClose={() => setShowPaymentSuccessDialog(false)}
+        onDownloadCertificate={() => {
+          setShowPaymentSuccessDialog(false);
+          handleDownloadCertificate();
+        }}
+      />
     </div>
   );
 };
