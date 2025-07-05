@@ -1,0 +1,47 @@
+# Blue-Green Deployment Upstream Configuration
+# This file is dynamically updated during deployments
+# DO NOT EDIT MANUALLY - Use deployment scripts
+
+# Blue deployment (default active)
+upstream nextjs_app_blue {
+    least_conn;
+    server app-blue:3000 max_fails=3 fail_timeout=30s;
+    keepalive 32;
+    keepalive_requests 1000;
+    keepalive_timeout 60s;
+}
+
+# Green deployment (standby/new version)
+upstream nextjs_app_green {
+    least_conn;
+    server app-green:3000 max_fails=3 fail_timeout=30s;
+    keepalive 32;
+    keepalive_requests 1000;
+    keepalive_timeout 60s;
+}
+
+# Dynamic upstream that points to the current active deployment
+# This will be updated by the deployment script
+upstream nextjs_app {
+    least_conn;
+    
+    # ACTIVE_DEPLOYMENT: blue
+    # DEPLOYMENT_TIMESTAMP: {{TIMESTAMP}}
+    # DEPLOYMENT_VERSION: {{VERSION}}
+    
+    server app-blue:3000 max_fails=3 fail_timeout=30s;
+    
+    # Backup server configuration (green is backup)
+    server app-green:3000 max_fails=3 fail_timeout=30s backup;
+    
+    keepalive 32;
+    keepalive_requests 1000;
+    keepalive_timeout 60s;
+}
+
+# Health check upstream for monitoring both deployments
+upstream health_check_combined {
+    server app-blue:3000;
+    server app-green:3000;
+    keepalive 8;
+}

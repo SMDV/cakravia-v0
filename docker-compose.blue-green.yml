@@ -1,0 +1,128 @@
+version: '3.8'
+
+services:
+  app-blue:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: cakravia-app-blue
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      - NEXT_TELEMETRY_DISABLED=1
+      - DEPLOYMENT_SLOT=blue
+    networks:
+      - cakravia-network
+    mem_limit: 1g
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "cakravia.slot=blue"
+      - "cakravia.service=app"
+
+  app-green:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+    container_name: cakravia-app-green
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
+      - NEXT_TELEMETRY_DISABLED=1
+      - DEPLOYMENT_SLOT=green
+    networks:
+      - cakravia-network
+    mem_limit: 1g
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      - "cakravia.slot=green"
+      - "cakravia.service=app"
+    profiles:
+      - green
+
+  nginx:
+    image: nginx:alpine
+    container_name: cakravia-nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/upstream.conf:/etc/nginx/conf.d/upstream.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./nginx/logs:/var/log/nginx
+      - /var/www/html:/var/www/html:ro
+    networks:
+      - cakravia-network
+    mem_limit: 128m
+    depends_on:
+      - app-blue
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    labels:
+      - "cakravia.service=nginx"
+
+  # Health check service for monitoring deployment status
+  health-monitor:
+    image: curlimages/curl:latest
+    container_name: cakravia-health-monitor
+    restart: "no"
+    networks:
+      - cakravia-network
+    profiles:
+      - monitor
+    command: >
+      sh -c "
+        echo 'Starting health monitoring...';
+        while true; do
+          echo '=== Health Check Results ===' >> /tmp/health.log;
+          echo 'Timestamp: $(date)' >> /tmp/health.log;
+          echo 'Blue Health:' >> /tmp/health.log;
+          curl -f http://app-blue:3000/api/health >> /tmp/health.log 2>&1 || echo 'Blue: DOWN' >> /tmp/health.log;
+          echo 'Green Health:' >> /tmp/health.log;
+          curl -f http://app-green:3000/api/health >> /tmp/health.log 2>&1 || echo 'Green: DOWN' >> /tmp/health.log;
+          echo 'Nginx Health:' >> /tmp/health.log;
+          curl -f http://nginx:80/api/health >> /tmp/health.log 2>&1 || echo 'Nginx: DOWN' >> /tmp/health.log;
+          echo '=========================' >> /tmp/health.log;
+          sleep 30;
+        done
+      "
+    volumes:
+      - ./monitoring:/tmp
+
+networks:
+  cakravia-network:
+    driver: bridge
+    name: cakravia-network
+
+volumes:
+  nginx-logs:
+    driver: local
+  monitoring:
+    driver: local
