@@ -13,8 +13,7 @@ import Footer from '@/components/Footer';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
-// Add state for dialog in your main component
-const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
+
 
 interface ResultsState {
   isLoading: boolean;
@@ -185,6 +184,9 @@ const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({
     </div>
   );
 };
+
+// Add state for dialog in your main component
+const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
 // Updated checkPaymentStatus function with dialog instead of alert
 const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
