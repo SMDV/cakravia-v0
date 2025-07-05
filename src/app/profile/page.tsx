@@ -192,7 +192,7 @@ const EnhancedProfilePage = () => {
       // Create FormData for multipart form submission
       const formData = new FormData();
       formData.append('name', profileData.name);
-      formData.append('email', profileData.email);
+      formData.append('email', profileData.email); // Still send email in request
       formData.append('phone', profileData.phone);
       formData.append('birthday', profileData.birthday);
       
@@ -419,28 +419,25 @@ const EnhancedProfilePage = () => {
                   {errors.name && <p className="mt-1 text-xs text-red-600">{errors.name}</p>}
                 </div>
 
-                {/* Email Field */}
+                {/* Email Field - Modified to be non-editable */}
                 <div>
                   <label className="block text-xs sm:text-sm font-medium mb-1 sm:mb-2" style={{ color: '#2A3262' }}>
                     Email Address
                   </label>
-                  {isEditing ? (
-                    <input
-                      type="email"
-                      value={profileData.email}
-                      onChange={(e) => handleInputChange('email', e.target.value)}
-                      className={`w-full px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-colors ${
-                        errors.email ? 'border-red-300' : 'border-gray-300'
-                      }`}
-                      style={{ backgroundColor: '#F8F9FA' }}
-                    />
-                  ) : (
-                    <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-50 rounded-lg">
-                      <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
-                      <span className="text-sm truncate">{profileData.email || 'Not provided'}</span>
-                    </div>
+                  <div className="flex items-center gap-2 p-2 sm:p-3 bg-gray-100 rounded-lg border border-gray-200">
+                    <Mail className="w-3 h-3 sm:w-4 sm:h-4 text-gray-500 flex-shrink-0" />
+                    <span className="text-sm truncate text-gray-600">{profileData.email || 'Not provided'}</span>
+                    {isEditing && (
+                      <span className="text-xs text-gray-500 ml-auto flex-shrink-0">
+                        Not editable
+                      </span>
+                    )}
+                  </div>
+                  {isEditing && (
+                    <p className="mt-1 text-xs text-gray-500">
+                      Email cannot be changed. Contact support if you need to update your email address.
+                    </p>
                   )}
-                  {errors.email && <p className="mt-1 text-xs text-red-600">{errors.email}</p>}
                 </div>
 
                 {/* Phone Field */}
@@ -512,7 +509,7 @@ const EnhancedProfilePage = () => {
             </div>
           </div>
 
-          {/* Test History Section */}
+          {/* Test History Section - Rest of the component remains the same */}
           <div className="xl:col-span-2 order-1 xl:order-2">
             <div className="bg-white rounded-lg shadow-lg">
               {/* Header */}
