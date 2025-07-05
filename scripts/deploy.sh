@@ -170,7 +170,7 @@ done
 
 # Test nginx proxy health
 for i in {1..5}; do
-    if curl -f http://localhost:80/api/health > /dev/null 2>&1; then
+    if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
         echo -e "${GREEN}✅ Nginx proxy health check passed!${NC}"
         break
     else
@@ -187,7 +187,7 @@ if ! curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
     exit 1
 fi
 
-if ! curl -f http://localhost:80/api/health > /dev/null 2>&1; then
+if ! curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
     echo -e "${RED}❌ Nginx proxy health check failed after 5 attempts!${NC}"
     echo -e "${YELLOW}📜 Nginx container logs:${NC}"
     docker-compose logs nginx --tail=50
