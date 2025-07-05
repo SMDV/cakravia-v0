@@ -161,7 +161,7 @@ const AboutUsPage = () => {
                 Why Choose Cakravia?
               </h2>
               <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                We&#39re more than just an assessment platform. We&#39re your partner in understanding and optimizing your learning journey. Here&#39s what makes us different:
+                {"We're more than just an assessment platform. We're your partner in understanding and optimizing your learning journey. Here's what makes us different:"}
               </p>
               
               <div className="space-y-6">
