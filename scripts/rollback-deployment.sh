@@ -137,36 +137,51 @@ get_previous_deployment() {
     fi
 }
 
-# Function to update nginx upstream configuration
-update_nginx_upstream() {
+# Function to update nginx configuration
+update_nginx_configuration() {
     local target_deployment=$1
     local version=$2
     local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     
-    log "Updating nginx upstream configuration to point to ${target_deployment}..."
+    log "Updating nginx configuration to point to ${target_deployment}..."
     
     # Create backup of current configuration
-    cp nginx/upstream.conf nginx/upstream.conf.backup
+    cp nginx/nginx.conf nginx/nginx.conf.backup
     
-    # Update upstream configuration
-    sed -e "s/{{TIMESTAMP}}/$timestamp/g" -e "s/{{VERSION}}/$version/g" \
-        "nginx/upstream.${target_deployment}.template" > nginx/upstream.conf
-    
-    # Test nginx configuration
-    if ! docker exec cakravia-nginx nginx -t > /dev/null 2>&1; then
-        log_error "Nginx configuration test failed! Restoring backup..."
-        cp nginx/upstream.conf.backup nginx/upstream.conf
+    # Update nginx configuration
+    if [ -f "nginx/nginx.${target_deployment}.conf" ]; then
+        sed -e "s/{{TIMESTAMP}}/$timestamp/g" -e "s/{{VERSION}}/$version/g" \
+            "nginx/nginx.${target_deployment}.conf" > nginx/nginx.conf
+    else
+        log_error "Nginx configuration template for ${target_deployment} not found!"
         return 1
     fi
     
-    # Reload nginx (zero downtime)
-    if docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1; then
-        log_success "Nginx configuration reloaded successfully"
-        return 0
+    # Test nginx configuration by copying to container and testing
+    if docker cp nginx/nginx.conf cakravia-nginx:/tmp/nginx.conf.test; then
+        if docker exec cakravia-nginx nginx -t -c /tmp/nginx.conf.test > /dev/null 2>&1; then
+            # Configuration is valid, apply it
+            docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf
+            
+            # Reload nginx (zero downtime)
+            if docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1; then
+                log_success "Nginx configuration updated and reloaded successfully"
+                return 0
+            else
+                log_error "Nginx reload failed! Restoring backup..."
+                cp nginx/nginx.conf.backup nginx/nginx.conf
+                docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf
+                docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1
+                return 1
+            fi
+        else
+            log_error "Nginx configuration test failed! Restoring backup..."
+            cp nginx/nginx.conf.backup nginx/nginx.conf
+            return 1
+        fi
     else
-        log_error "Nginx reload failed! Restoring backup..."
-        cp nginx/upstream.conf.backup nginx/upstream.conf
-        docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1
+        log_error "Failed to copy configuration to nginx container!"
+        cp nginx/nginx.conf.backup nginx/nginx.conf
         return 1
     fi
 }
@@ -257,7 +272,7 @@ perform_rollback() {
     
     # Switch traffic to target deployment
     log "Switching traffic to ${target_deployment}..."
-    if ! update_nginx_upstream "$target_deployment" "$target_version"; then
+    if ! update_nginx_configuration "$target_deployment" "$target_version"; then
         log_error "Failed to switch traffic"
         exit 1
     fi

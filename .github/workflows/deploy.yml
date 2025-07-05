@@ -95,15 +95,10 @@ jobs:
             # Create nginx directories
             mkdir -p nginx/ssl nginx/logs monitoring
             
-            # Set up initial nginx configuration for blue-green
-            if [ ! -f "nginx/upstream.conf" ]; then
-              cp nginx/upstream.blue.template nginx/upstream.conf
-              sed -i "s/{{TIMESTAMP}}/$(date -u +"%Y-%m-%dT%H:%M:%SZ")/g" nginx/upstream.conf
-              sed -i "s/{{VERSION}}/${DEPLOYMENT_VERSION}/g" nginx/upstream.conf
-            fi
-            
-            # Use blue-green nginx configuration
-            if [ -f "nginx/nginx.blue-green.conf" ]; then
+            # Set up initial nginx configuration for blue deployment
+            if [ -f "nginx/nginx.blue.conf" ]; then
+              sed -e "s/{{TIMESTAMP}}/$(date -u +"%Y-%m-%dT%H:%M:%SZ")/g" -e "s/{{VERSION}}/${DEPLOYMENT_VERSION}/g" nginx/nginx.blue.conf > nginx/nginx.conf
+            elif [ -f "nginx/nginx.blue-green.conf" ]; then
               cp nginx/nginx.blue-green.conf nginx/nginx.conf
             fi
             
@@ -285,9 +280,10 @@ jobs:
           echo "🔄 Deployment failed, checking if rollback is needed..."
           
           # Check if backup configuration exists
-          if [ -f "nginx/upstream.conf.backup" ]; then
+          if [ -f "nginx/nginx.conf.backup" ]; then
             echo "Restoring previous nginx configuration..."
-            cp nginx/upstream.conf.backup nginx/upstream.conf
+            cp nginx/nginx.conf.backup nginx/nginx.conf
+            docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf || true
             docker exec cakravia-nginx nginx -s reload || true
           fi
           
