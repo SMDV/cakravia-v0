@@ -346,7 +346,7 @@ const EnhancedProfilePage = () => {
                   {previewUrl || user?.avatar_url ? (
                     <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-4 border-gray-200">
                       <Image
-                        src={previewUrl || user?.avatar_url || ''}
+                        src={previewUrl || (user?.avatar_url?.startsWith('http') ? user.avatar_url : `https://api.cakravia.com${user?.avatar_url}`) || ''}
                         alt="Profile"
                         width={96}
                         height={96}
