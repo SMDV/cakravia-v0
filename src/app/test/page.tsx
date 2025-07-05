@@ -509,11 +509,11 @@ const TestInterface = () => {
         
         <div className="text-center">
           <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}>
-            {scaledValue}/5
+            {scaledValue}/5 points
           </div>
-          <div className="text-base text-gray-600 mb-1">
+          {/* <div className="text-base text-gray-600 mb-1">
             {actualPoints} / {maxWeight} points
-          </div>
+          </div> */}
           <div className="text-xs text-gray-500">
             Category: {currentQuestion?.category.name || 'Unknown'}
           </div>
