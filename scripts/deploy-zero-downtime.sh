@@ -134,8 +134,19 @@ update_nginx_configuration() {
     
     # Update nginx configuration
     if [ -f "nginx/nginx.${target_deployment}.conf" ]; then
+        # Generate config with placeholders replaced
         sed -e "s/{{TIMESTAMP}}/$timestamp/g" -e "s/{{VERSION}}/$version/g" \
-            "nginx/nginx.${target_deployment}.conf" > nginx/nginx.conf
+            "nginx/nginx.${target_deployment}.conf" > nginx/nginx.conf.tmp
+
+        # Remove backup server references if the container doesn't exist
+        local inactive_deployment=$(get_inactive_deployment "$target_deployment")
+        if ! is_container_running "cakravia-app-${inactive_deployment}"; then
+            log "Removing backup server references for stopped ${inactive_deployment} container"
+            # Remove backup server lines from nginx config
+            sed -i '/server app-'${inactive_deployment}':3000.*backup/d' nginx/nginx.conf.tmp
+        fi
+
+        mv nginx/nginx.conf.tmp nginx/nginx.conf
     else
         log_error "Nginx configuration template for ${target_deployment} not found!"
         return 1
