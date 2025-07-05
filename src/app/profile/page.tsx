@@ -17,7 +17,8 @@ import {
   Play,
   FileText,
   Trophy,
-  Activity
+  Activity,
+  Shield,
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -91,6 +92,7 @@ const EnhancedProfilePage = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [showPasswordChange, setShowPasswordChange] = useState(false);
 
   // Load profile data and test history
   useEffect(() => {
@@ -512,8 +514,44 @@ const EnhancedProfilePage = () => {
                 </div>
               )}
             </div>
-            {/* Password Change Component - NEW */}
-            <ChangePasswordComponent />
+            {/* Password Change Section - NEW */}
+            <div className="mt-4 sm:mt-6">
+              {!showPasswordChange ? (
+                // Show button when component is hidden
+                <button
+                  onClick={() => setShowPasswordChange(true)}
+                  className="w-full flex items-center justify-center gap-2 py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors group"
+                >
+                  <Shield className="w-4 h-4 group-hover:text-blue-500 transition-colors" />
+                  <span className="text-sm font-medium">Change Password</span>
+                </button>
+              ) : (
+                // Show component when toggled on
+                <div className="bg-white rounded-lg shadow-lg border border-gray-200">
+                  {/* Header with close button */}
+                  <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4" style={{ color: '#2A3262' }} />
+                      <h3 className="text-sm font-medium" style={{ color: '#2A3262' }}>
+                        Change Password
+                      </h3>
+                    </div>
+                    <button
+                      onClick={() => setShowPasswordChange(false)}
+                      className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded hover:bg-gray-100"
+                      title="Close"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  
+                  {/* Password Change Component without the header */}
+                  <div className="p-4">
+                    <ChangePasswordComponent className="!p-0 !shadow-none !bg-transparent" />
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Test History Section - Rest of the component remains the same */}
