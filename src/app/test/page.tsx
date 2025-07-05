@@ -143,94 +143,95 @@ const TestInterface = () => {
     }
   }, []);
 
-  // Handle next question and submission
-  const handleNextQuestion = useCallback(async () => {
-    const { test, currentQuestionIndex } = testState;
-    if (!test) return;
+// Updated handleNextQuestion function - modify the answer calculation
+const handleNextQuestion = useCallback(async () => {
+  const { test, currentQuestionIndex } = testState;
+  if (!test) return;
 
-    const currentQuestion = test.questions[currentQuestionIndex];
-    
-    // Create answer object using actual max_weight from API
-    const answer: VarkAnswer = {
-      question_id: currentQuestion.id,
-      category_id: currentQuestion.category.id,
-      point: Math.round((currentSliderValue / 100) * currentQuestion.max_weight)
-    };
+  const currentQuestion = test.questions[currentQuestionIndex];
+  
+  // Convert slider value (0-100) to 1-5 scale, then calculate points
+  const scaledValue = Math.max(1, Math.round((currentSliderValue / 100) * 4) + 1); // Maps 0-100 to 1-5
+  const answer: VarkAnswer = {
+    question_id: currentQuestion.id,
+    category_id: currentQuestion.category.id,
+    point: Math.round((scaledValue / 5) * currentQuestion.max_weight)
+  };
 
-    // Add user's slider answer to chat history
+  // Add user's slider answer to chat history
+  setChatHistory(prev => [...prev, { 
+    sender: "user", 
+    type: "slider_answer", 
+    sliderValue: currentSliderValue,
+    questionId: currentQuestion.id
+  }]);
+
+  // Store answer
+  const newAnswers = {
+    ...testState.answers,
+    [currentQuestion.id]: answer
+  };
+
+  setTestState(prev => ({
+    ...prev,
+    answers: newAnswers
+  }));
+
+  addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${scaledValue}/5 (${answer.point}/${currentQuestion.max_weight} points)`);
+
+  const nextIndex = currentQuestionIndex + 1;
+  
+  if (nextIndex < test.questions.length) {
+    // Add next question to chat history
+    const nextQuestion = test.questions[nextIndex];
     setChatHistory(prev => [...prev, { 
-      sender: "user", 
-      type: "slider_answer", 
-      sliderValue: currentSliderValue,
-      questionId: currentQuestion.id
+      sender: "ai", 
+      type: "text", 
+      text: nextQuestion.body,
+      questionId: nextQuestion.id
     }]);
-
-    // Store answer
-    const newAnswers = {
-      ...testState.answers,
-      [currentQuestion.id]: answer
-    };
-
-    setTestState(prev => ({
-      ...prev,
-      answers: newAnswers
-    }));
-
-    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${answer.point}/${currentQuestion.max_weight} points`);
-
-    const nextIndex = currentQuestionIndex + 1;
     
-    if (nextIndex < test.questions.length) {
-      // Add next question to chat history
-      const nextQuestion = test.questions[nextIndex];
-      setChatHistory(prev => [...prev, { 
-        sender: "ai", 
-        type: "text", 
-        text: nextQuestion.body,
-        questionId: nextQuestion.id
+    setTestState(prev => ({ 
+      ...prev, 
+      currentQuestionIndex: nextIndex 
+    }));
+    setCurrentSliderValue(50); // Reset slider to middle (3/5) for next question
+  } else {
+    // All questions completed, submit answers directly
+    addLog('🏁 All questions answered, submitting...');
+    setTestState(prev => ({ ...prev, step: 'submitting' }));
+
+    try {
+      const submission = { answers: Object.values(newAnswers) };
+      addLog(`📊 Submitting ${submission.answers.length} answers`);
+      await varkAPI.submitAnswers(test.id, submission);
+      
+      addLog('✅ Answers submitted successfully!');
+      setTestState(prev => ({ ...prev, step: 'completed' }));
+      
+      // Add completion message to chat
+      setChatHistory(prev => [...prev, {
+        sender: "ai",
+        type: "text",
+        text: "🎉 Congratulations! You have completed the VARK Learning Style Assessment. Your results are being processed..."
       }]);
       
+      // Redirect to results page after a short delay
+      setTimeout(() => {
+        window.location.href = `/results?testId=${test.id}`;
+      }, 3000);
+      
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
+      addLog(`❌ Submission failed: ${errorMessage}`);
       setTestState(prev => ({ 
         ...prev, 
-        currentQuestionIndex: nextIndex 
+        step: 'error', 
+        error: errorMessage 
       }));
-      setCurrentSliderValue(50); // Reset slider for next question
-    } else {
-      // All questions completed, submit answers directly
-      addLog('🏁 All questions answered, submitting...');
-      setTestState(prev => ({ ...prev, step: 'submitting' }));
-
-      try {
-        const submission = { answers: Object.values(newAnswers) };
-        addLog(`📊 Submitting ${submission.answers.length} answers`);
-        await varkAPI.submitAnswers(test.id, submission);
-        
-        addLog('✅ Answers submitted successfully!');
-        setTestState(prev => ({ ...prev, step: 'completed' }));
-        
-        // Add completion message to chat
-        setChatHistory(prev => [...prev, {
-          sender: "ai",
-          type: "text",
-          text: "🎉 Congratulations! You have completed the VARK Learning Style Assessment. Your results are being processed..."
-        }]);
-        
-        // Redirect to results page after a short delay
-        setTimeout(() => {
-          window.location.href = `/results?testId=${test.id}`;
-        }, 3000);
-        
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to submit answers';
-        addLog(`❌ Submission failed: ${errorMessage}`);
-        setTestState(prev => ({ 
-          ...prev, 
-          step: 'error', 
-          error: errorMessage 
-        }));
-      }
     }
-  }, [testState, currentSliderValue, addLog]);
+  }
+}, [testState, currentSliderValue, addLog]);
 
   // Auto-scroll chat to bottom
   useEffect(() => {
@@ -285,155 +286,163 @@ const TestInterface = () => {
     }
   }, [isAuthenticated, initializeTest]);
 
-  // Slider Answer Component - Enhanced design (this is for the ANSWER in chat)
-  const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
-    // Get current question to show actual point value
-    const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
-    const maxWeight = currentQuestion?.max_weight || 5;
-    const actualPoints = Math.round((value / 100) * maxWeight);
+// Updated SliderAnswer Component - for displaying the answer in chat
+const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
+  // Get current question to show actual point value
+  const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
+  const maxWeight = currentQuestion?.max_weight || 5;
+  
+  // Convert 0-100 percentage to 1-5 range for display
+  const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1); // Maps 0-100 to 1-5
+  const actualPoints = Math.round((scaledValue / 5) * maxWeight);
 
-    return (
-      <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg"> {/* Reduced padding from p-6 to p-4 (-25% height) */}
-        {/* Fixed labels with proper separation like SliderInput */}
-        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium"> {/* Reduced margin from mb-6 to mb-4 */}
-          <span className="flex items-center">
-            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span> {/* Added visual indicator */}
-            Disagree
-          </span>
-          <span className="flex items-center">
-            <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span> {/* Added visual indicator */}
-            Agree
-          </span>
-        </div>
+  return (
+    <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
+      <div className="flex justify-between text-sm text-white/90 mb-4 font-medium">
+        <span className="flex items-center">
+          <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
+          Strongly Disagree
+        </span>
+        <span className="flex items-center">
+          <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
+          Strongly Agree
+        </span>
+      </div>
+      
+      <div className="relative h-3 bg-white/20 rounded-full mb-4">
+        <div
+          className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
+          style={{ width: `${((scaledValue - 1) / 4) * 100}%` }}
+        />
+        <div
+          className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
+          style={{ left: `calc(${((scaledValue - 1) / 4) * 100}% - 10px)` }}
+        />
+      </div>
+      
+      <div className="text-center text-white space-y-1">
+        <div className="text-xl font-bold">{scaledValue}/5</div>
+        <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div>
+      </div>
+    </div>
+  );
+}, [testState.test]);
+
+// Updated SliderInput Component - for user input
+const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
+  const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
+  const maxWeight = currentQuestion?.max_weight || 5;
+  
+  // Convert 0-100 percentage to 1-5 range for display
+  const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1); // Maps 0-100 to 1-5
+  const actualPoints = Math.round((scaledValue / 5) * maxWeight);
+
+  return (
+    <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
+      <div className="flex justify-between text-sm text-gray-600 mb-4 font-medium">
+        <span className="flex items-center">
+          <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
+          Strongly Disagree
+        </span>
+        <span className="flex items-center">
+          <span className="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
+          Strongly Agree
+        </span>
+      </div>
+      
+      <div className="relative px-4 mb-4">
+        <input
+          type="range"
+          min="0"
+          max="100"
+          value={value}
+          onChange={(e) => onChange(parseInt(e.target.value))}
+          className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
+          style={{
+            background: `linear-gradient(to right, 
+              #f87171 0%, 
+              #fbbf24 ${value/2}%, 
+              #34d399 ${value}%, 
+              #e5e7eb ${value}%, 
+              #e5e7eb 100%)`
+          }}
+        />
         
-        {/* Enhanced slider track */}
-        <div className="relative h-3 bg-white/20 rounded-full mb-4"> {/* Reduced height from h-4 and margin from mb-6 to mb-4 */}
-          <div
-            className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
-            style={{ width: `${value}%` }}
-          />
-          <div
-            className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
-            style={{ left: `calc(${value}% - 10px)` }}
-          />
-        </div>
-        
-        {/* Display both percentage and actual points with reduced spacing */}
-        <div className="text-center text-white space-y-1"> {/* Reduced from space-y-2 to space-y-1 */}
-          <div className="text-xl font-bold">{value}%</div> {/* Reduced from text-2xl to text-xl */}
-          <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div> {/* Reduced from text-base to text-sm */}
+        {/* Add scale markers */}
+        <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
+          <span>1</span>
+          <span>2</span>
+          <span>3</span>
+          <span>4</span>
+          <span>5</span>
         </div>
       </div>
-    );
-  }, [testState.test]);
-
-  // Slider Input Component - Keep this normal size for input
-  const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
-    // Get current question to show max weight
-    const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
-    const maxWeight = currentQuestion?.max_weight || 5;
-    const actualPoints = Math.round((value / 100) * maxWeight);
-
-    return (
-      <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100"> {/* Reduced padding from p-6 to p-4 */}
-        <div className="flex justify-between text-sm text-gray-600 mb-4 font-medium"> {/* Reduced margin from mb-6 to mb-4 */}
-          <span className="flex items-center">
-            <span className="w-3 h-3 bg-red-400 rounded-full mr-2"></span>
-            Disagree {/* Shortened text */}
-          </span>
-          <span className="flex items-center">
-            <span className="w-3 h-3 bg-green-400 rounded-full mr-2"></span>
-            Agree {/* Shortened text */}
-          </span>
+      
+      <div className="text-center">
+        <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}>
+          {scaledValue}/5
         </div>
-        
-        <div className="relative px-4 mb-4"> {/* Reduced margin from mb-6 to mb-4 */}
-          {/* Enhanced slider with gradient track and better dragging */}
-          <input
-            type="range"
-            min="0"
-            max="100"
-            value={value}
-            onChange={(e) => onChange(parseInt(e.target.value))}
-            className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
-            style={{
-              background: `linear-gradient(to right, 
-                #f87171 0%, 
-                #fbbf24 ${value/2}%, 
-                #34d399 ${value}%, 
-                #e5e7eb ${value}%, 
-                #e5e7eb 100%)`
-            }}
-          />
+        <div className="text-base text-gray-600 mb-1">
+          {actualPoints} / {maxWeight} points
         </div>
-        
-        {/* Enhanced display */}
-        <div className="text-center">
-          <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}> {/* Reduced margin from mb-2 to mb-1 */}
-            {value}%
-          </div>
-          <div className="text-base text-gray-600 mb-1"> {/* Reduced text size from text-lg */}
-            {actualPoints} / {maxWeight} points
-          </div>
-          <div className="text-xs text-gray-500"> {/* Reduced text size from text-sm */}
-            Category: {currentQuestion?.category.name || 'Unknown'}
-          </div>
+        <div className="text-xs text-gray-500">
+          Category: {currentQuestion?.category.name || 'Unknown'}
         </div>
-
-        {/* Custom slider styles */}
-        <style jsx>{`
-          .slider::-webkit-slider-thumb {
-            appearance: none;
-            height: 28px;
-            width: 28px;
-            border-radius: 50%;
-            background: #2A3262;
-            cursor: grab;
-            border: 4px solid #ffffff;
-            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
-            transition: all 0.2s ease-in-out;
-          }
-          
-          .slider::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
-          }
-          
-          .slider::-webkit-slider-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.15);
-            box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
-          }
-          
-          .slider::-moz-range-thumb {
-            height: 28px;
-            width: 28px;
-            border-radius: 50%;
-            background: #2A3262;
-            cursor: grab;
-            border: 4px solid #ffffff;
-            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
-            transition: all 0.2s ease-in-out;
-          }
-          
-          .slider::-moz-range-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
-          }
-          
-          .slider::-moz-range-thumb:active {
-            cursor: grabbing;
-            transform: scale(1.15);
-          }
-          
-          .slider::-moz-range-track {
-            height: 8px;
-            border-radius: 4px;
-          }
-        `}</style>
       </div>
-    );
-  }, [testState.test, testState.currentQuestionIndex]);
+
+      <style jsx>{`
+        .slider::-webkit-slider-thumb {
+          appearance: none;
+          height: 28px;
+          width: 28px;
+          border-radius: 50%;
+          background: #2A3262;
+          cursor: grab;
+          border: 4px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+          transition: all 0.2s ease-in-out;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+        }
+        
+        .slider::-webkit-slider-thumb:active {
+          cursor: grabbing;
+          transform: scale(1.15);
+          box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
+        }
+        
+        .slider::-moz-range-thumb {
+          height: 28px;
+          width: 28px;
+          border-radius: 50%;
+          background: #2A3262;
+          cursor: grab;
+          border: 4px solid #ffffff;
+          box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+          transition: all 0.2s ease-in-out;
+        }
+        
+        .slider::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+        }
+        
+        .slider::-moz-range-thumb:active {
+          cursor: grabbing;
+          transform: scale(1.15);
+        }
+        
+        .slider::-moz-range-track {
+          height: 8px;
+          border-radius: 4px;
+        }
+      `}</style>
+    </div>
+  );
+}, [testState.test, testState.currentQuestionIndex]);
 
   // Don't render if not authenticated
   if (!isAuthenticated) {

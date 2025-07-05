@@ -80,41 +80,66 @@ const EnhancedResultsDashboard = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
 
-  // Check payment status using API endpoint
-  const checkPaymentStatus = useCallback(async (testId: string) => {
-    try {
-      // Get the order information for this test
-      const orderResponse = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders`, {
-        headers: {
-          'Authorization': `Bearer ${document.cookie.split('auth_token=')[1]?.split(';')[0]}`,
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (orderResponse.ok) {
-        const orderData = await orderResponse.json();
-        const order = orderData.data;
-        
-        // Check if payment is completed based on order status
-        const hasValidPayment = order.status === 'paid' && order.can_download_certificate === true;
-        
-        if (hasValidPayment) {
-          setIsPaid(true);
-          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
-        } else {
-          setIsPaid(false);
-          setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
-        }
-        
-        return hasValidPayment;
-      } else {
-        return false;
-      }
-    } catch (error) {
-      console.error('Payment status check failed:', error);
+// Enhanced checkPaymentStatus function to get single order
+const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
+  try {
+    console.log(`🔍 Checking payment status for test ${testId}${isAutoCheck ? ' (auto-check)' : ''}`);
+    
+    // Get auth token from cookie
+    const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+    if (!authToken) {
+      console.warn('⚠️ No auth token found for payment check');
       return false;
     }
-  }, []);
+
+    // Call the single order API endpoint
+    const orderResponse = await fetch(`https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders`, {
+      headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+    
+    if (orderResponse.ok) {
+      const orderData = await orderResponse.json();
+      const order = orderData.data;
+      
+      console.log('📊 Order data received:', order);
+      
+      // Check if payment is completed based on order status
+      const hasValidPayment = order.status === 'paid' && order.can_download_certificate === true;
+      
+      if (hasValidPayment) {
+        console.log('✅ Payment verified as completed');
+        setIsPaid(true);
+        setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+        
+        // Show success message if this was an auto-check after payment
+        if (isAutoCheck) {
+          alert('🎉 Payment successful! You can now access all features and download your certificate.');
+        }
+      } else {
+        console.log('❌ Payment not completed yet. Status:', order.status);
+        setIsPaid(false);
+        setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
+        
+        // If this was an auto-check and payment is still pending, inform user
+        if (isAutoCheck && order.status === 'pending') {
+          console.log('⏳ Payment is still pending...');
+          // Optionally show a message that payment is being processed
+        }
+      }
+      
+      return hasValidPayment;
+    } else {
+      console.warn('⚠️ Failed to fetch order data:', orderResponse.status);
+      return false;
+    }
+  } catch (error) {
+    console.error('❌ Payment status check failed:', error);
+    return false;
+  }
+}, []);
 
   // Load Midtrans Snap script
   useEffect(() => {
@@ -131,39 +156,78 @@ const EnhancedResultsDashboard = () => {
     loadMidtransScript();
   }, []);
 
-  // Open Midtrans Snap popup
-  const openSnapPopup = useCallback((snapToken: string) => {
-    if (window.snap) {
-      window.snap.pay(snapToken, {
-        onSuccess: function(result: MidtransResult) {
-          console.log('Payment successful:', result);
-          
-          // Verify payment status with API
-          const urlParams = new URLSearchParams(window.location.search);
-          const testId = urlParams.get('testId');
-          if (testId) {
-            setTimeout(() => {
-              checkPaymentStatus(testId);
-            }, 2000); // Wait 2 seconds for payment to be processed on server
-          }
-        },
-        onPending: function(result: MidtransResult) {
-          console.log('Payment pending:', result);
-        },
-        onError: function(result: MidtransResult) {
-          console.error('Payment failed:', result);
-        },
-        onClose: function() {
-          console.log('Payment popup closed');
+// Enhanced openSnapPopup function with automatic status check
+const openSnapPopup = useCallback((snapToken: string) => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const testId = urlParams.get('testId');
+  
+  if (window.snap) {
+    window.snap.pay(snapToken, {
+      onSuccess: function(result: MidtransResult) {
+        console.log('💳 Payment successful:', result);
+        
+        // Automatically check payment status after successful payment
+        if (testId) {
+          setTimeout(() => {
+            console.log('🔄 Auto-checking payment status after success...');
+            checkPaymentStatus(testId, true);
+          }, 3000); // Wait 3 seconds for payment to be processed on server
         }
-      });
-    } else {
-      console.log('Midtrans Snap not loaded, opening in new tab');
-      if (snapUrl) {
-        window.open(snapUrl, '_blank');
+      },
+      onPending: function(result: MidtransResult) {
+        console.log('⏳ Payment pending:', result);
+        
+        // Also check status for pending payments (some payment methods complete quickly)
+        if (testId) {
+          setTimeout(() => {
+            console.log('🔄 Auto-checking payment status after pending...');
+            checkPaymentStatus(testId, true);
+          }, 5000); // Wait 5 seconds for pending payments
+        }
+      },
+      onError: function(result: MidtransResult) {
+        console.error('❌ Payment failed:', result);
+        alert('Payment failed. Please try again or contact support if the issue persists.');
+      },
+      onClose: function() {
+        console.log('🔒 Payment popup closed by user');
+        
+        // Check payment status when popup is closed (user might have completed payment)
+        if (testId) {
+          setTimeout(() => {
+            console.log('🔄 Auto-checking payment status after popup close...');
+            checkPaymentStatus(testId, true);
+          }, 2000); // Wait 2 seconds then check
+        }
+      }
+    });
+  } else {
+    console.log('⚠️ Midtrans Snap not loaded, opening in new tab');
+    if (snapUrl) {
+      const paymentWindow = window.open(snapUrl, '_blank');
+      
+      // For external window, we need to poll for payment completion
+      if (testId && paymentWindow) {
+        // Check payment status every 10 seconds while window might be open
+        const pollInterval = setInterval(() => {
+          console.log('🔄 Polling payment status...');
+          checkPaymentStatus(testId, true).then((isPaid) => {
+            if (isPaid) {
+              clearInterval(pollInterval);
+              console.log('✅ Payment detected via polling');
+            }
+          });
+        }, 10000); // Check every 10 seconds
+        
+        // Stop polling after 10 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          console.log('⏰ Stopped polling for payment after 10 minutes');
+        }, 600000);
       }
     }
-  }, [checkPaymentStatus, snapUrl]);
+  }
+}, [checkPaymentStatus, snapUrl]);
 
   // Enhanced certificate purchase handler with existing order check
   const handlePurchaseCertificate = async () => {
@@ -761,7 +825,7 @@ const EnhancedResultsDashboard = () => {
                   </div>
                 </div>
 
-                {/* Download PDF Button */}
+                {/* Payment/Download Component - Same as payment wall */}
                 <div className="mt-6 sm:mt-8">
                   {isPaid ? (
                     <button 
@@ -772,13 +836,24 @@ const EnhancedResultsDashboard = () => {
                       Download PDF Certificate
                     </button>
                   ) : (
-                    <button 
-                      className="w-full py-2 sm:py-3 rounded-lg text-white font-medium cursor-not-allowed text-sm sm:text-base"
-                      style={{ backgroundColor: '#6B7280' }}
-                      disabled
-                    >
-                      PDF Available After Purchase
-                    </button>
+                    <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
+                      <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                        VARK Results + Report Certificate
+                      </h3>
+                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                      <button 
+                        onClick={handlePurchaseCertificate}
+                        disabled={isProcessingPayment}
+                        className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                        style={{ backgroundColor: '#4A47A3' }}
+                      >
+                        {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+                      </button>
+                      <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                        <Lock className="h-4 w-4" />
+                        <span className="text-xs font-medium">100% Secure</span>
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
