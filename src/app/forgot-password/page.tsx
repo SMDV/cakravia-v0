@@ -94,7 +94,7 @@ const ForgotPasswordPage = () => {
                 Check Your Email
               </h2>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                If an account with that email exists, we've sent password reset instructions to <strong>{email}</strong>.
+                {"If an account with that email exists, we've sent password reset instructions to"} <strong>{email}</strong>.
               </p>
               <div className="space-y-4">
                 <p className="text-sm text-gray-500">
