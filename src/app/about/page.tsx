@@ -74,7 +74,7 @@ const AboutUsPage = () => {
               <h1 className="text-5xl font-bold mb-6 text-white leading-tight">
                 Empowering Your <span style={{ color: '#ABD305' }}>Learning Journey</span>
               </h1>
-                <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                <p className="text-lg text-blue-100 mb-8 leading-relaxed">
                   We&#39;re more than just an assessment platform. We&#39;re your partner in understanding and optimizing your learning journey. Here&#39;s what makes us different:
                 </p>
               <div className="flex flex-wrap gap-4">
