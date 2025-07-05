@@ -239,6 +239,44 @@ docker system prune -f
 
 ## Troubleshooting
 
+### Quick Debug
+
+Run the debug script to get comprehensive system information:
+```bash
+cd /opt/cakravia
+./scripts/debug.sh
+```
+
+### Common GitHub Actions Issues
+
+1. **Git Repository Not Found**
+   ```bash
+   # Solution: Ensure the directory exists and repository is cloned
+   sudo mkdir -p /opt/cakravia
+   sudo chown $USER:$USER /opt/cakravia
+   cd /opt/cakravia
+   git clone https://github.com/yourusername/cakravia-v0.git .
+   ```
+
+2. **Docker Compose Not Found**
+   ```bash
+   # Solution: Install Docker Compose on VPS
+   sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+   sudo chmod +x /usr/local/bin/docker-compose
+   ```
+
+3. **Health Check Failures**
+   ```bash
+   # Check if app container is running
+   docker-compose ps
+   
+   # Check app logs
+   docker-compose logs app
+   
+   # Test health endpoint manually
+   curl http://localhost:3000/api/health
+   ```
+
 ### Common Issues
 
 1. **Container Won't Start**
@@ -249,6 +287,12 @@ docker system prune -f
    # Check resources
    docker stats
    free -h
+   
+   # Rebuild from scratch
+   docker-compose down
+   docker system prune -f
+   docker-compose build --no-cache
+   docker-compose up -d
    ```
 
 2. **SSL Certificate Issues**
@@ -258,6 +302,9 @@ docker system prune -f
    
    # Renew certificate
    sudo certbot renew
+   
+   # Test SSL configuration
+   sudo nginx -t
    ```
 
 3. **Application Not Accessible**
@@ -270,6 +317,9 @@ docker system prune -f
    
    # Check firewall
    sudo ufw status
+   
+   # Check if ports are open
+   netstat -tlnp | grep -E ':80|:443|:3000'
    ```
 
 4. **Build Failures**
@@ -277,8 +327,27 @@ docker system prune -f
    # Check build logs
    docker-compose logs --tail=100
    
-   # Manual build
-   docker-compose build --no-cache
+   # Manual build with verbose output
+   docker-compose build --no-cache --progress=plain
+   
+   # Check disk space
+   df -h
+   ```
+
+5. **Environment Variable Issues**
+   ```bash
+   # Verify environment file exists
+   ls -la .env.production
+   
+   # Check environment variables are loaded
+   docker-compose config
+   
+   # Recreate environment file
+   cat > .env.production << EOF
+   NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_actual_client_id
+   NODE_ENV=production
+   NEXT_TELEMETRY_DISABLED=1
+   EOF
    ```
 
 ### Performance Optimization
