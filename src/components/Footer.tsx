@@ -23,17 +23,17 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
           
           {/* Middle: Navigation Links (center aligned) */}
           <div className="flex justify-center lg:col-span-1 lg:items-center lg:h-full">
-            <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6 text-center">
-              <Link href="/" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
+            <nav className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-8 lg:space-x-12 text-center">
+              <Link href="/" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap font-bold text-lg">
                 Home
               </Link>
-              <Link href="/about" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
+              <Link href="/about" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap font-bold text-lg">
                 About us
               </Link>
-              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
+              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap font-bold text-lg">
                 Terms of use
               </Link>
-              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
+              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap font-bold text-lg">
                 Privacy policy
               </Link>
             </nav>
