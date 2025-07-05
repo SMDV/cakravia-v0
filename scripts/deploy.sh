@@ -25,25 +25,42 @@ if ! command -v docker-compose > /dev/null 2>&1; then
     exit 1
 fi
 
-# Pull latest changes
-echo -e "${YELLOW}📥 Pulling latest changes from Git...${NC}"
-git pull origin main
+# Check if this is first deployment
+if [ ! -f "docker-compose.yml" ]; then
+    echo -e "${RED}❌ docker-compose.yml not found. Are you in the correct directory?${NC}"
+    exit 1
+fi
 
 # Check if .env.production exists
 if [ ! -f .env.production ]; then
     echo -e "${YELLOW}⚠️  .env.production not found. Creating from template...${NC}"
-    cp .env.example .env.production
-    echo -e "${RED}❌ Please update .env.production with your environment variables and run again.${NC}"
-    exit 1
+    if [ -f .env.example ]; then
+        cp .env.example .env.production
+        echo -e "${RED}❌ Please update .env.production with your environment variables and run again.${NC}"
+        exit 1
+    else
+        # Create basic .env.production
+        cat > .env.production << EOF
+NEXT_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id_here
+NODE_ENV=production
+NEXT_TELEMETRY_DISABLED=1
+EOF
+        echo -e "${RED}❌ Created .env.production template. Please update with your environment variables and run again.${NC}"
+        exit 1
+    fi
 fi
 
-# Stop existing containers
+# Create nginx directories if they don't exist
+echo -e "${YELLOW}📁 Creating nginx directories...${NC}"
+mkdir -p nginx/ssl nginx/logs
+
+# Stop existing containers (ignore errors if none exist)
 echo -e "${YELLOW}🛑 Stopping existing containers...${NC}"
-docker-compose down
+docker-compose down || true
 
 # Remove old images to save space
 echo -e "${YELLOW}🧹 Cleaning up old Docker images...${NC}"
-docker image prune -f
+docker image prune -f || true
 
 # Build new images
 echo -e "${YELLOW}🏗️  Building new Docker images...${NC}"
@@ -61,12 +78,22 @@ sleep 30
 echo -e "${YELLOW}📊 Checking container status...${NC}"
 docker-compose ps
 
-# Test health endpoint
+# Test health endpoint with retry
 echo -e "${YELLOW}🏥 Testing health endpoint...${NC}"
-if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Health check passed!${NC}"
-else
-    echo -e "${RED}❌ Health check failed!${NC}"
+for i in {1..5}; do
+    if curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Health check passed!${NC}"
+        break
+    else
+        echo -e "${YELLOW}Health check failed, retrying in 10 seconds... ($i/5)${NC}"
+        sleep 10
+    fi
+done
+
+# Final check
+if ! curl -f http://localhost:3000/api/health > /dev/null 2>&1; then
+    echo -e "${RED}❌ Health check failed after 5 attempts!${NC}"
+    echo -e "${YELLOW}📜 Container logs:${NC}"
     docker-compose logs --tail=50
     exit 1
 fi
