@@ -12,61 +12,63 @@ const Footer: React.FC<FooterProps> = ({ className = "" }) => {
   return (
     <footer className={`py-12 ${className}`} style={{ backgroundColor: '#212437' }}>
       <div className="max-w-6xl mx-auto px-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-8">
-          {/* Logo */}
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-white rounded mr-2"></div>
-            <span className="font-bold text-lg text-white">logoipsum</span>
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center lg:items-start">
+          {/* Left: Logo */}
+          <div className="flex justify-center lg:justify-start lg:col-span-2 lg:items-center lg:h-full">
+            <div className="flex items-center">
+              <div className="w-8 h-8 bg-white rounded mr-2"></div>
+              <span className="font-bold text-lg text-white">logoipsum</span>
+            </div>
           </div>
           
-          <div className="flex flex-col lg:flex-row space-y-8 lg:space-y-0 lg:space-x-12 w-full lg:w-auto">
-            {/* Navigation Links */}
-            <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-8">
-              <Link href="/" className="text-white hover:text-gray-300 transition-colors">
+          {/* Middle: Navigation Links (center aligned) */}
+          <div className="flex justify-center lg:col-span-1 lg:items-center lg:h-full">
+            <nav className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6 text-center">
+              <Link href="/" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
                 Home
               </Link>
-              <Link href="/about" className="text-white hover:text-gray-300 transition-colors">
+              <Link href="/about" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
                 About us
               </Link>
-              <Link href="#" className="text-white hover:text-gray-300 transition-colors">
+              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
                 Terms of use
               </Link>
-              <Link href="#" className="text-white hover:text-gray-300 transition-colors">
+              <Link href="#" className="text-white hover:text-gray-300 transition-colors whitespace-nowrap">
                 Privacy policy
               </Link>
             </nav>
-            
-            {/* Contact and Social */}
-            <div className="text-left lg:text-right">
-              {/* Contact Info */}
-              <div className="space-y-2 mb-4">
-                <div className="flex items-center lg:justify-end">
-                  <Mail className="w-4 h-4 mr-2 text-white" />
-                  <span className="text-white text-sm sm:text-base">support@cakravia.com</span>
-                </div>
-                <div className="flex items-center lg:justify-end">
-                  <Phone className="w-4 h-4 mr-2 text-white" />
-                  <span className="text-white text-sm sm:text-base">+62 812-3456-789</span>
-                </div>
+          </div>
+          
+          {/* Right: Contact and Social */}
+          <div className="text-center lg:text-right lg:col-span-2 lg:flex lg:flex-col lg:justify-center lg:h-full">
+            {/* Contact Info */}
+            <div className="space-y-2 mb-6 lg:mb-8">
+              <div className="flex items-center justify-center lg:justify-end">
+                <Mail className="w-4 h-4 mr-2 text-white" />
+                <span className="text-white text-sm sm:text-base">support@cakravia.com</span>
               </div>
-              
-              {/* Social Media */}
-              <div className="lg:text-right">
-                <p className="text-white mb-2 text-sm sm:text-base">Follow us:</p>
-                <div className="flex lg:justify-end space-x-3">
-                  <Link href="#" aria-label="Facebook">
-                    <Facebook className="w-6 h-6 text-white hover:text-blue-400 cursor-pointer transition-colors" />
-                  </Link>
-                  <Link href="#" aria-label="Instagram">
-                    <Instagram className="w-6 h-6 text-white hover:text-pink-400 cursor-pointer transition-colors" />
-                  </Link>
-                  <Link href="#" aria-label="LinkedIn">
-                    <Linkedin className="w-6 h-6 text-white hover:text-blue-500 cursor-pointer transition-colors" />
-                  </Link>
-                  <Link href="#" aria-label="YouTube">
-                    <Youtube className="w-6 h-6 text-white hover:text-red-500 cursor-pointer transition-colors" />
-                  </Link>
-                </div>
+              <div className="flex items-center justify-center lg:justify-end">
+                <Phone className="w-4 h-4 mr-2 text-white" />
+                <span className="text-white text-sm sm:text-base">+62 812-3456-789</span>
+              </div>
+            </div>
+            
+            {/* Social Media */}
+            <div>
+              <p className="text-white mb-2 text-sm sm:text-base font-bold text-center lg:text-right">Follow us:</p>
+              <div className="flex justify-center lg:justify-end space-x-3">
+                <Link href="#" aria-label="Facebook">
+                  <Facebook className="w-6 h-6 text-white hover:text-blue-400 cursor-pointer transition-colors" />
+                </Link>
+                <Link href="#" aria-label="Instagram">
+                  <Instagram className="w-6 h-6 text-white hover:text-pink-400 cursor-pointer transition-colors" />
+                </Link>
+                <Link href="#" aria-label="LinkedIn">
+                  <Linkedin className="w-6 h-6 text-white hover:text-blue-500 cursor-pointer transition-colors" />
+                </Link>
+                <Link href="#" aria-label="YouTube">
+                  <Youtube className="w-6 h-6 text-white hover:text-red-500 cursor-pointer transition-colors" />
+                </Link>
               </div>
             </div>
           </div>
