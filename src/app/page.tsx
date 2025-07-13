@@ -1,8 +1,8 @@
-// src/app/page.tsx - Updated to show development status for tests
+// src/app/page.tsx - Updated with carousel section and modified test selection
 
 "use client"
 
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,44 +12,126 @@ import Footer from '@/components/Footer';
 // Import your image assets
 import askingQuestionImage from '@/assets/images/hero/asking-question.png';
 import listeningMusicImage from '@/assets/images/learning-assets/listening-music.png';
+import listeningMusicImage2x from '@/assets/images/learning-assets/listening-music-2x.png';
+import TestChatBg from '@/assets/background/TestChatbg.png';
 
 const EnhancedHomepage = () => {
   const { isAuthenticated } = useAuth();
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const carouselRef = useRef(null);
+  const autoSlideRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Carousel content
+  const carouselItems = [
+    {
+      title: "VARK Learning Style Assessment",
+      subtitle: "Uncover Your Unique Learning Blueprint: The VARK Learning Style Assessment.",
+      description: "The VARK Learning Style Assessment on Cakravia is your key to understanding your innate preferences for absorbing and processing information. VARK illuminates whether you learn best visually, aurally, through reading/writing, or kinaesthetically. Discover your dominant learning style(s) and gain invaluable insights to optimize your study habits, enhance retention, and make every learning experience more effective and enjoyable.",
+      available: true,
+      href: "/test"
+    },
+    {
+      title: "Artificial Intelligence Assessment",
+      subtitle: "Validate Your Knowledge: The Definitive Artificial Intelligence Assessment.",
+      description: "Are you confident in your grasp of Artificial Intelligence? Cakravia presents a comprehensive assessment crafted to rigorously test your understanding of AI concepts and technologies. Whether you're an aspiring data scientist, a tech enthusiast, or a professional navigating AI's impact, this assessment provides a clear benchmark of your proficiency. Identify your expertise in key AI domains and gain the clarity needed to advance your skills and career in this pivotal field.",
+      available: false,
+      href: "#"
+    },
+    {
+      title: "Comprehensive Assessment",
+      subtitle: "Build Your Foundation: Discover Your Resilience and Self-Esteem with Cakravia's Comprehensive Assessment.",
+      description: "True learning and growth extend beyond academic knowledge – they are deeply rooted in your inner strength. Cakravia's Comprehensive Assessment offers a profound exploration of two critical pillars of personal development: resilience and self-esteem. This assessment is designed to help you understand your capacity to bounce back from challenges, adapt to change, and maintain a healthy sense of self-worth. Uncover your inherent strengths, identify areas for cultivation, and build an unshakeable foundation for lifelong success and well-being.",
+      available: false,
+      href: "#"
+    },
+    {
+      title: "Behavioral Learning Patterns Assessment",
+      subtitle: "Unpack Your Habits, Optimize Your Learning: Discover Your Behavioral Learning Patterns.",
+      description: "Ever wondered why some study sessions are incredibly productive while others feel like a struggle? Cakravia's Behavioral Learning Patterns assessment delves beyond what you learn to explore how you learn. This insightful tool analyzes your actual learning behaviors, habits, and study patterns, revealing the routines and approaches that either empower or hinder your progress. Gain a deeper understanding of your cognitive tendencies, identify areas for improvement, and cultivate more effective, sustainable learning practices.",
+      available: false,
+      href: "#"
+    }
+  ];
 
   const testCards = [
     {
       title: "Visual, Auditory, Reading, Kinesthetic",
-      subtitle: "VARK Learning Style Assessment",
       buttonText: "Start Exam",
       href: "/test",
-      description: "Discover how you learn best through our comprehensive VARK assessment",
       available: true
     },
     {
       title: "AI Knowledge",
-      subtitle: "Artificial Intelligence Assessment",
       buttonText: "Coming Soon",
       href: "#",
-      description: "Test your understanding of AI concepts and technologies",
       available: false
     },
     {
       title: "Learning Behavior",
-      subtitle: "Behavioral Learning Patterns",
       buttonText: "Coming Soon", 
       href: "#",
-      description: "Analyze your learning behaviors and study patterns",
       available: false
     },
     {
       title: "Additional Measurement",
-      subtitle: "Comprehensive Assessment",
       buttonText: "Coming Soon",
       href: "#",
-      description: "Additional metrics to understand your learning profile",
       available: false
     }
   ];
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
+    resetAutoSlide();
+  };
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + carouselItems.length) % carouselItems.length);
+    resetAutoSlide();
+  };
+
+  const goToSlide = (index: number) => {
+    setCurrentSlide(index);
+    resetAutoSlide();
+  };
+
+  // Auto slide functionality
+  const startAutoSlide = () => {
+    autoSlideRef.current = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
+    }, 15000);
+  };
+
+  const resetAutoSlide = () => {
+    if (autoSlideRef.current) {
+      clearInterval(autoSlideRef.current);
+    }
+    startAutoSlide();
+  };
+
+  // Touch/Mouse drag functionality - REMOVED
+  // Keeping only the auto-slide pause/resume functionality
+  
+  // Initialize auto slide on component mount
+  useEffect(() => {
+    startAutoSlide();
+    return () => {
+      if (autoSlideRef.current) {
+        clearInterval(autoSlideRef.current);
+      }
+    };
+  }, []);
+
+  // Pause auto slide when user hovers over carousel
+  const handleMouseEnter = () => {
+    if (autoSlideRef.current) {
+      clearInterval(autoSlideRef.current);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    startAutoSlide();
+  };
 
   return (
     <div className="min-h-screen bg-white" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
@@ -87,15 +169,17 @@ const EnhancedHomepage = () => {
             {/* Text Content */}
             <div className="flex-1 text-center lg:text-left lg:pr-8">
               <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-4 sm:mb-6 text-white leading-tight">
-                People Have Their<br />
-                <span style={{ color: '#ABD305' }}>Own Preferences</span>
+                Discover Your Learning<br />
+                <span style={{ color: '#ABD305' }}>Superpower</span>
               </h1>
-              <p className="text-lg sm:text-xl mb-6 sm:mb-8 text-blue-100 leading-relaxed">
-                Ever wonder what your learning<br className="hidden sm:block" />
-                preferences are?
+              <h2 className="text-xl sm:text-2xl lg:text-3xl mb-6 sm:mb-8 text-blue-100 leading-relaxed font-medium">
+                Ever wondered how you truly learn best?
+              </h2>
+              <p className="text-base sm:text-lg mb-6 sm:mb-8 text-blue-200 leading-relaxed">
+                Cakravia is your dedicated platform for uncovering the learning competencies that define your success. Our expertly designed assessments, from the renowned VARK Learning Style to in-depth Artificial Intelligence, Behavioral Learning Patterns, and Comprehensive Assessments, offer unparalleled clarity into your cognitive landscape.
               </p>
-              <p className="text-base sm:text-lg mb-8 sm:mb-10 text-blue-200">
-                Discover your unique learning style with our comprehensive VARK assessment and unlock your full potential.
+              <p className="text-base sm:text-lg mb-8 sm:mb-10 text-blue-200 leading-relaxed">
+                Discover your strengths, understand your patterns, and unlock a more effective, fulfilling learning experience.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 items-center justify-center lg:justify-start">
@@ -150,7 +234,137 @@ const EnhancedHomepage = () => {
         </div>
       </section>
 
-      {/* Enhanced Test Selection Section */}
+      {/* New Carousel Section */}
+      <section 
+        className="py-12 sm:py-16 lg:py-20 relative overflow-hidden bg-white"
+      >
+        {/* Left Navigation Arrow */}
+        <button
+          onClick={prevSlide}
+          className="absolute left-4 sm:left-6 lg:left-8 top-1/2 transform -translate-y-1/2 z-30 p-3 sm:p-4 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          style={{ color: '#2A3262' }}
+        >
+          <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        {/* Right Navigation Arrow */}
+        <button
+          onClick={nextSlide}
+          className="absolute right-4 sm:right-6 lg:right-8 top-1/2 transform -translate-y-1/2 z-30 p-3 sm:p-4 bg-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-110"
+          style={{ color: '#2A3262' }}
+        >
+          <svg className="w-6 h-6 sm:w-8 sm:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
+        
+        <div className="max-w-[95vw] mx-auto px-4 sm:px-6 lg:px-8 relative z-20">
+          <div className="flex items-center justify-center min-h-[500px] sm:min-h-[600px]">
+            {/* Much Wider Carousel Card - Takes up most of screen width */}
+            <div className="w-full">
+              <div 
+                ref={carouselRef}
+                className="group relative rounded-2xl p-6 sm:p-8 lg:p-12 xl:p-16 transform hover:scale-[1.02] transition-all duration-300 shadow-lg hover:shadow-2xl"
+                style={{ backgroundColor: '#ABD305' }}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
+              >
+                <div className="px-4 sm:px-8 lg:px-12 xl:px-16">
+                  {/* First Row: Text Content and Image */}
+                  <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 xl:gap-20 mb-8">
+                    {/* Text Content - Left Column */}
+                    <div className="flex-1 text-center lg:text-left">
+                      <h3 className="text-white font-bold mb-4 sm:mb-6 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl leading-tight">
+                        {carouselItems[currentSlide].title}
+                      </h3>
+                      <h4 className="text-white text-lg sm:text-xl lg:text-2xl xl:text-3xl font-medium mb-6 sm:mb-8 opacity-90 leading-relaxed italic">
+                        {carouselItems[currentSlide].subtitle}
+                      </h4>
+                      <p className="text-white text-base sm:text-lg lg:text-xl xl:text-xl mb-0 opacity-90 leading-relaxed max-w-4xl mx-auto lg:mx-0">
+                        {carouselItems[currentSlide].description}
+                      </p>
+                      
+                      {!carouselItems[currentSlide].available && (
+                        <p className="text-white text-base sm:text-lg font-semibold opacity-90 mt-6">
+                          🚧 In Development
+                        </p>
+                      )}
+                    </div>
+                    
+                    {/* Image - Right Column */}
+                    <div className="flex-shrink-0 order-first lg:order-last">
+                      <div className="w-44 h-44 sm:w-56 sm:h-56 lg:w-72 lg:h-72 xl:w-80 xl:h-80 flex items-center justify-center">
+                        <Image 
+                          src={listeningMusicImage2x} 
+                          alt={carouselItems[currentSlide].title} 
+                          width={320} 
+                          height={320}
+                          className="object-contain w-full h-full"
+                          draggable={false}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Second Row: Button Only */}
+                  <div className="flex justify-center">
+                    {carouselItems[currentSlide].available ? (
+                      isAuthenticated ? (
+                        <Link
+                          href={carouselItems[currentSlide].href}
+                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                          style={{ color: '#2A3262' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Start Exam
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/login"
+                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                          style={{ color: '#2A3262' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          Start Exam
+                        </Link>
+                      )
+                    ) : (
+                      <button
+                        disabled
+                        className="px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-gray-300 rounded-lg font-semibold text-base sm:text-lg lg:text-xl cursor-not-allowed text-gray-500 shadow-md"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Coming Soon
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Bottom Navigation Indicators */}
+          <div className="flex justify-center items-center gap-4 mt-8">
+            <div className="flex gap-3">
+              {carouselItems.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-3 h-3 sm:w-4 sm:h-4 rounded-full transition-all duration-300 ${
+                    index === currentSlide 
+                      ? 'bg-blue-600 shadow-lg scale-125' 
+                      : 'bg-gray-400 hover:bg-gray-500'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Modified Test Selection Section */}
       <section className="py-12 sm:py-16 lg:py-20 relative overflow-hidden" style={{ backgroundColor: '#DFE4FF' }}>
         <div className="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
           <div className="text-center mb-12 sm:mb-16">
@@ -173,7 +387,7 @@ const EnhancedHomepage = () => {
                   <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
                     <Image 
                       src={listeningMusicImage} 
-                      alt={card.subtitle} 
+                      alt={card.title} 
                       width={80} 
                       height={80}
                       className="object-contain w-full h-full"
@@ -182,15 +396,9 @@ const EnhancedHomepage = () => {
                 </div>
                 
                 <div className="flex-grow">
-                  <h3 className="text-white font-bold mb-2 text-lg sm:text-lg leading-tight">
-                    {card.subtitle}
-                  </h3>
                   <h4 className="text-white text-base font-medium mb-3 sm:mb-4 text-sm leading-tight opacity-90">
                     {card.title}
                   </h4>
-                  <p className="text-white text-base sm:text-sm mb-4 sm:mb-6 opacity-80 leading-relaxed">
-                    {card.description}
-                  </p>
                   {!card.available && (
                     <p className="text-white text-xs font-semibold opacity-90 mb-2">
                       🚧 In Development
@@ -302,7 +510,7 @@ const EnhancedHomepage = () => {
                 </h3>
                 
                 <div className="mb-4 sm:mb-6">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 rounded-full bg-white bg-opacity-20 flex items-center justify-center">
+                  <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
                     <Image 
                       src={listeningMusicImage} 
                       alt="Academic Potential Test" 
