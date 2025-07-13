@@ -430,13 +430,12 @@ const TestInterface = () => {
 
     return (
       <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
-        <div className="flex text-sm text-white/90 mb-4 font-medium">
-          <span className="flex items-center">
+        <div className="grid grid-cols-2 gap-4 text-sm text-white/90 mb-4 font-medium">
+          <span className="flex items-center justify-start">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            Strongly Disagree - 
+            Strongly Disagree
           </span>
-          <div className="flex-1"></div>
-          <span className="flex items-center">
+          <span className="flex items-center justify-end">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
             Strongly Agree
           </span>
@@ -454,7 +453,6 @@ const TestInterface = () => {
         </div>
         
         <div className="text-center text-white space-y-1">
-          {/* <div className="text-xl font-bold">{value.toFixed(1)}/{maxWeight}</div> */}
           <div className="text-sm opacity-90">{actualPoints.toFixed(1)}/{maxWeight} points</div>
         </div>
       </div>
