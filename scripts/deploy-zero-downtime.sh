@@ -556,11 +556,60 @@ main() {
         exit 1
     fi
     
-    # Verify container is reachable via Docker network
-    if ! docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
-        log_error "Target container not reachable via Docker network before traffic switch"
+    # Verify nginx container is running before network test
+    if ! is_container_running "cakravia-nginx"; then
+        log_error "Nginx container is not running - cannot verify network connectivity"
         rollback_deployment "$active_deployment" "$inactive_deployment"
         exit 1
+    fi
+    
+    # Wait for nginx container to stabilize if it was recently restarted
+    local nginx_status=$(docker inspect cakravia-nginx --format='{{.State.Status}}' 2>/dev/null || echo "unknown")
+    if [ "$nginx_status" = "restarting" ]; then
+        log "Waiting for nginx container to stabilize..."
+        sleep 10
+        if ! is_container_running "cakravia-nginx"; then
+            log_error "Nginx container failed to stabilize"
+            rollback_deployment "$active_deployment" "$inactive_deployment"
+            exit 1
+        fi
+    fi
+    
+    # Verify container is reachable via Docker network
+    if ! docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
+        log_warning "Target container not reachable via Docker network - checking network configuration..."
+        
+        # Check if containers are on the same network
+        local nginx_networks=$(docker inspect cakravia-nginx --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null || echo "")
+        local app_networks=$(docker inspect "cakravia-app-${inactive_deployment}" --format='{{range $k, $v := .NetworkSettings.Networks}}{{$k}} {{end}}' 2>/dev/null || echo "")
+        
+        log "Nginx networks: ${nginx_networks}"
+        log "App networks: ${app_networks}"
+        
+        # Try to connect to the same network if needed
+        local main_network="cakravia_cakravia-network"
+        if echo "$nginx_networks" | grep -q "$main_network" && ! echo "$app_networks" | grep -q "$main_network"; then
+            log "Connecting ${inactive_deployment} container to ${main_network}..."
+            if docker network connect "$main_network" "cakravia-app-${inactive_deployment}" 2>/dev/null; then
+                sleep 2
+                # Retry the connectivity test
+                if docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
+                    log_success "Network connectivity restored after connecting to correct network"
+                else
+                    log_error "Still cannot reach container after network connection"
+                    rollback_deployment "$active_deployment" "$inactive_deployment"
+                    exit 1
+                fi
+            else
+                log_error "Failed to connect container to network"
+                rollback_deployment "$active_deployment" "$inactive_deployment"
+                exit 1
+            fi
+        else
+            log_error "Target container not reachable via Docker network"
+            rollback_deployment "$active_deployment" "$inactive_deployment"
+            exit 1
+        fi
     fi
     
     # Switch traffic to new deployment
