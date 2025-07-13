@@ -236,8 +236,29 @@ const EnhancedHomepage = () => {
 
       {/* New Carousel Section */}
       <section 
-        className="py-12 sm:py-16 lg:py-20 relative overflow-hidden bg-white"
+        className="py-12 sm:py-16 lg:py-20 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, #DFE4FF 0%, #F8FAFF 50%, #E8ECFF 100%)',
+          fontFamily: 'Merriweather Sans, sans-serif'
+        }}
       >
+        {/* Decorative Background Elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          {/* Large decorative circles */}
+          <div className="absolute -top-20 -left-20 w-40 h-40 bg-blue-200 bg-opacity-30 rounded-full"></div>
+          <div className="absolute -bottom-16 -right-16 w-32 h-32 bg-green-200 bg-opacity-25 rounded-full"></div>
+          <div className="absolute top-1/3 -right-8 w-24 h-24 bg-yellow-200 bg-opacity-20 rounded-full"></div>
+          <div className="absolute bottom-1/4 -left-8 w-28 h-28 bg-purple-200 bg-opacity-15 rounded-full"></div>
+          
+          {/* Small floating dots */}
+          <div className="absolute top-20 left-1/4 w-3 h-3 bg-blue-400 bg-opacity-40 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/2 left-3/4 w-2 h-2 bg-green-400 bg-opacity-50 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+          <div className="absolute bottom-20 left-1/3 w-4 h-4 bg-yellow-400 bg-opacity-30 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+          
+          {/* Subtle geometric shapes */}
+          <div className="absolute top-1/4 right-1/4 w-6 h-6 border-2 border-blue-300 border-opacity-30 rotate-45"></div>
+          <div className="absolute bottom-1/3 left-1/4 w-8 h-8 border-2 border-green-300 border-opacity-25 rotate-12"></div>
+        </div>
         {/* Left Navigation Arrow */}
         <button
           onClick={prevSlide}
@@ -276,18 +297,19 @@ const EnhancedHomepage = () => {
                   <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16 xl:gap-20 mb-8">
                     {/* Text Content - Left Column */}
                     <div className="flex-1 text-center lg:text-left">
-                      <h3 className="text-white font-bold mb-4 sm:mb-6 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl leading-tight">
-                        {carouselItems[currentSlide].title}
+                      <h3 className="font-bold mb-4 sm:mb-6 text-2xl sm:text-3xl lg:text-4xl xl:text-5xl leading-tight text-white" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
+                        <span style={{ color: '#F2EA6B' }}>{carouselItems[currentSlide].title.replace(' Assessment', '')}</span>{' '}
+                        <span className="text-white">Assessment</span>
                       </h3>
-                      <h4 className="text-white text-lg sm:text-xl lg:text-2xl xl:text-3xl font-medium mb-6 sm:mb-8 opacity-90 leading-relaxed italic">
+                      <h4 className="text-lg sm:text-xl lg:text-2xl xl:text-3xl font-medium mb-6 sm:mb-8 leading-relaxed italic" style={{ color: '#F2EA6B', textShadow: '2px 2px 4px rgba(0,0,0,0.4)' }}>
                         {carouselItems[currentSlide].subtitle}
                       </h4>
-                      <p className="text-white text-base sm:text-lg lg:text-xl xl:text-xl mb-0 opacity-90 leading-relaxed max-w-4xl mx-auto lg:mx-0">
+                      <p className="text-base sm:text-lg lg:text-xl xl:text-xl mb-0 leading-relaxed max-w-4xl mx-auto lg:mx-0 text-white" style={{ textShadow: '1px 1px 3px rgba(0,0,0,0.3)' }}>
                         {carouselItems[currentSlide].description}
                       </p>
                       
                       {!carouselItems[currentSlide].available && (
-                        <p className="text-white text-base sm:text-lg font-semibold opacity-90 mt-6">
+                        <p className="text-base sm:text-lg font-semibold mt-6" style={{ color: '#F2EA6B', textShadow: '1px 1px 3px rgba(0,0,0,0.4)' }}>
                           🚧 In Development
                         </p>
                       )}
@@ -301,7 +323,7 @@ const EnhancedHomepage = () => {
                           alt={carouselItems[currentSlide].title} 
                           width={320} 
                           height={320}
-                          className="object-contain w-full h-full"
+                          className="object-contain w-full h-full drop-shadow-lg"
                           draggable={false}
                         />
                       </div>
@@ -314,7 +336,7 @@ const EnhancedHomepage = () => {
                       isAuthenticated ? (
                         <Link
                           href={carouselItems[currentSlide].href}
-                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                           style={{ color: '#2A3262' }}
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -323,7 +345,7 @@ const EnhancedHomepage = () => {
                       ) : (
                         <Link
                           href="/login"
-                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                          className="inline-flex items-center justify-center px-8 sm:px-10 lg:px-12 py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg lg:text-xl hover:bg-gray-50 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                           style={{ color: '#2A3262' }}
                           onClick={(e) => e.stopPropagation()}
                         >
@@ -396,11 +418,11 @@ const EnhancedHomepage = () => {
                 </div>
                 
                 <div className="flex-grow">
-                  <h4 className="text-white text-base font-medium mb-3 sm:mb-4 text-sm leading-tight opacity-90">
+                  <h4 className="text-white text-base font-medium mb-3 sm:mb-4 text-sm leading-tight opacity-90" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                     {card.title}
                   </h4>
                   {!card.available && (
-                    <p className="text-white text-xs font-semibold opacity-90 mb-2">
+                    <p className="text-white text-xs font-semibold opacity-90 mb-2" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                       🚧 In Development
                     </p>
                   )}
@@ -472,27 +494,27 @@ const EnhancedHomepage = () => {
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-12">
             {/* Text Content */}
             <div className="flex-1 text-center lg:text-left order-2 lg:order-1">
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-4 sm:mb-6" style={{ color: '#2A3262' }}>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 sm:mb-8" style={{ color: '#2A3262' }}>
                 We Also Have<br />
                 Academic Potential<br />
                 Test ( TPA )
               </h2>
-              <p className="text-base sm:text-lg mb-4 sm:mb-6" style={{ color: '#2A3262' }}>
+              <p className="text-lg sm:text-xl lg:text-2xl xl:text-3xl mb-6 sm:mb-8" style={{ color: '#2A3262' }}>
                 To measure your intellectual abilities<br className="hidden sm:block" />
                 in terms of reasoning, logic, and<br className="hidden sm:block" />
                 conceptual understanding.
               </p>
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6 text-base sm:text-lg lg:text-xl text-gray-600">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-green-500"></div>
                   <span>Comprehensive Analysis</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-blue-500"></div>
                   <span>Detailed Report</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-purple-500"></div>
                   <span>Professional Insights</span>
                 </div>
               </div>
@@ -504,18 +526,18 @@ const EnhancedHomepage = () => {
                 className="rounded-2xl p-6 sm:p-8 text-center w-full max-w-sm transform hover:scale-105 transition-all duration-300 shadow-lg"
                 style={{ backgroundColor: '#ABD305' }}
               >
-                <h3 className="text-white font-bold text-lg sm:text-xl mb-4 sm:mb-6">
+                <h3 className="text-white font-bold text-xl sm:text-2xl lg:text-3xl mb-4 sm:mb-6" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
                   Academic<br />
                   Potential Test
                 </h3>
                 
                 <div className="mb-4 sm:mb-6">
-                  <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
+                  <div className="w-24 h-24 sm:w-32 sm:h-32 mx-auto mb-3 sm:mb-4 flex items-center justify-center">
                     <Image 
                       src={listeningMusicImage} 
                       alt="Academic Potential Test" 
-                      width={48} 
-                      height={48}
+                      width={80} 
+                      height={80}
                       className="object-contain"
                     />
                   </div>
@@ -526,18 +548,18 @@ const EnhancedHomepage = () => {
                   </div>
                 </div>
                 
-                <p className="text-white text-xs font-semibold opacity-90 mb-4">
+                <p className="text-white text-sm sm:text-base font-semibold opacity-90 mb-4" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                   🚧 In Development
                 </p>
                 
                 <button 
                   disabled
-                  className="w-full py-2 sm:py-3 bg-gray-300 rounded-lg font-semibold text-sm sm:text-base cursor-not-allowed text-gray-500 shadow-md"
+                  className="w-full py-3 sm:py-4 bg-gray-300 rounded-lg font-semibold text-base sm:text-lg cursor-not-allowed text-gray-500 shadow-md"
                 >
                   Coming Soon
                 </button>
                 
-                <p className="text-white text-xs mt-3 opacity-80">
+                <p className="text-white text-xs sm:text-sm mt-3 opacity-80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
                   Advanced Assessment - Stay Tuned
                 </p>
               </div>
