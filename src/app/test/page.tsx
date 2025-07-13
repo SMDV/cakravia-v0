@@ -454,7 +454,7 @@ const TestInterface = () => {
         </div>
         
         <div className="text-center text-white space-y-1">
-          <div className="text-xl font-bold">{value.toFixed(1)}/{maxWeight}</div>
+          {/* <div className="text-xl font-bold">{value.toFixed(1)}/{maxWeight}</div> */}
           <div className="text-sm opacity-90">{actualPoints.toFixed(1)}/{maxWeight} points</div>
         </div>
       </div>
