@@ -51,7 +51,7 @@ const TestInterface = () => {
     error: null
   });
   
-  const [currentSliderValue, setCurrentSliderValue] = useState(50);
+  const [currentSliderValue, setCurrentSliderValue] = useState(1.0);
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [showCrossDeviceWarning, setShowCrossDeviceWarning] = useState(false);
@@ -233,8 +233,8 @@ const TestInterface = () => {
           const currentQuestion = test.questions[savedProgress.currentQuestionIndex];
           const savedAnswer = savedProgress.answers[currentQuestion?.id];
           if (savedAnswer && currentQuestion) {
-            const sliderValue = (savedAnswer.point / currentQuestion.max_weight) * 100;
-            setCurrentSliderValue(sliderValue);
+            const sliderValue = (savedAnswer.point / currentQuestion.max_weight) * currentQuestion.max_weight;
+            setCurrentSliderValue(Math.max(1.0, sliderValue));
           }
 
           addLog(`✅ Test resumed from question ${savedProgress.currentQuestionIndex + 1}`);
@@ -305,6 +305,9 @@ const TestInterface = () => {
       text: firstQuestion.body,
       questionId: firstQuestion.id
     }]);
+    
+    // Set initial slider value to minimum (1.0)
+    setCurrentSliderValue(1.0);
   }, [testState.test, addLog]);
 
   // Format time helper
@@ -335,13 +338,13 @@ const TestInterface = () => {
     if (!test) return;
 
     const currentQuestion = test.questions[currentQuestionIndex];
+    const maxWeight = currentQuestion.max_weight;
     
-    // Convert slider value to answer
-    const scaledValue = Math.max(1, Math.round((currentSliderValue / 100) * 4) + 1);
+    // Convert slider value directly to answer (now using decimal values)
     const answer: VarkAnswer = {
       question_id: currentQuestion.id,
       category_id: currentQuestion.category.id,
-      point: Math.round((scaledValue / 5) * currentQuestion.max_weight)
+      point: Math.round((currentSliderValue / maxWeight) * maxWeight * 10) / 10 // Round to 1 decimal place
     };
 
     // Add user's slider answer to chat history
@@ -363,7 +366,7 @@ const TestInterface = () => {
       answers: newAnswers
     }));
 
-    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${scaledValue}/5 (${answer.point}/${currentQuestion.max_weight} points)`);
+    addLog(`📝 Answered question ${currentQuestionIndex + 1}: ${currentSliderValue.toFixed(1)}/${maxWeight} (${answer.point}/${maxWeight} points)`);
 
     const nextIndex = currentQuestionIndex + 1;
     
@@ -381,7 +384,7 @@ const TestInterface = () => {
         ...prev, 
         currentQuestionIndex: nextIndex 
       }));
-      setCurrentSliderValue(50);
+      setCurrentSliderValue(1.0); // Reset to minimum value for next question
     } else {
       // All questions completed, submit answers
       addLog('🏁 All questions answered, submitting...');
@@ -424,8 +427,7 @@ const TestInterface = () => {
     const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
     const maxWeight = currentQuestion?.max_weight || 5;
     
-    const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1);
-    const actualPoints = Math.round((scaledValue / 5) * maxWeight);
+    const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
 
     return (
       <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
@@ -443,17 +445,17 @@ const TestInterface = () => {
         <div className="relative h-3 bg-white/20 rounded-full mb-4">
           <div
             className="absolute h-full bg-gradient-to-r from-green-400 to-blue-300 rounded-full transition-all duration-300"
-            style={{ width: `${((scaledValue - 1) / 4) * 100}%` }}
+            style={{ width: `${((value - 1) / (maxWeight - 1)) * 100}%` }}
           />
           <div
             className="absolute -top-1 w-5 h-5 bg-white rounded-full shadow-lg border-2 border-blue-200 transition-all duration-300"
-            style={{ left: `calc(${((scaledValue - 1) / 4) * 100}% - 10px)` }}
+            style={{ left: `calc(${((value - 1) / (maxWeight - 1)) * 100}% - 10px)` }}
           />
         </div>
         
         <div className="text-center text-white space-y-1">
-          <div className="text-xl font-bold">{scaledValue}/5</div>
-          <div className="text-sm opacity-90">{actualPoints}/{maxWeight} points</div>
+          <div className="text-xl font-bold">{value.toFixed(1)}/{maxWeight}</div>
+          <div className="text-sm opacity-90">{actualPoints.toFixed(1)}/{maxWeight} points</div>
         </div>
       </div>
     );
@@ -464,8 +466,7 @@ const TestInterface = () => {
     const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
     const maxWeight = currentQuestion?.max_weight || 5;
     
-    const scaledValue = Math.max(1, Math.round((value / 100) * 4) + 1);
-    const actualPoints = Math.round((scaledValue / 5) * maxWeight);
+    const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
 
     return (
       <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
@@ -483,39 +484,35 @@ const TestInterface = () => {
         <div className="relative px-4 mb-4">
           <input
             type="range"
-            min="0"
-            max="100"
+            min="1"
+            max={maxWeight}
+            step="0.1"
             value={value}
-            onChange={(e) => onChange(parseInt(e.target.value))}
+            onChange={(e) => onChange(parseFloat(e.target.value))}
             className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
             style={{
               background: `linear-gradient(to right, 
                 #f87171 0%, 
-                #fbbf24 ${value/2}%, 
-                #34d399 ${value}%, 
-                #e5e7eb ${value}%, 
+                #fbbf24 ${((value - 1) / (maxWeight - 1)) * 50}%, 
+                #34d399 ${((value - 1) / (maxWeight - 1)) * 100}%, 
+                #e5e7eb ${((value - 1) / (maxWeight - 1)) * 100}%, 
                 #e5e7eb 100%)`
             }}
           />
           
           <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
-            <span>1</span>
-            <span>2</span>
-            <span>3</span>
-            <span>4</span>
-            <span>5</span>
+            <span>1.0</span>
+            {maxWeight > 2 && <span>{(maxWeight / 2).toFixed(1)}</span>}
+            <span>{maxWeight.toFixed(1)}</span>
           </div>
         </div>
         
         <div className="text-center">
-          {/* <div className="text-2xl font-bold mb-1" style={{ color: '#2A3262' }}>
-            {scaledValue}/5 points
-          </div> */}
           <div className="text-base text-gray-600 mb-1">
-            {actualPoints} / {maxWeight} points
+            {actualPoints.toFixed(1)} / {maxWeight} points
           </div>
           <div className="text-xs text-gray-500">
-            Category: {currentQuestion?.category.name || 'Unknown'}
+            Value: {value.toFixed(1)} | Category: {currentQuestion?.category.name || 'Unknown'}
           </div>
         </div>
 
@@ -660,7 +657,7 @@ const TestInterface = () => {
   }
 
   return (
-    <div className="min-h-screen relative" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+    <div className="h-screen flex flex-col overflow-hidden relative" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Cross-Device Warning Modal */}
       <CrossDeviceWarning
         isOpen={showCrossDeviceWarning}
@@ -689,46 +686,51 @@ const TestInterface = () => {
       </div>
 
       {/* Header */}
-      <Header currentPage="test" transparent />
+      <div className="relative z-10 flex-shrink-0">
+        <Header currentPage="test" transparent />
+      </div>
 
-      <div className="relative z-10 flex justify-center py-4 sm:py-8 px-4 sm:px-6">
-        <div className="w-full max-w-6xl">
-          {/* Status & Timer */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4 sm:mb-6">
-            {/* Status */}
+      {/* Main Content Container */}
+      <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full min-h-0">
+        {/* Status & Timer */}
+        <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+          {/* Status */}
+          <div 
+            className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
+            style={{ backgroundColor: '#2A3262' }}
+          >
+            <div className="text-xs sm:text-sm mb-1">Status</div>
+            <div className="capitalize text-sm sm:text-base">{testState.step.replace('_', ' ')}</div>
+          </div>
+
+          {/* Timer (only show during testing) */}
+          {testState.step === 'testing' && (
             <div 
               className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
               style={{ backgroundColor: '#2A3262' }}
             >
-              <div className="text-xs sm:text-sm mb-1">Status</div>
-              <div className="capitalize text-sm sm:text-base">{testState.step.replace('_', ' ')}</div>
-            </div>
-
-            {/* Timer (only show during testing) */}
-            {testState.step === 'testing' && (
-              <div 
-                className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
-                style={{ backgroundColor: '#2A3262' }}
-              >
-                <div className="text-xs sm:text-sm mb-1 flex items-center justify-center gap-1">
-                  <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                  Time left
-                </div>
-                <div className="text-lg sm:text-2xl">{formatTime(testState.timeLeft)}</div>
+              <div className="text-xs sm:text-sm mb-1 flex items-center justify-center gap-1">
+                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
+                Time left
               </div>
-            )}
-          </div>
+              <div className="text-lg sm:text-2xl">{formatTime(testState.timeLeft)}</div>
+            </div>
+          )}
+        </div>
 
-          {/* Main Content Area */}
-          {testState.step === 'loading' && (
+        {/* Main Content Area */}
+        {testState.step === 'loading' && (
+          <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 sm:p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-lg sm:text-xl font-semibold mb-2">Preparing Your Test...</h2>
               <p className="text-gray-600 text-sm sm:text-base">Setting up your VARK Learning Style Assessment</p>
             </div>
-          )}
+          </div>
+        )}
 
-          {testState.step === 'ready' && (
+        {testState.step === 'ready' && (
+          <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 sm:p-8 text-center">
               <h2 className="text-xl sm:text-2xl font-bold mb-4" style={{ color: '#2A3262' }}>Ready to Start!</h2>
               <p className="text-gray-600 mb-6 text-sm sm:text-base leading-relaxed">
@@ -748,70 +750,73 @@ const TestInterface = () => {
                 <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {testState.step === 'testing' && (
-            <>
-              {/* Chat History Container */}
-              <div 
-                className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 sm:mb-6 h-96 sm:h-[550px] overflow-y-auto p-4 sm:p-6"
-                ref={chatContainerRef}
-              >
-                <div className="space-y-4 sm:space-y-6">
-                  {chatHistory.map((message, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-end gap-2 sm:gap-3 ${
-                        message.sender === "user" ? "justify-end" : "justify-start"
-                      }`}
-                    >
-                      {/* AI Avatar (left side) */}
-                      {message.sender === "ai" && (
-                        <div className="flex-shrink-0">
-                          <div 
-                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: '#2A3262' }}
-                          >
-                            <User className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Message Content */}
-                      {message.type === "text" && (
-                        <div
-                          className="max-w-[85%] sm:max-w-[70%] p-3 sm:p-4 rounded-lg text-white text-sm sm:text-base"
-                          style={{ backgroundColor: '#ABD305' }}
+        {testState.step === 'testing' && (
+          <>
+            {/* Chat History Container - Takes remaining space and scrolls */}
+            <div 
+              className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 overflow-y-auto p-4 sm:p-6 min-h-0"
+              ref={chatContainerRef}
+            >
+              <div className="space-y-4 sm:space-y-6">
+                {chatHistory.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`flex items-end gap-2 sm:gap-3 ${
+                      message.sender === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    {/* AI Avatar (left side) */}
+                    {message.sender === "ai" && (
+                      <div className="flex-shrink-0">
+                        <div 
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#2A3262' }}
                         >
-                          {message.text}
+                          <User className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {message.type === "slider_answer" && (
-                        <div className="max-w-[90%] sm:max-w-[80%] p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#2A3262' }}>
-                          <SliderAnswer value={message.sliderValue!} questionId={message.questionId} />
-                        </div>
-                      )}
+                    {/* Message Content */}
+                    {message.type === "text" && (
+                      <div
+                        className="max-w-[85%] sm:max-w-[70%] p-3 sm:p-4 rounded-lg text-white text-sm sm:text-base"
+                        style={{ backgroundColor: '#DFE4FF', color: '#2A3262' }}
+                      >
+                        {message.text}
+                      </div>
+                    )}
 
-                      {/* User Avatar (right side) */}
-                      {message.sender === "user" && (
-                        <div className="flex flex-col items-center gap-1">
-                          <div 
-                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
-                            style={{ backgroundColor: '#2A3262' }}
-                          >
-                            <User className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
-                          </div>
-                          <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
+                    {message.type === "slider_answer" && (
+                      <div className="max-w-[90%] sm:max-w-[80%] p-3 sm:p-4 rounded-lg" style={{ backgroundColor: '#2A3262' }}>
+                        <SliderAnswer value={message.sliderValue!} questionId={message.questionId} />
+                      </div>
+                    )}
+
+                    {/* User Avatar (right side) */}
+                    {message.sender === "user" && (
+                      <div className="flex flex-col items-center gap-1">
+                        <div 
+                          className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: '#2A3262' }}
+                        >
+                          <User className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
                         </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        <Check className="w-3 h-3 sm:w-4 sm:h-4 text-green-500" />
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
+            </div>
 
+            {/* Fixed Bottom Section - Input and Controls */}
+            <div className="flex-shrink-0 space-y-4">
               {/* Current Answer Input */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 mb-4 sm:mb-6">
+              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4">
                 <div className="flex items-center justify-center">
                   <SliderInput 
                     value={currentSliderValue}
@@ -845,18 +850,22 @@ const TestInterface = () => {
                   {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Finish Assessment' : 'Next Question'}
                 </button>
               </div>
-            </>
-          )}
+            </div>
+          </>
+        )}
 
-          {testState.step === 'submitting' && (
+        {testState.step === 'submitting' && (
+          <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 sm:p-8 text-center">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
               <h2 className="text-lg sm:text-xl font-semibold mb-2">Processing Your Results...</h2>
               <p className="text-gray-600 text-sm sm:text-base">Please wait while we analyze your learning style preferences.</p>
             </div>
-          )}
+          </div>
+        )}
 
-          {testState.step === 'completed' && (
+        {testState.step === 'completed' && (
+          <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 sm:p-8 text-center">
               <Check className="w-12 h-12 sm:w-16 sm:h-16 text-green-500 mx-auto mb-4" />
               <h2 className="text-xl sm:text-2xl font-bold mb-4 text-green-700">Assessment Completed!</h2>
@@ -864,9 +873,11 @@ const TestInterface = () => {
                 Your VARK assessment has been submitted successfully. Redirecting to your results...
               </p>
             </div>
-          )}
+          </div>
+        )}
 
-          {testState.step === 'error' && (
+        {testState.step === 'error' && (
+          <div className="flex-1 flex items-center justify-center">
             <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-6 sm:p-8 text-center">
               <AlertCircle className="w-12 h-12 sm:w-16 sm:h-16 text-red-500 mx-auto mb-4" />
               <h2 className="text-xl sm:text-2xl font-bold mb-4 text-red-700">Something went wrong</h2>
@@ -878,24 +889,24 @@ const TestInterface = () => {
                 Try Again
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {/* Debug Logs (only show in development) */}
-          {process.env.NODE_ENV === 'development' && logs.length > 0 && (
-            <div className="mt-4 sm:mt-6 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6">
-              <h3 className="text-base sm:text-lg font-semibold mb-4">Debug Logs</h3>
-              <div className="bg-gray-100 p-3 sm:p-4 rounded-lg max-h-32 sm:max-h-48 overflow-y-auto">
-                <div className="space-y-1 font-mono text-xs">
-                  {logs.map((log, index) => (
-                    <div key={index} className="text-gray-700">
-                      {log}
-                    </div>
-                  ))}
-                </div>
+        {/* Debug Logs (only show in development) */}
+        {process.env.NODE_ENV === 'development' && logs.length > 0 && (
+          <div className="flex-shrink-0 mt-4 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-4">Debug Logs</h3>
+            <div className="bg-gray-100 p-3 sm:p-4 rounded-lg max-h-32 sm:max-h-48 overflow-y-auto">
+              <div className="space-y-1 font-mono text-xs">
+                {logs.map((log, index) => (
+                  <div key={index} className="text-gray-700">
+                    {log}
+                  </div>
+                ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
