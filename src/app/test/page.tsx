@@ -431,14 +431,14 @@ const TestInterface = () => {
 
     return (
       <div className="w-full max-w-4xl bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
-        <div className="flex justify-between text-sm text-white/90 mb-4 font-medium">
+        <div className="w-full flex justify-between text-sm text-white/90 mb-4 font-medium">
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            {'Disagree'}
+            Strongly Disagree
           </span>
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            {'Agree'}
+            Strongly Agree
           </span>
         </div>
         
