@@ -434,11 +434,11 @@ const TestInterface = () => {
         <div className="flex justify-between text-sm text-white/90 mb-4 font-medium">
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            Strongly Disagree
+            {'Strongly\nDisagree'}
           </span>
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            Strongly Agree
+            {'Strongly\nAgree'}
           </span>
         </div>
         
@@ -466,7 +466,7 @@ const TestInterface = () => {
     const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
     const maxWeight = currentQuestion?.max_weight || 5;
     
-    const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
+    // const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
 
     return (
       <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
@@ -508,9 +508,9 @@ const TestInterface = () => {
         </div>
         
         <div className="text-center">
-          <div className="text-base text-gray-600 mb-1">
+          {/* <div className="text-base text-gray-600 mb-1">
             {actualPoints.toFixed(1)} / {maxWeight} points
-          </div>
+          </div> */}
           <div className="text-xs text-gray-500">
             Value: {value.toFixed(1)} | Category: {currentQuestion?.category.name || 'Unknown'}
           </div>
