@@ -121,34 +121,258 @@ get_inactive_deployment() {
     fi
 }
 
+# Function to determine which containers are running
+get_running_containers() {
+    local blue_running=false
+    local green_running=false
+    
+    if is_container_running "cakravia-app-blue"; then
+        blue_running=true
+    fi
+    
+    if is_container_running "cakravia-app-green"; then
+        green_running=true
+    fi
+    
+    echo "${blue_running},${green_running}"
+}
+
+# Function to create dynamic nginx configuration
+create_dynamic_nginx_config() {
+    local target_deployment=$1
+    local version=$2
+    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+    
+    log "Creating dynamic nginx configuration for ${target_deployment}..."
+    
+    # Verify target container is actually running
+    if ! is_container_running "cakravia-app-${target_deployment}"; then
+        log_error "Target container cakravia-app-${target_deployment} is not running!"
+        return 1
+    fi
+    
+    # Get running container status
+    local container_status=$(get_running_containers)
+    local blue_running=$(echo $container_status | cut -d',' -f1)
+    local green_running=$(echo $container_status | cut -d',' -f2)
+    
+    log "Container status - Blue: ${blue_running}, Green: ${green_running}"
+    
+    # Create base configuration
+    cat > nginx/nginx.conf << 'EOF'
+user nginx;
+worker_processes auto;
+error_log /var/log/nginx/error.log warn;
+pid /var/run/nginx.pid;
+
+events {
+    worker_connections 1024;
+    use epoll;
+    multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    # Logging with deployment tracking
+    log_format main '$remote_addr - $remote_user [$time_local] "$request" '
+                    '$status $body_bytes_sent "$http_referer" '
+                    '"$http_user_agent" "$http_x_forwarded_for" '
+                    'upstream_addr="$upstream_addr" '
+                    'upstream_response_time=$upstream_response_time '
+                    'upstream_status=$upstream_status';
+
+    log_format deployment '$time_local: $upstream_addr responded with $upstream_status in $upstream_response_time seconds';
+
+    access_log /var/log/nginx/access.log main;
+    access_log /var/log/nginx/deployment.log deployment;
+
+    # Basic Settings
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+    keepalive_timeout 65;
+    types_hash_max_size 2048;
+    client_max_body_size 20M;
+
+    # Gzip Settings
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 6;
+    gzip_types
+        application/atom+xml
+        application/javascript
+        application/json
+        application/rss+xml
+        application/vnd.ms-fontobject
+        application/x-font-ttf
+        application/x-web-app-manifest+json
+        application/xhtml+xml
+        application/xml
+        font/opentype
+        image/svg+xml
+        image/x-icon
+        text/css
+        text/plain
+        text/x-component;
+
+    # Security Headers
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+    add_header Referrer-Policy "strict-origin-when-cross-origin";
+
+    # Rate Limiting
+    limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
+    limit_req_zone $binary_remote_addr zone=login:10m rate=5r/m;
+
+    # Upstream configuration - dynamically generated based on running containers
+    upstream nextjs_app {
+        least_conn;
+        
+        # ACTIVE_DEPLOYMENT: {{TARGET_DEPLOYMENT}}
+        # DEPLOYMENT_TIMESTAMP: {{TIMESTAMP}}
+        # DEPLOYMENT_VERSION: {{VERSION}}
+        
+EOF
+
+    # Add primary server (target deployment)
+    echo "        server app-${target_deployment}:3000 max_fails=3 fail_timeout=30s;" >> nginx/nginx.conf
+    
+    # Add backup server if the other container is running
+    local backup_deployment=$(get_inactive_deployment "$target_deployment")
+    if [ "$target_deployment" = "blue" ] && [ "$green_running" = "true" ]; then
+        echo "        server app-green:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
+        log "Added green as backup server"
+    elif [ "$target_deployment" = "green" ] && [ "$blue_running" = "true" ]; then
+        echo "        server app-blue:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
+        log "Added blue as backup server"
+    fi
+    
+    # Continue with the rest of the configuration
+    cat >> nginx/nginx.conf << 'EOF'
+        
+        keepalive 32;
+        keepalive_requests 1000;
+        keepalive_timeout 60s;
+    }
+
+    # Health check upstream for monitoring
+    upstream health_check {
+EOF
+
+    # Add health check servers based on what's running
+    echo "        server app-${target_deployment}:3000;" >> nginx/nginx.conf
+    if [ "$target_deployment" = "blue" ] && [ "$green_running" = "true" ]; then
+        echo "        server app-green:3000 backup;" >> nginx/nginx.conf
+    elif [ "$target_deployment" = "green" ] && [ "$blue_running" = "true" ]; then
+        echo "        server app-blue:3000 backup;" >> nginx/nginx.conf
+    fi
+    
+    cat >> nginx/nginx.conf << 'EOF'
+        keepalive 8;
+    }
+
+    # Internal health check server
+    server {
+        listen 8081;
+        server_name localhost;
+        
+        location /health-check {
+            access_log off;
+            proxy_pass http://health_check/api/health;
+            proxy_connect_timeout 5s;
+            proxy_send_timeout 5s;
+            proxy_read_timeout 5s;
+        }
+        
+        location /nginx-status {
+            stub_status on;
+            access_log off;
+            allow 127.0.0.1;
+            allow 172.16.0.0/12;
+            deny all;
+        }
+    }
+
+    # HTTP server
+    server {
+        listen 80;
+        server_name cakravia.com www.cakravia.com;
+        
+        # Health check endpoint (for load balancer)
+        location /api/health {
+            proxy_pass http://nextjs_app;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            access_log off;
+        }
+        
+        # Let's Encrypt challenge
+        location ^~ /.well-known/acme-challenge/ {
+            root /var/www/html;
+            try_files $uri =404;
+        }
+
+        # Main application
+        location / {
+            proxy_pass http://nextjs_app;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Port $server_port;
+            
+            # WebSocket support
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection "upgrade";
+            
+            # Enhanced upstream configuration
+            proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
+            proxy_next_upstream_tries 2;
+            proxy_next_upstream_timeout 10s;
+            
+            # Timeouts
+            proxy_connect_timeout 30s;
+            proxy_send_timeout 30s;
+            proxy_read_timeout 30s;
+            
+            # Buffer settings
+            proxy_buffering on;
+            proxy_buffer_size 4k;
+            proxy_buffers 8 4k;
+        }
+    }
+}
+EOF
+
+    # Replace placeholders
+    sed -i "s/{{TARGET_DEPLOYMENT}}/$target_deployment/g" nginx/nginx.conf
+    sed -i "s/{{TIMESTAMP}}/$timestamp/g" nginx/nginx.conf
+    sed -i "s/{{VERSION}}/$version/g" nginx/nginx.conf
+    
+    log_success "Dynamic nginx configuration created for ${target_deployment}"
+    return 0
+}
+
 # Function to update nginx configuration
 update_nginx_configuration() {
     local target_deployment=$1
     local version=$2
-    local timestamp=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
     
     log "Updating nginx configuration to point to ${target_deployment}..."
     
     # Create backup of current configuration
     cp nginx/nginx.conf nginx/nginx.conf.backup
     
-    # Update nginx configuration
-    if [ -f "nginx/nginx.${target_deployment}.conf" ]; then
-        # Generate config with placeholders replaced
-        sed -e "s/{{TIMESTAMP}}/$timestamp/g" -e "s/{{VERSION}}/$version/g" \
-            "nginx/nginx.${target_deployment}.conf" > nginx/nginx.conf.tmp
-
-        # Remove backup server references if the container doesn't exist
-        local inactive_deployment=$(get_inactive_deployment "$target_deployment")
-        if ! is_container_running "cakravia-app-${inactive_deployment}"; then
-            log "Removing backup server references for stopped ${inactive_deployment} container"
-            # Remove backup server lines from nginx config
-            sed -i '/server app-'${inactive_deployment}':3000.*backup/d' nginx/nginx.conf.tmp
-        fi
-
-        mv nginx/nginx.conf.tmp nginx/nginx.conf
-    else
-        log_error "Nginx configuration template for ${target_deployment} not found!"
+    # Create dynamic configuration based on running containers
+    if ! create_dynamic_nginx_config "$target_deployment" "$version"; then
+        log_error "Failed to create dynamic nginx configuration"
         return 1
     fi
     
@@ -320,6 +544,21 @@ main() {
     # Perform comprehensive health checks
     if ! comprehensive_health_check "$inactive_deployment" "$inactive_port"; then
         log_error "Comprehensive health checks failed"
+        rollback_deployment "$active_deployment" "$inactive_deployment"
+        exit 1
+    fi
+    
+    # Verify container is still running and reachable before switching traffic
+    log "Final verification before traffic switch..."
+    if ! is_container_running "cakravia-app-${inactive_deployment}"; then
+        log_error "Target container stopped unexpectedly before traffic switch"
+        rollback_deployment "$active_deployment" "$inactive_deployment"
+        exit 1
+    fi
+    
+    # Verify container is reachable via Docker network
+    if ! docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
+        log_error "Target container not reachable via Docker network before traffic switch"
         rollback_deployment "$active_deployment" "$inactive_deployment"
         exit 1
     fi
