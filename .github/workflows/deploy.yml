@@ -137,6 +137,11 @@ jobs:
           GITHUB_SHA=${GITHUB_SHA}
           EOF
             
+            # Clean up orphaned containers before deployment
+            echo "Cleaning up orphaned containers..."
+            docker-compose -f docker-compose.blue-green.yml down --remove-orphans
+            docker system prune -f
+            
             # Run zero-downtime deployment
             echo "Running zero-downtime deployment..."
             if [ -f "scripts/deploy-zero-downtime.sh" ]; then

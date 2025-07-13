@@ -587,13 +587,13 @@ main() {
         log "App networks: ${app_networks}"
         
         # Try to connect to the same network if needed
-        local main_network="cakravia_cakravia-network"
+        local main_network="cakravia-network"
         if echo "$nginx_networks" | grep -q "$main_network" && ! echo "$app_networks" | grep -q "$main_network"; then
             log "Connecting ${inactive_deployment} container to ${main_network}..."
             if docker network connect "$main_network" "cakravia-app-${inactive_deployment}" 2>/dev/null; then
                 sleep 2
                 # Retry the connectivity test
-                if docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
+                if docker exec cakravia-nginx curl -f -s "http://cakravia-app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
                     log_success "Network connectivity restored after connecting to correct network"
                 else
                     log_error "Still cannot reach container after network connection"
