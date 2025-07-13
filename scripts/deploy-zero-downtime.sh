@@ -239,15 +239,15 @@ http {
 EOF
 
     # Add primary server (target deployment)
-    echo "        server app-${target_deployment}:3000 max_fails=3 fail_timeout=30s;" >> nginx/nginx.conf
+    echo "        server cakravia-app-${target_deployment}:3000 max_fails=3 fail_timeout=30s;" >> nginx/nginx.conf
     
     # Add backup server if the other container is running
     local backup_deployment=$(get_inactive_deployment "$target_deployment")
     if [ "$target_deployment" = "blue" ] && [ "$green_running" = "true" ]; then
-        echo "        server app-green:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
+        echo "        server cakravia-app-green:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
         log "Added green as backup server"
     elif [ "$target_deployment" = "green" ] && [ "$blue_running" = "true" ]; then
-        echo "        server app-blue:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
+        echo "        server cakravia-app-blue:3000 max_fails=3 fail_timeout=30s backup;" >> nginx/nginx.conf
         log "Added blue as backup server"
     fi
     
@@ -264,11 +264,11 @@ EOF
 EOF
 
     # Add health check servers based on what's running
-    echo "        server app-${target_deployment}:3000;" >> nginx/nginx.conf
+    echo "        server cakravia-app-${target_deployment}:3000;" >> nginx/nginx.conf
     if [ "$target_deployment" = "blue" ] && [ "$green_running" = "true" ]; then
-        echo "        server app-green:3000 backup;" >> nginx/nginx.conf
+        echo "        server cakravia-app-green:3000 backup;" >> nginx/nginx.conf
     elif [ "$target_deployment" = "green" ] && [ "$blue_running" = "true" ]; then
-        echo "        server app-blue:3000 backup;" >> nginx/nginx.conf
+        echo "        server cakravia-app-blue:3000 backup;" >> nginx/nginx.conf
     fi
     
     cat >> nginx/nginx.conf << 'EOF'
@@ -576,7 +576,7 @@ main() {
     fi
     
     # Verify container is reachable via Docker network
-    if ! docker exec cakravia-nginx curl -f -s "http://app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
+    if ! docker exec cakravia-nginx curl -f -s "http://cakravia-app-${inactive_deployment}:3000/api/health" > /dev/null 2>&1; then
         log_warning "Target container not reachable via Docker network - checking network configuration..."
         
         # Check if containers are on the same network
