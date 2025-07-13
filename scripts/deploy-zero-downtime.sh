@@ -526,6 +526,25 @@ main() {
         exit 1
     fi
     
+    # Ensure nginx is running first
+    log "Ensuring nginx container is running..."
+    if ! is_container_running "cakravia-nginx"; then
+        log "Starting nginx container..."
+        if ! docker-compose -f docker-compose.blue-green.yml up -d nginx; then
+            log_error "Failed to start nginx container"
+            exit 1
+        fi
+        
+        # Wait for nginx to be ready
+        log "Waiting for nginx to be ready..."
+        sleep 10
+        
+        if ! is_container_running "cakravia-nginx"; then
+            log_error "Nginx container failed to start"
+            exit 1
+        fi
+    fi
+    
     # Start new container
     log "Starting new ${inactive_deployment} container..."
     if ! docker-compose -f docker-compose.blue-green.yml up -d "app-${inactive_deployment}"; then
