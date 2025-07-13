@@ -13,7 +13,6 @@ import Footer from '@/components/Footer';
 import askingQuestionImage from '@/assets/images/hero/asking-question.png';
 import listeningMusicImage from '@/assets/images/learning-assets/listening-music.png';
 import listeningMusicImage2x from '@/assets/images/learning-assets/listening-music-2x.png';
-import TestChatBg from '@/assets/background/TestChatbg.png';
 
 const EnhancedHomepage = () => {
   const { isAuthenticated } = useAuth();
