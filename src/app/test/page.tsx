@@ -433,12 +433,12 @@ const TestInterface = () => {
         <div className="flex text-sm text-white/90 mb-4 font-medium">
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            Disagree
+            Strongly Disagree - 
           </span>
           <div className="flex-1"></div>
           <span className="flex items-center">
             <span className="w-2 h-2 bg-white rounded-full mr-2 opacity-80"></span>
-            Agree
+            Strongly Agree
           </span>
         </div>
         
