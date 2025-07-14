@@ -89,6 +89,108 @@ interface PaymentSuccessDialogProps {
   onDownloadCertificate: () => void;
 }
 
+// New Learning Style Section Component
+const NewLearningStyleSection = () => {
+  if (!resultsState.resultsData) return null;
+
+  const { result_description } = resultsState.resultsData;
+  
+  // Get dominant learning styles and their data
+  const dominantStyles = result_description.learning_styles;
+  const dominantScoreData = dominantStyles.map(styleName => {
+    // Map style names to our organized scores
+    const styleMapping: { [key: string]: string } = {
+      'Visual': 'Visual',
+      'Aural': 'Auditory', 
+      'Auditory': 'Auditory',
+      'Read/Write': 'Reading',
+      'Kinesthetic': 'Kinesthetic'
+    };
+    
+    const mappedName = styleMapping[styleName] || styleName;
+    return organizedScores.find(score => score.name === mappedName);
+  }).filter(Boolean); // Remove any undefined values
+
+  return (
+    <div className={`bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 sm:mb-12 relative ${!isPaid ? 'overflow-hidden' : ''}`}>
+      {/* Blur overlay for locked content - Same as payment wall */}
+      {!isPaid && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center p-4">
+          <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
+            <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+              VARK Results + Report Certificate
+            </h3>
+            <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+            <button 
+              onClick={handlePurchaseCertificate}
+              disabled={isProcessingPayment}
+              className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+              style={{ backgroundColor: '#4A47A3' }}
+            >
+              {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+            </button>
+            <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+              <Lock className="h-4 w-4" />
+              <span className="text-xs font-medium">100% Secure</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 1. Your Learning Style Header */}
+      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+        Your Learning Style
+      </h2>
+      
+      {/* 2. Title */}
+      <h3 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+        {result_description.title}
+      </h3>
+
+      {/* 3. Score Cards - Dominant Styles Only */}
+      {dominantScoreData.length > 0 && (
+        <div className={`mb-8 sm:mb-12 ${dominantScoreData.length > 1 ? 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6' : 'flex justify-center'}`}>
+          {dominantScoreData.map((scoreData, index) => (
+            scoreData && (
+              <div key={index} className={dominantScoreData.length === 1 ? 'max-w-md w-full' : ''}>
+                <SmallChart 
+                  score={scoreData.score} 
+                  name={scoreData.name} 
+                  color={scoreData.color} 
+                />
+              </div>
+            )
+          ))}
+        </div>
+      )}
+
+      {/* 4. Rekomendasi Kemampuan Card */}
+      <div className="mb-6 sm:mb-8">
+        <div className="rounded-xl p-4 sm:p-6" style={{ backgroundColor: '#F4F4F4EE' }}>
+          <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+            Deskripsi Kemampuan
+          </h4>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
+            {result_description.characteristics}
+          </p>
+        </div>
+      </div>
+
+      {/* 5. Rekomendasi Pembelajaran Card */}
+      <div className="mb-6 sm:mb-8">
+        <div className="rounded-xl p-4 sm:p-6" style={{ backgroundColor: '#DFE4FF' }}>
+          <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+            Rekomendasi Pembelajaran
+          </h4>
+          <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
+            {result_description.study_recommendations}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({ 
   isOpen, 
   onClose, 
@@ -534,9 +636,9 @@ const openSnapPopup = useCallback((snapToken: string) => {
   ];
 
   // Sort by score to get highest first
-  const sortedScores = [...organizedScores].sort((a, b) => b.score - a.score);
-  const highestScore = sortedScores[0];
-  const otherScores = sortedScores.slice(1);
+  // const sortedScores = [...organizedScores].sort((a, b) => b.score - a.score);
+  // const highestScore = sortedScores[0];
+  // const otherScores = sortedScores.slice(1);
 
   // Load results data
   useEffect(() => {
@@ -968,179 +1070,8 @@ const openSnapPopup = useCallback((snapToken: string) => {
             </div>
           </div>
 
-          {/* Learning Style Details Section - Updated with Primary + 3 Others Layout */}
-          <div className={`bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 sm:mb-12 relative ${!isPaid ? 'overflow-hidden' : ''}`}>
-            {/* Blur overlay for locked content */}
-            {!isPaid && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center p-4">
-                <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-                  <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
-                    VARK Results + Report Certificate
-                  </h3>
-                  <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
-                  <button 
-                    onClick={handlePurchaseCertificate}
-                    disabled={isProcessingPayment}
-                    className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                    style={{ backgroundColor: '#4A47A3' }}
-                  >
-                    {isProcessingPayment ? 'Processing...' : 'Get My Results'}
-                  </button>
-                  <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
-                    <Lock className="h-4 w-4" />
-                    <span className="text-xs font-medium">100% Secure</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#4A47A3' }}>
-              Your Primary Learning Style
-            </h2>
-            
-            {/* Primary Learning Style - Highest Score */}
-            <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-center mb-8 sm:mb-12">
-              <div className="w-full lg:w-1/2 flex justify-center">
-                <Card className="rounded-lg overflow-hidden border-none shadow-lg w-full">
-                  <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-3 sm:py-4">
-                    <CardTitle className="text-center text-lg sm:text-2xl font-bold" style={{ color: '#24348C' }}>
-                      {highestScore.name} Learning Style
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-3 sm:p-6 bg-[#F0F2F5]">
-                    {/* Primary Learning Style Chart - Only show the highest score */}
-                    <ApexCharts
-                      options={{
-                        ...learningChartOptions,
-                        colors: ["#8979FF", "#FF928A", "#3CC3DF", "#FFAE4C"], // Keep all colors
-                        plotOptions: {
-                          ...learningChartOptions.plotOptions,
-                          radialBar: {
-                            ...learningChartOptions.plotOptions.radialBar,
-                            barLabels: {
-                              enabled: true,
-                              useSeriesColors: true,
-                              offsetX: -8,
-                              fontSize: "14px",
-                              formatter: (seriesName: string, opts: { w: { globals: { series: number[] } }; seriesIndex: number }) => {
-                                const value = opts.w.globals.series[opts.seriesIndex];
-                                return value > 0 ? `${seriesName}: ${value}%` : `${seriesName}: 0%`;
-                              },
-                            },
-                          },
-                        },
-                        responsive: [
-                          {
-                            breakpoint: 768,
-                            options: {
-                              chart: {
-                                height: 300,
-                              },
-                              plotOptions: {
-                                radialBar: {
-                                  barLabels: {
-                                    fontSize: "12px",
-                                  },
-                                },
-                              },
-                            },
-                          },
-                          {
-                            breakpoint: 480,
-                            options: {
-                              chart: {
-                                height: 250,
-                              },
-                              plotOptions: {
-                                radialBar: {
-                                  barLabels: {
-                                    fontSize: "10px",
-                                  },
-                                },
-                              },
-                            },
-                          },
-                        ],
-                      }}
-                      series={[
-                        highestScore.name === 'Visual' ? highestScore.percentage : 0,
-                        highestScore.name === 'Auditory' ? highestScore.percentage : 0,
-                        highestScore.name === 'Reading' ? highestScore.percentage : 0,
-                        highestScore.name === 'Kinesthetic' ? highestScore.percentage : 0,
-                      ]}
-                      type="radialBar"
-                      height={350}
-                    />
-                  </CardContent>
-                </Card>
-              </div>
-              
-              <div className="w-full lg:w-1/2">
-                <h3 className="text-lg sm:text-xl font-bold mb-4" style={{ color: '#4A47A3' }}>
-                  {highestScore.name} Learning Style ({highestScore.percentage.toFixed(1)}%)
-                </h3>
-                
-                {/* Dynamic interpretation text based on dominant learning styles */}
-                {resultsState.resultsData?.learning_style_interpretation && 
-                 resultsState.resultsData?.dominant_learning_styles && 
-                 resultsState.resultsData.dominant_learning_styles.length > 0 && (
-                  <div className="mb-4 prose prose-gray prose-sm max-w-none">
-                    {resultsState.resultsData.dominant_learning_styles.includes('Visual') && (
-                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{resultsState.resultsData.learning_style_interpretation.visual}</p>
-                    )}
-                    {resultsState.resultsData.dominant_learning_styles.includes('Aural') && (
-                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{resultsState.resultsData.learning_style_interpretation.aural}</p>
-                    )}
-                    {resultsState.resultsData.dominant_learning_styles.includes('Read/Write') && (
-                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{resultsState.resultsData.learning_style_interpretation.read_write}</p>
-                    )}
-                    {resultsState.resultsData.dominant_learning_styles.includes('Kinesthetic') && (
-                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{resultsState.resultsData.learning_style_interpretation.kinesthetic}</p>
-                    )}
-                  </div>
-                )}
-                
-                {/* Fallback text if no dominant learning styles */}
-                {(!resultsState.resultsData?.dominant_learning_styles || 
-                  resultsState.resultsData.dominant_learning_styles.length === 0) && (
-                  <div className="mb-4 text-gray-700">
-                    <p className="text-sm sm:text-base">
-                      You prefer {highestScore.name.toLowerCase()} representations of information such as pictures, diagrams, flow charts, time lines, films, and demonstrations.
-                    </p>
-                    <p className="mt-4 text-sm sm:text-base">
-                      This is your strongest learning preference based on your assessment results. Consider incorporating more {highestScore.name.toLowerCase()} learning techniques into your study routine.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-6 p-3 sm:p-4 bg-blue-50 rounded-lg">
-                  <h4 className="font-semibold text-blue-800 mb-2 text-sm sm:text-base">Your Primary Score:</h4>
-                  <div className="text-xl sm:text-2xl font-bold text-blue-600">
-                    {highestScore.score} points ({highestScore.percentage.toFixed(1)}%)
-                  </div>
-                  <p className="text-xs sm:text-sm text-blue-700 mt-1">
-                    This represents your strongest learning preference
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Your Complete Score Breakdown - 3 Other Scores */}
-            <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#4A47A3' }}>
-              Your Complete Score Breakdown
-            </h2>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {otherScores.map((scoreItem, index) => (
-                <SmallChart 
-                  key={index} 
-                  score={scoreItem.score} 
-                  name={scoreItem.name} 
-                  color={scoreItem.color} 
-                />
-              ))}
-            </div>
-          </div>
+          {/* NEW SECTION: Replace the old Learning Style Details Section */}
+          <NewLearningStyleSection />
 
           {/* Test Again Section */}
           <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 md:p-12 mb-6 sm:mb-12">
