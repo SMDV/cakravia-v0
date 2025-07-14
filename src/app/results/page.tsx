@@ -11,7 +11,7 @@ import { VarkTest, VarkTestResults } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 // import Image from 'next/image';
-import TestChatBg from '@/assets/background/TestChatbg.png';
+// import TestChatBg from '@/assets/background/TestChatbg.png';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -137,19 +137,40 @@ const NewLearningStyleSection = () => {
 
   return (
     <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`} style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
-      {/* Background with TestChatBg pattern - More visible */}
+      {/* Magazine-style Background - No opacity, full visibility */}
       <div 
         className="absolute inset-0 z-0"
         style={{ 
-          backgroundImage: `url(${TestChatBg.src})`,
-          backgroundRepeat: 'repeat',
-          backgroundSize: 'auto',
-          opacity: 0.3
+          background: 'white',
+          position: 'relative',
+          overflow: 'hidden'
         }}
-      />
+      >
+        {/* Magazine decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-100px',
+          right: '-100px',
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(45deg, #fef3c7, #fed7aa)',
+          borderRadius: '50%',
+          opacity: 0.3
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '-50px',
+          left: '-50px',
+          width: '100px',
+          height: '100px',
+          background: 'linear-gradient(45deg, #dbeafe, #c7d2fe)',
+          borderRadius: '50%',
+          opacity: 0.4
+        }}></div>
+      </div>
 
-      {/* Content Container - Reduced opacity to show background */}
-      <div className="relative z-10 bg-white/70 backdrop-blur-sm p-4 sm:p-8 md:p-12">
+      {/* Content Container */}
+      <div className="relative z-10 p-4 sm:p-8 md:p-12">
         {/* Blur overlay for locked content - Same as payment wall */}
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
@@ -177,15 +198,46 @@ const NewLearningStyleSection = () => {
           </div>
         )}
 
-        {/* 1. Your Learning Style Header - Bold, reduced gap */}
-        <h2 className="text-lg sm:text-xl font-bold italic text-center mb-2 sm:mb-3" style={{ color: '#24348C' }}>
-          Your Learning Style
-        </h2>
-        
-        {/* 2. Title - Bold, reduced gap */}
-        <h3 className="text-xl sm:text-2xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
-          {result_description.title}
-        </h3>
+        {/* Magazine-style Header - Adapted for "Your Learning Style" */}
+        <div className="text-center mb-8 sm:mb-12 relative z-10">
+          <div 
+            className="max-w-2xl mx-auto py-6 sm:py-8" 
+            style={{ 
+              borderTop: '3px solid #24348C', 
+              borderBottom: '3px solid #24348C',
+              padding: '2rem 0'
+            }}
+          >
+            <h2 
+              className="text-sm sm:text-base font-medium mb-3 sm:mb-4" 
+              style={{ 
+                color: '#6b7280', 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.2em',
+                marginTop: 0
+              }}
+            >
+              Personal Learning Assessment
+            </h2>
+            <h3 
+              className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4" 
+              style={{ 
+                color: '#24348C',
+                lineHeight: '1.2',
+                margin: 0
+              }}
+            >
+              {result_description.title}
+            </h3>
+            <div 
+              className="w-16 h-0.5 mx-auto" 
+              style={{ 
+                background: '#fbbf24',
+                marginTop: '1rem'
+              }}
+            ></div>
+          </div>
+        </div>
 
         {/* 3. Score Cards - Dominant Styles Only (Modified SmallScoreBox) */}
         {dominantScoreData.length > 0 && (
