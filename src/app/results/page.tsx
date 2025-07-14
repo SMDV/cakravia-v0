@@ -137,11 +137,10 @@ const NewLearningStyleSection = () => {
 
   return (
     <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`}>
-      {/* Background with TestChatBg pattern */}
+      {/* Background with TestChatBg pattern - No opacity, no white background */}
       <div 
-        className="absolute inset-0 z-0 opacity-20"
+        className="absolute inset-0 z-0"
         style={{ 
-          backgroundColor: 'white',
           backgroundImage: `url(${TestChatBg.src})`,
           backgroundRepeat: 'repeat',
           backgroundSize: 'auto'
@@ -174,12 +173,12 @@ const NewLearningStyleSection = () => {
           </div>
         )}
 
-        {/* 1. Your Learning Style Header - Reduced to half size (18px equivalent) */}
-        <h2 className="text-lg sm:text-xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+        {/* 1. Your Learning Style Header - Bold, reduced gap */}
+        <h2 className="text-lg sm:text-xl font-bold italic text-center mb-2 sm:mb-3" style={{ color: '#24348C' }}>
           Your Learning Style
         </h2>
         
-        {/* 2. Title - Reduced to half size (24px equivalent) */}
+        {/* 2. Title - Bold, reduced gap */}
         <h3 className="text-xl sm:text-2xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
           {result_description.title}
         </h3>
