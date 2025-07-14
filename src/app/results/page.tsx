@@ -136,19 +136,20 @@ const NewLearningStyleSection = () => {
   };
 
   return (
-    <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`}>
-      {/* Background with TestChatBg pattern - No opacity, no white background */}
+    <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`} style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+      {/* Background with TestChatBg pattern - More visible */}
       <div 
         className="absolute inset-0 z-0"
         style={{ 
           backgroundImage: `url(${TestChatBg.src})`,
           backgroundRepeat: 'repeat',
-          backgroundSize: 'auto'
+          backgroundSize: 'auto',
+          opacity: 0.3
         }}
       />
 
-      {/* Content Container */}
-      <div className="relative z-10 bg-white/90 backdrop-blur-sm p-4 sm:p-8 md:p-12">
+      {/* Content Container - Reduced opacity to show background */}
+      <div className="relative z-10 bg-white/70 backdrop-blur-sm p-4 sm:p-8 md:p-12">
         {/* Blur overlay for locked content - Same as payment wall */}
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
@@ -156,6 +157,9 @@ const NewLearningStyleSection = () => {
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 VARK Results + Report Certificate
               </h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                Hasil analisa lengkap dari expert dengan rekomendasi pembelajaran yang dipersonalisasi khusus untuk Anda
+              </p>
               <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               <button 
                 onClick={handlePurchaseCertificate}
