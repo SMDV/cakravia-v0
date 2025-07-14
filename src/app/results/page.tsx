@@ -10,6 +10,8 @@ import { varkAPI, paymentAPI } from '@/lib/api';
 import { VarkTest, VarkTestResults } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import Image from 'next/image';
+import TestChatBg from '@/assets/background/TestChatbg.png';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -23,12 +25,12 @@ interface ResultsState {
   canDownloadCertificate: boolean;
 }
 
-// Type definitions
-interface SmallChartProps {
-  score: number;
-  name: string;
-  color: string;
-}
+// // Type definitions
+// interface SmallChartProps {
+//   score: number;
+//   name: string;
+//   color: string;
+// }
 
 // Midtrans result types
 interface MidtransResult {
@@ -111,80 +113,127 @@ const NewLearningStyleSection = () => {
     return organizedScores.find(score => score.name === mappedName);
   }).filter(Boolean); // Remove any undefined values
 
+  // Modified SmallScoreBox Component (without chart, just title and score)
+  const SmallScoreBox = ({ score, name, color }: { score: number; name: string; color: string }) => {
+    return (
+      <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100">
+        <div 
+          className="text-white text-center py-3 sm:py-4 font-bold text-lg sm:text-xl"
+          style={{ backgroundColor: color }}
+        >
+          {name}
+        </div>
+        <div className="p-6 sm:p-8 text-center bg-gray-50">
+          <div className="text-4xl sm:text-5xl font-bold mb-2" style={{ color: '#24348C' }}>
+            {score}
+          </div>
+          <div className="text-sm sm:text-base text-gray-600">
+            Score
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
-    <div className={`bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 sm:mb-12 relative ${!isPaid ? 'overflow-hidden' : ''}`}>
-      {/* Blur overlay for locked content - Same as payment wall */}
-      {!isPaid && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center p-4">
-          <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
-              VARK Results + Report Certificate
-            </h3>
-            <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
-            <button 
-              onClick={handlePurchaseCertificate}
-              disabled={isProcessingPayment}
-              className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-              style={{ backgroundColor: '#4A47A3' }}
-            >
-              {isProcessingPayment ? 'Processing...' : 'Get My Results'}
-            </button>
-            <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
-              <Lock className="h-4 w-4" />
-              <span className="text-xs font-medium">100% Secure</span>
+    <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`}>
+      {/* Background with TestChatBg pattern */}
+      <div className="absolute inset-0 z-0" style={{ backgroundColor: 'white' }}>
+        <Image
+          src={TestChatBg}
+          alt="Test Chat Background"
+          fill
+          className="object-cover object-center opacity-20"
+          style={{ 
+            backgroundRepeat: 'repeat',
+            backgroundSize: 'auto'
+          }}
+        />
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 bg-white/90 backdrop-blur-sm p-4 sm:p-8 md:p-12">
+        {/* Blur overlay for locked content - Same as payment wall */}
+        {!isPaid && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
+            <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
+              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                VARK Results + Report Certificate
+              </h3>
+              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+              <button 
+                onClick={handlePurchaseCertificate}
+                disabled={isProcessingPayment}
+                className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: '#4A47A3' }}
+              >
+                {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+              </button>
+              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                <Lock className="h-4 w-4" />
+                <span className="text-xs font-medium">100% Secure</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 1. Your Learning Style Header - 36px equivalent (text-4xl) */}
+        <h2 className="text-3xl sm:text-4xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+          Your Learning Style
+        </h2>
+        
+        {/* 2. Title - 48px equivalent (text-5xl) */}
+        <h3 className="text-4xl sm:text-5xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+          {result_description.title}
+        </h3>
+
+        {/* 3. Score Cards - Dominant Styles Only (Modified SmallScoreBox) */}
+        {dominantScoreData.length > 0 && (
+          <div className={`mb-8 sm:mb-12 ${dominantScoreData.length > 1 ? 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6' : 'flex justify-center'}`}>
+            {dominantScoreData.map((scoreData, index) => (
+              scoreData && (
+                <div key={index} className={dominantScoreData.length === 1 ? 'max-w-md w-full' : ''}>
+                  <SmallScoreBox 
+                    score={scoreData.score} 
+                    name={scoreData.name} 
+                    color={scoreData.color} 
+                  />
+                </div>
+              )
+            ))}
+          </div>
+        )}
+
+        {/* 4. Rekomendasi Kemampuan Card - with separator line */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#F4F4F4EE' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+                Deskripsi Kemampuan
+              </h4>
+              {/* Separator Line */}
+              <div className="w-full h-px bg-gray-300 mb-3 sm:mb-4"></div>
+              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
+                {result_description.characteristics}
+              </p>
             </div>
           </div>
         </div>
-      )}
 
-      {/* 1. Your Learning Style Header */}
-      <h2 className="text-2xl sm:text-3xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
-        Your Learning Style
-      </h2>
-      
-      {/* 2. Title */}
-      <h3 className="text-xl sm:text-2xl font-bold text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
-        {result_description.title}
-      </h3>
-
-      {/* 3. Score Cards - Dominant Styles Only */}
-      {dominantScoreData.length > 0 && (
-        <div className={`mb-8 sm:mb-12 ${dominantScoreData.length > 1 ? 'grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6' : 'flex justify-center'}`}>
-          {dominantScoreData.map((scoreData, index) => (
-            scoreData && (
-              <div key={index} className={dominantScoreData.length === 1 ? 'max-w-md w-full' : ''}>
-                <SmallChart 
-                  score={scoreData.score} 
-                  name={scoreData.name} 
-                  color={scoreData.color} 
-                />
-              </div>
-            )
-          ))}
-        </div>
-      )}
-
-      {/* 4. Rekomendasi Kemampuan Card */}
-      <div className="mb-6 sm:mb-8">
-        <div className="rounded-xl p-4 sm:p-6" style={{ backgroundColor: '#F4F4F4EE' }}>
-          <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-            Deskripsi Kemampuan
-          </h4>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
-            {result_description.characteristics}
-          </p>
-        </div>
-      </div>
-
-      {/* 5. Rekomendasi Pembelajaran Card */}
-      <div className="mb-6 sm:mb-8">
-        <div className="rounded-xl p-4 sm:p-6" style={{ backgroundColor: '#DFE4FF' }}>
-          <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-            Rekomendasi Pembelajaran
-          </h4>
-          <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
-            {result_description.study_recommendations}
-          </p>
+        {/* 5. Rekomendasi Pembelajaran Card - with separator line */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#DFE4FF' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+                Rekomendasi Pembelajaran
+              </h4>
+              {/* Separator Line */}
+              <div className="w-full h-px mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
+              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
+                {result_description.study_recommendations}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -786,107 +835,107 @@ const openSnapPopup = useCallback((snapToken: string) => {
   };
 
   // Individual scores component - Updated to use ApexCharts for single values
-  const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => {
-    const percentage = organizedScores.find(item => item.name === name)?.percentage || 0;
+  // const SmallChart: React.FC<SmallChartProps> = ({ score, name, color }) => {
+  //   const percentage = organizedScores.find(item => item.name === name)?.percentage || 0;
     
-    const singleChartOptions = {
-      chart: {
-        height: 180,
-        type: "radialBar" as const,
-        toolbar: {
-          show: false,
-        },
-      },
-      plotOptions: {
-        radialBar: {
-          startAngle: -90,
-          endAngle: 90,
-          hollow: {
-            margin: 5,
-            size: "50%",
-            background: "transparent",
-          },
-          track: {
-            background: '#E5E7EB', // Grey color for unfilled portions
-            strokeWidth: '100%',
-            margin: 5,
-          },
-          dataLabels: {
-            name: {
-              show: false,
-            },
-            value: {
-              show: true,
-              fontSize: "20px",
-              fontWeight: "bold",
-              color: "#2A3262",
-              formatter: () => `${percentage.toFixed(1)}%`,
-            },
-          },
-        },
-      },
-      colors: [color],
-      labels: [name],
-      stroke: {
-        lineCap: "round" as const,
-      },
-      responsive: [
-        {
-          breakpoint: 768,
-          options: {
-            chart: {
-              height: 160,
-            },
-            plotOptions: {
-              radialBar: {
-                dataLabels: {
-                  value: {
-                    fontSize: "18px",
-                  },
-                },
-              },
-            },
-          },
-        },
-        {
-          breakpoint: 480,
-          options: {
-            chart: {
-              height: 140,
-            },
-            plotOptions: {
-              radialBar: {
-                dataLabels: {
-                  value: {
-                    fontSize: "16px",
-                  },
-                },
-              },
-            },
-          },
-        },
-      ],
-    };
+  //   const singleChartOptions = {
+  //     chart: {
+  //       height: 180,
+  //       type: "radialBar" as const,
+  //       toolbar: {
+  //         show: false,
+  //       },
+  //     },
+  //     plotOptions: {
+  //       radialBar: {
+  //         startAngle: -90,
+  //         endAngle: 90,
+  //         hollow: {
+  //           margin: 5,
+  //           size: "50%",
+  //           background: "transparent",
+  //         },
+  //         track: {
+  //           background: '#E5E7EB', // Grey color for unfilled portions
+  //           strokeWidth: '100%',
+  //           margin: 5,
+  //         },
+  //         dataLabels: {
+  //           name: {
+  //             show: false,
+  //           },
+  //           value: {
+  //             show: true,
+  //             fontSize: "20px",
+  //             fontWeight: "bold",
+  //             color: "#2A3262",
+  //             formatter: () => `${percentage.toFixed(1)}%`,
+  //           },
+  //         },
+  //       },
+  //     },
+  //     colors: [color],
+  //     labels: [name],
+  //     stroke: {
+  //       lineCap: "round" as const,
+  //     },
+  //     responsive: [
+  //       {
+  //         breakpoint: 768,
+  //         options: {
+  //           chart: {
+  //             height: 160,
+  //           },
+  //           plotOptions: {
+  //             radialBar: {
+  //               dataLabels: {
+  //                 value: {
+  //                   fontSize: "18px",
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //       {
+  //         breakpoint: 480,
+  //         options: {
+  //           chart: {
+  //             height: 140,
+  //           },
+  //           plotOptions: {
+  //             radialBar: {
+  //               dataLabels: {
+  //                 value: {
+  //                   fontSize: "16px",
+  //                 },
+  //               },
+  //             },
+  //           },
+  //         },
+  //       },
+  //     ],
+  //   };
     
-    return (
-      <div className="rounded-xl overflow-hidden shadow-lg">
-        <div 
-          className="text-white text-center py-2 sm:py-3 font-bold text-sm sm:text-lg"
-          style={{ backgroundColor: '#8BC34A' }}
-        >
-          {name} Score: {score}
-        </div>
-        <div className="p-3 sm:p-6 bg-gray-50">
-          <ApexCharts
-            options={singleChartOptions}
-            series={[percentage]}
-            type="radialBar"
-            height={180}
-          />
-        </div>
-      </div>
-    );
-  };
+  //   return (
+  //     <div className="rounded-xl overflow-hidden shadow-lg">
+  //       <div 
+  //         className="text-white text-center py-2 sm:py-3 font-bold text-sm sm:text-lg"
+  //         style={{ backgroundColor: '#8BC34A' }}
+  //       >
+  //         {name} Score: {score}
+  //       </div>
+  //       <div className="p-3 sm:p-6 bg-gray-50">
+  //         <ApexCharts
+  //           options={singleChartOptions}
+  //           series={[percentage]}
+  //           type="radialBar"
+  //           height={180}
+  //         />
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   // Loading state
   if (resultsState.isLoading) {
