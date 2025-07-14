@@ -91,6 +91,20 @@ interface PaymentSuccessDialogProps {
   onDownloadCertificate: () => void;
 }
 
+const exclusiveBadgeStyle = {
+  position: 'absolute' as const,
+  top: '-8px',
+  right: '-8px',
+  backgroundColor: '#fbbf24',
+  color: '#000',
+  fontSize: '10px',
+  fontWeight: 'bold',
+  padding: '4px 8px',
+  borderRadius: '6px',
+  transform: 'rotate(12deg)',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+};
+
 // New Learning Style Section Component
 const NewLearningStyleSection = () => {
   if (!resultsState.resultsData) return null;
@@ -175,11 +189,12 @@ const NewLearningStyleSection = () => {
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
             <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
+              <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 VARK Results + Report Certificate
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                Hasil analisa lengkap dari expert dengan rekomendasi pembelajaran yang dipersonalisasi khusus untuk Anda
+                Get your exclusive learning profile with expert-backed strategies tailored just for you!
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               <button 
@@ -1148,9 +1163,13 @@ const openSnapPopup = useCallback((snapToken: string) => {
                     </button>
                   ) : (
                     <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
+                      <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
                       <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                         VARK Results + Report Certificate
                       </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                        Get your exclusive learning profile with expert-backed strategies tailored just for you
+                      </p>
                       <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
                       <button 
                         onClick={handlePurchaseCertificate}
