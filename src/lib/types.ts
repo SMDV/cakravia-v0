@@ -92,6 +92,19 @@ export interface VarkLearningStyleInterpretation {
   kinesthetic: string;
 }
 
+export interface VarkResultDescription {
+  title: string;
+  description: string;
+  characteristics: string;
+  study_recommendations: string;
+  strengths: string;
+  potential_challenges: string;
+  career_suggestions: string;
+  style_type: string;
+  learning_styles: string[];
+  multimodal: boolean;
+}
+
 export interface VarkTestResults {
   visual_score: number;
   aural_score: number;
@@ -103,6 +116,7 @@ export interface VarkTestResults {
   scores_breakdown: VarkScoreBreakdown[];
   dominant_learning_styles: string[];
   learning_style_interpretation: VarkLearningStyleInterpretation;
+  result_description: VarkResultDescription; // NEW FIELD ADDED
 }
 
 // Payment Types

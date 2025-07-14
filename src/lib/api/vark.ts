@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { ApiResponse, VarkQuestionSet, VarkTest, VarkSubmission, VarkTestResults } from '../types';
+import { ApiResponse, VarkQuestionSet, VarkTest, VarkSubmission, VarkTestResults, VarkLearningStyleInterpretation, VarkResultDescription } from '../types';
 import { AxiosError } from 'axios';
 
 interface ApiErrorResponse {
@@ -84,7 +84,53 @@ export const varkAPI = {
       console.log('🔄 Fetching test results for:', testId);
       const response = await apiClient.get(`/users/vark_tests/${testId}/results`);
       console.log('✅ Test results response:', response.data);
-      return response.data; // API returns { data: results, status: "ok", error: false }
+      
+      // Define the raw API response type (with string values)
+      interface RawVarkTestResults {
+        visual_score: string;
+        aural_score: string;
+        read_score: string;
+        kinesthetic_score: string;
+        min_score: string;
+        max_score: string;
+        total_score: string;
+        scores_breakdown: Array<{
+          category: string;
+          code: string;
+          score: string;
+          percentage: string;
+        }>;
+        dominant_learning_styles: string[];
+        learning_style_interpretation: VarkLearningStyleInterpretation;
+        result_description: VarkResultDescription;
+      }
+      
+      // Convert string values to numbers for consistent data handling
+      const rawData: RawVarkTestResults = response.data.data;
+      const convertedData: VarkTestResults = {
+        ...rawData,
+        visual_score: parseFloat(rawData.visual_score),
+        aural_score: parseFloat(rawData.aural_score),
+        read_score: parseFloat(rawData.read_score),
+        kinesthetic_score: parseFloat(rawData.kinesthetic_score),
+        min_score: parseFloat(rawData.min_score),
+        max_score: parseFloat(rawData.max_score),
+        total_score: parseFloat(rawData.total_score),
+        scores_breakdown: rawData.scores_breakdown.map((item) => ({
+          ...item,
+          score: parseFloat(item.score),
+          percentage: parseFloat(item.percentage)
+        })),
+        // Keep other fields as they are
+        dominant_learning_styles: rawData.dominant_learning_styles,
+        learning_style_interpretation: rawData.learning_style_interpretation,
+        result_description: rawData.result_description
+      };
+      
+      return {
+        ...response.data,
+        data: convertedData
+      };
     } catch (error) {
       console.error('❌ Failed to fetch test results:', error);
       
