@@ -137,7 +137,7 @@ const NewLearningStyleSection = () => {
 
   return (
     <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`} style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
-      {/* Magazine-style Background - No opacity, full visibility */}
+      {/* Magazine-style Background - White background with decorative elements */}
       <div 
         className="absolute inset-0 z-0"
         style={{ 
@@ -170,7 +170,7 @@ const NewLearningStyleSection = () => {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 p-4 sm:p-8 md:p-12">
+      <div className="relative z-10 bg-white p-4 sm:p-8 md:p-12">
         {/* Blur overlay for locked content - Same as payment wall */}
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
@@ -217,7 +217,7 @@ const NewLearningStyleSection = () => {
                 marginTop: 0
               }}
             >
-              Personal Learning Assessment
+              Your Learning Style
             </h2>
             <h3 
               className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4" 
