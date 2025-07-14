@@ -10,7 +10,7 @@ import { varkAPI, paymentAPI } from '@/lib/api';
 import { VarkTest, VarkTestResults } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-import Image from 'next/image';
+// import Image from 'next/image';
 import TestChatBg from '@/assets/background/TestChatbg.png';
 
 // Import ApexCharts dynamically for client-side rendering
@@ -138,18 +138,15 @@ const NewLearningStyleSection = () => {
   return (
     <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`}>
       {/* Background with TestChatBg pattern */}
-      <div className="absolute inset-0 z-0" style={{ backgroundColor: 'white' }}>
-        <Image
-          src={TestChatBg}
-          alt="Test Chat Background"
-          fill
-          className="object-cover object-center opacity-20"
-          style={{ 
-            backgroundRepeat: 'repeat',
-            backgroundSize: 'auto'
-          }}
-        />
-      </div>
+      <div 
+        className="absolute inset-0 z-0 opacity-20"
+        style={{ 
+          backgroundColor: 'white',
+          backgroundImage: `url(${TestChatBg.src})`,
+          backgroundRepeat: 'repeat',
+          backgroundSize: 'auto'
+        }}
+      />
 
       {/* Content Container */}
       <div className="relative z-10 bg-white/90 backdrop-blur-sm p-4 sm:p-8 md:p-12">
@@ -177,13 +174,13 @@ const NewLearningStyleSection = () => {
           </div>
         )}
 
-        {/* 1. Your Learning Style Header - 36px equivalent (text-4xl) */}
-        <h2 className="text-3xl sm:text-4xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+        {/* 1. Your Learning Style Header - Reduced to half size (18px equivalent) */}
+        <h2 className="text-lg sm:text-xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
           Your Learning Style
         </h2>
         
-        {/* 2. Title - 48px equivalent (text-5xl) */}
-        <h3 className="text-4xl sm:text-5xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
+        {/* 2. Title - Reduced to half size (24px equivalent) */}
+        <h3 className="text-xl sm:text-2xl font-bold italic text-center mb-6 sm:mb-8" style={{ color: '#24348C' }}>
           {result_description.title}
         </h3>
 
@@ -204,15 +201,15 @@ const NewLearningStyleSection = () => {
           </div>
         )}
 
-        {/* 4. Rekomendasi Kemampuan Card - with separator line */}
+        {/* 4. Ability Description Card - with separator line, same color for title and text */}
         <div className="mb-6 sm:mb-8">
           <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#F4F4F4EE' }}>
             <div className="p-4 sm:p-6">
-              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-                Deskripsi Kemampuan
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#5E5E5E' }}>
+                Ability Description
               </h4>
-              {/* Separator Line */}
-              <div className="w-full h-px bg-gray-300 mb-3 sm:mb-4"></div>
+              {/* Separator Line - double weight (2px) */}
+              <div className="w-full h-0.5 bg-gray-300 mb-3 sm:mb-4"></div>
               <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
                 {result_description.characteristics}
               </p>
@@ -220,15 +217,15 @@ const NewLearningStyleSection = () => {
           </div>
         </div>
 
-        {/* 5. Rekomendasi Pembelajaran Card - with separator line */}
+        {/* 5. Learning Recommendations Card - with separator line */}
         <div className="mb-6 sm:mb-8">
           <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#DFE4FF' }}>
             <div className="p-4 sm:p-6">
               <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-                Rekomendasi Pembelajaran
+                Learning Recommendations
               </h4>
-              {/* Separator Line */}
-              <div className="w-full h-px mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
+              {/* Separator Line - double weight (2px) */}
+              <div className="w-full h-0.5 mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
               <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
                 {result_description.study_recommendations}
               </p>
