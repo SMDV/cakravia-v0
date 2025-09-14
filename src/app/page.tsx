@@ -397,6 +397,12 @@ const EnhancedHomepage = () => {
             </p>
           </div>
           
+          <div className="text-center mb-6">
+            <p className="text-base sm:text-2xl text-gray-600 max-w-3xl mx-auto">
+              All exam start from <span className="font-bold">IDR 30.000</span>
+            </p>
+          </div>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-12 sm:mb-16">
             {testCards.map((card, index) => (
               <div 
