@@ -288,7 +288,7 @@ const AiKnowledgeTestInterface = () => {
         error: errorMessage
       }));
     }
-  }, [isAuthenticated, addLog, user]);
+  }, [isAuthenticated, addLog]);
 
   // Start the actual test
   const startTest = useCallback(() => {

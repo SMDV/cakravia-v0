@@ -103,7 +103,7 @@ export const aiKnowledgeAPI = {
         min_score: typeof rawData.min_score === 'string' ? parseFloat(rawData.min_score) : rawData.min_score,
         max_score: typeof rawData.max_score === 'string' ? parseFloat(rawData.max_score) : rawData.max_score,
         total_score: typeof rawData.total_score === 'string' ? parseFloat(rawData.total_score) : rawData.total_score,
-        scores_breakdown: rawData.scores_breakdown?.map((item: any) => ({
+        scores_breakdown: rawData.scores_breakdown?.map((item: { score: string | number; percentage: string | number; [key: string]: unknown }) => ({
           ...item,
           score: typeof item.score === 'string' ? parseFloat(item.score) : item.score,
           percentage: typeof item.percentage === 'string' ? parseFloat(item.percentage) : item.percentage

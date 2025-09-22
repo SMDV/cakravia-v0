@@ -1,13 +1,13 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, AlertCircle, User, BarChart3, TrendingUp } from 'lucide-react';
+import { Check, AlertCircle, BarChart3, TrendingUp } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { aiKnowledgeAPI } from '@/lib/api/aiKnowledge';
-import { AiKnowledgeTest, AiKnowledgeTestResults } from '@/lib/types';
+import { AiKnowledgeTest, AiKnowledgeTestResults as AiKnowledgeTestResultsType } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -17,7 +17,7 @@ const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 interface ResultsState {
   isLoading: boolean;
   testData: AiKnowledgeTest | null;
-  resultsData: AiKnowledgeTestResults | null;
+  resultsData: AiKnowledgeTestResultsType | null;
   error: string | null;
 }
 
@@ -66,7 +66,7 @@ const AI_KNOWLEDGE_CATEGORIES = {
 };
 
 const AiKnowledgeTestResults = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
@@ -125,7 +125,7 @@ const AiKnowledgeTestResults = () => {
   }, [initializeResults]);
 
   // Chart configuration for radar chart
-  const getRadarChartOptions = (resultsData: AiKnowledgeTestResults) => {
+  const getRadarChartOptions = (resultsData: AiKnowledgeTestResultsType) => {
     const categories = Object.keys(AI_KNOWLEDGE_CATEGORIES);
     const scores = categories.map(code => {
       switch (code) {
@@ -178,7 +178,7 @@ const AiKnowledgeTestResults = () => {
   };
 
   // Bar chart for individual scores
-  const getBarChartOptions = (resultsData: AiKnowledgeTestResults) => {
+  const getBarChartOptions = (resultsData: AiKnowledgeTestResultsType) => {
     const categories = Object.keys(AI_KNOWLEDGE_CATEGORIES);
     const scores = categories.map(code => {
       switch (code) {
@@ -246,7 +246,7 @@ const AiKnowledgeTestResults = () => {
         colors: colors,
         tooltip: {
           y: {
-            formatter: function (val: number, opts: any) {
+            formatter: function (val: number, opts: { dataPointIndex: number }) {
               const categoryCode = categories[opts.dataPointIndex];
               const categoryInfo = AI_KNOWLEDGE_CATEGORIES[categoryCode as keyof typeof AI_KNOWLEDGE_CATEGORIES];
               return `${val.toFixed(1)}/${resultsData.max_score} - ${categoryInfo.description}`;

@@ -2,7 +2,7 @@
 
 "use client"
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
@@ -95,11 +95,11 @@ const EnhancedHomepage = () => {
   };
 
   // Auto slide functionality
-  const startAutoSlide = () => {
+  const startAutoSlide = useCallback(() => {
     autoSlideRef.current = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselItems.length);
     }, 15000);
-  };
+  }, [carouselItems.length]);
 
   const resetAutoSlide = () => {
     if (autoSlideRef.current) {
@@ -119,7 +119,7 @@ const EnhancedHomepage = () => {
         clearInterval(autoSlideRef.current);
       }
     };
-  }, []);
+  }, [startAutoSlide]);
 
   // Pause auto slide when user hovers over carousel
   const handleMouseEnter = () => {
