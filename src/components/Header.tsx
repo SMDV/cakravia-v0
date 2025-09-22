@@ -7,7 +7,7 @@ import { User, LogOut, Menu, X } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface HeaderProps {
-  currentPage?: 'home' | 'about' | 'login' | 'profile' | 'test' | 'results';
+  currentPage?: string; // Accept any string for scalability with multiple test types
   transparent?: boolean;
 }
 

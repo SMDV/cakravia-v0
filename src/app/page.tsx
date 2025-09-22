@@ -31,10 +31,10 @@ const EnhancedHomepage = () => {
     },
     {
       title: "Artificial Intelligence Assessment",
-      subtitle: "Validate Your Knowledge: The Definitive Artificial Intelligence Assessment.",
-      description: "Are you confident in your grasp of Artificial Intelligence? Cakravia presents a comprehensive assessment crafted to rigorously test your understanding of AI concepts and technologies. Whether you're an aspiring data scientist, a tech enthusiast, or a professional navigating AI's impact, this assessment provides a clear benchmark of your proficiency. Identify your expertise in key AI domains and gain the clarity needed to advance your skills and career in this pivotal field.",
-      available: false,
-      href: "#"
+      subtitle: "Measure Your AI Learning Readiness and Attitudes.",
+      description: "Discover your attitudes toward AI usage in learning across 8 psychological dimensions. This comprehensive assessment evaluates your Performance Expectancy, Effort Expectancy, Social Influence, Facilitating Conditions, Hedonic Motivation, Price Value, Habit, and Behavioral Intention regarding AI in education. Understand your AI readiness level and get personalized recommendations to enhance your learning experience with artificial intelligence tools.",
+      available: true,
+      href: "/ai-knowledge-test"
     },
     {
       title: "Comprehensive Assessment",
@@ -61,9 +61,9 @@ const EnhancedHomepage = () => {
     },
     {
       title: "AI Knowledge",
-      buttonText: "Coming Soon",
-      href: "#",
-      available: false
+      buttonText: "Start Exam",
+      href: "/ai-knowledge-test",
+      available: true
     },
     {
       title: "Learning Behavior",

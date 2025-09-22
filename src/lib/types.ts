@@ -164,25 +164,92 @@ export interface ApiError {
   status: number;
 }
 
-// Add these to your existing src/lib/types.ts file
-
-// Extend your existing User interface with Google fields
-export interface User {
+// AI Knowledge Test Types
+export interface AiKnowledgeCategory {
   id: string;
+  code: string; // PE, EE, SI, FC, HM, PV, HT, BI
   name: string;
-  email: string;
-  phone?: string | null;
-  birthday?: string | null;
-  avatar_url?: string | null;
-  password_digest?: string; // Only in register response
-  created_at?: string;
+}
+
+export interface AiKnowledgeQuestion {
+  id: string;
+  body: string;
+  max_weight: number;
+  category: AiKnowledgeCategory;
+}
+
+export interface AiKnowledgeQuestionSet {
+  id: string;
+  version: number;
+  name: string;
+  active: boolean;
+  created_at: string;
   updated_at: string;
-  // NEW: Google-specific fields
-  google_id?: string;
-  google_email?: string;
-  google_name?: string;
-  google_picture?: string;
-  auth_provider?: 'email' | 'google' | 'both'; // Indicates how user can authenticate
+  time_limit: number;
+  questions: AiKnowledgeQuestion[];
+}
+
+export interface AiKnowledgeTest {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: 'in_progress' | 'completed';
+  time_limit: number;
+  expires_at: string;
+  questions: AiKnowledgeQuestion[];
+}
+
+export interface AiKnowledgeAnswer {
+  question_id: string;
+  category_id: string;
+  point: number;
+}
+
+export interface AiKnowledgeSubmission {
+  answers: AiKnowledgeAnswer[];
+}
+
+// AI Knowledge Results Types
+export interface AiKnowledgeScoreBreakdown {
+  category: string;
+  code: string;
+  score: number;
+  percentage: number;
+}
+
+export interface AiKnowledgeTestResults {
+  pe_score: number; // Performance Expectancy
+  ee_score: number; // Effort Expectancy
+  si_score: number; // Social Influence
+  fc_score: number; // Facilitating Conditions
+  hm_score: number; // Hedonic Motivation
+  pv_score: number; // Price Value
+  ht_score: number; // Habit
+  bi_score: number; // Behavioral Intention
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: AiKnowledgeScoreBreakdown[];
+  dominant_categories: string[];
+  category_interpretations: Record<string, string>;
+  result_description: {
+    title: string;
+    description: string;
+    recommendations: string;
+    ai_readiness_level: string;
+  };
+}
+
+// Extend the existing User interface with Google fields (fixing duplicate definition)
+declare module './types' {
+  interface User {
+    // NEW: Google-specific fields
+    google_id?: string;
+    google_email?: string;
+    google_name?: string;
+    google_picture?: string;
+    auth_provider?: 'email' | 'google' | 'both'; // Indicates how user can authenticate
+  }
 }
 
 // NEW: Google Authentication Response
