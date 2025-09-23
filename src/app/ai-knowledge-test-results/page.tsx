@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Check, AlertCircle, BarChart3, TrendingUp } from 'lucide-react';
+import { Check, Lock, AlertCircle, User, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
@@ -19,9 +19,10 @@ interface ResultsState {
   testData: AiKnowledgeTest | null;
   resultsData: AiKnowledgeTestResultsType | null;
   error: string | null;
+  canDownloadCertificate: boolean;
 }
 
-// Category mapping for display
+// AI Knowledge Categories mapping
 const AI_KNOWLEDGE_CATEGORIES = {
   PE: {
     name: 'Performance Expectancy',
@@ -50,465 +51,675 @@ const AI_KNOWLEDGE_CATEGORIES = {
   },
   PV: {
     name: 'Price Value',
-    description: 'How worthwhile you find the cost-benefit of AI',
+    description: 'How cost-effective you perceive AI tools to be',
     color: '#06B6D4'
   },
   HT: {
     name: 'Habit',
-    description: 'How much AI usage has become automatic for you',
+    description: 'How much AI usage has become a habit for you',
     color: '#84CC16'
   },
   BI: {
     name: 'Behavioral Intention',
-    description: 'Your intention to continue using AI in the future',
+    description: 'Your intention to continue using AI for learning',
     color: '#F97316'
   }
 };
 
-const AiKnowledgeTestResults = () => {
-  const { isAuthenticated } = useAuth();
+
+const exclusiveBadgeStyle = {
+  position: 'absolute' as const,
+  top: '-8px',
+  right: '-8px',
+  backgroundColor: '#fbbf24',
+  color: '#000',
+  fontSize: '10px',
+  fontWeight: 'bold',
+  padding: '4px 8px',
+  borderRadius: '6px',
+  transform: 'rotate(12deg)',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+};
+
+// New AI Knowledge Style Section Component (adapted from VARK)
+const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProcessingPayment, organizedScores, resultsData }: {
+  isPaid: boolean;
+  handlePurchaseCertificate: () => void;
+  isProcessingPayment: boolean;
+  organizedScores: Array<{
+    name: string;
+    score: number;
+    percentage: number;
+    color: string;
+    code: string;
+  }>;
+  resultsData: AiKnowledgeTestResultsType;
+}) => {
+  const { result_description } = resultsData;
+
+  // Modified SmallScoreBox Component for AI Knowledge
+  const SmallScoreBox = ({ score, name, color, code }: { score: number; name: string; color: string; code: string }) => {
+    return (
+      <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 w-full aspect-[3/4]">
+        <div
+          className="text-white text-center font-bold text-sm sm:text-base leading-tight h-1/3 flex items-center justify-center px-2"
+          style={{ backgroundColor: color }}
+        >
+          {name} ({code})
+        </div>
+        <div className="p-4 sm:p-6 text-center bg-gray-50 h-2/3 flex flex-col justify-center">
+          <div className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2" style={{ color: '#24348C' }}>
+            {score.toFixed(1)}
+          </div>
+          <div className="text-xs sm:text-sm text-gray-600">
+            Score
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`} style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+      {/* Magazine-style Background - White background with decorative elements */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: 'white',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Magazine decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-100px',
+          right: '-100px',
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(45deg, #fef3c7, #fed7aa)',
+          borderRadius: '50%',
+          opacity: 0.3
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '-50px',
+          left: '-50px',
+          width: '100px',
+          height: '100px',
+          background: 'linear-gradient(45deg, #dbeafe, #c7d2fe)',
+          borderRadius: '50%',
+          opacity: 0.4
+        }}></div>
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 bg-white p-4 sm:p-8 md:p-12">
+        {/* Blur overlay for locked content */}
+        {!isPaid && (
+          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
+            <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
+              <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
+              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                AI Knowledge Results + Certificate
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                Get your exclusive AI readiness profile with expert-backed strategies tailored just for you!
+              </p>
+              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+              <button
+                onClick={handlePurchaseCertificate}
+                disabled={isProcessingPayment}
+                className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: '#4A47A3' }}
+              >
+                {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+              </button>
+              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                <Lock className="h-4 w-4" />
+                <span className="text-xs font-medium">100% Secure</span>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Magazine-style Header - Adapted for "Your AI Readiness" */}
+        <div className="text-center mb-8 sm:mb-12 relative z-10">
+          <div
+            className="max-w-2xl mx-auto py-6 sm:py-8"
+            style={{
+              borderTop: '3px solid #24348C',
+              borderBottom: '3px solid #24348C',
+              padding: '2rem 0'
+            }}
+          >
+            <h2
+              className="text-sm sm:text-base font-medium mb-3 sm:mb-4"
+              style={{
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                marginTop: 0
+              }}
+            >
+              Your AI Readiness Profile
+            </h2>
+            <h3
+              className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4"
+              style={{
+                color: '#24348C',
+                lineHeight: '1.2',
+                margin: 0
+              }}
+            >
+              {result_description?.title || 'AI-Enthusiastic Learner'}
+            </h3>
+            <div
+              className="w-16 h-0.5 mx-auto"
+              style={{
+                background: '#fbbf24',
+                marginTop: '1rem'
+              }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Score Cards - All 8 AI Knowledge Categories */}
+        <div className="mb-8 sm:mb-12 grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+          {organizedScores.map((scoreData) => (
+            <div key={scoreData.code} className="w-full h-full">
+              <SmallScoreBox
+                score={scoreData.score}
+                name={scoreData.name}
+                color={scoreData.color || '#4A47A3'}
+                code={scoreData.code}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* AI Readiness Description Card */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#F4F4F4EE' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#5E5E5E' }}>
+                AI Readiness Description
+              </h4>
+              <div className="w-full h-0.5 bg-gray-300 mb-3 sm:mb-4"></div>
+              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
+                {result_description?.description || 'You demonstrate a strong positive attitude toward AI integration in learning. Your high scores in Performance Expectancy, Hedonic Motivation, and Behavioral Intention indicate that you see significant value in AI tools and genuinely enjoy using them for educational purposes. You believe AI can enhance your academic performance and you have a strong commitment to continue using these tools.'}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* AI Learning Recommendations Card */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#DFE4FF' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+                AI Learning Recommendations
+              </h4>
+              <div className="w-full h-0.5 mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
+              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
+                {result_description?.recommendations || 'Continue exploring advanced AI tools and consider becoming an AI learning advocate in your academic community. Focus on developing consistent habits around AI usage to maximize the benefits. Consider sharing your positive experiences with peers to help build a supportive AI learning community.'}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Payment Success Dialog Component
+interface PaymentSuccessDialogProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onDownloadCertificate: () => void;
+}
+
+const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({
+  isOpen,
+  onClose,
+  onDownloadCertificate
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        onClick={onClose}
+      />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all">
+        {/* Success Header */}
+        <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-8 text-center">
+          <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4">
+            <Check className="w-8 h-8 text-green-600" />
+          </div>
+          <h3 className="text-2xl font-bold text-white mb-2">
+            Payment Successful!
+          </h3>
+          <p className="text-green-100 text-sm">
+            Your transaction has been completed
+          </p>
+        </div>
+
+        {/* Content */}
+        <div className="px-6 py-6">
+          <div className="text-center mb-6">
+            <h4 className="text-lg font-semibold text-gray-800 mb-3">
+              🎉 Congratulations!
+            </h4>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              You now have access to your complete AI Knowledge Assessment results and can download your official certificate.
+            </p>
+          </div>
+
+          {/* Features Unlocked */}
+          <div className="bg-blue-50 rounded-lg p-4 mb-6">
+            <h5 className="font-semibold text-blue-800 mb-3 text-sm">
+              ✨ Features Now Available:
+            </h5>
+            <ul className="space-y-2 text-sm text-blue-700">
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Detailed AI readiness analysis
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Complete score breakdown
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Official PDF certificate
+              </li>
+              <li className="flex items-center gap-2">
+                <Check className="w-4 h-4 text-blue-600" />
+                Personalized AI recommendations
+              </li>
+            </ul>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            <button
+              onClick={onDownloadCertificate}
+              className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span>📄</span>
+              Download Certificate
+            </button>
+            <button
+              onClick={onClose}
+              className="flex-1 bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-all duration-200"
+            >
+              Continue Reading
+            </button>
+          </div>
+
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 w-8 h-8 bg-white bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-200"
+          >
+            <X className="w-4 h-4 text-gray-600" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const EnhancedAIKnowledgeResultsDashboard = () => {
+  const { user } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
     resultsData: null,
-    error: null
+    error: null,
+    canDownloadCertificate: false
   });
 
-  // Initialize results data
-  const initializeResults = useCallback(async () => {
-    if (!isAuthenticated) {
+  // Mock payment state for now - replace with real payment integration
+  const [isPaid, setIsPaid] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
+
+  // Mock handlers - replace with real payment integration
+  const handlePurchaseCertificate = async () => {
+    setIsProcessingPayment(true);
+    // Simulate payment processing
+    setTimeout(() => {
+      setIsProcessingPayment(false);
+      setIsPaid(true);
+      setShowPaymentSuccessDialog(true);
+    }, 2000);
+  };
+
+  const handleDownloadCertificate = async () => {
+    alert('Certificate download would start here (real implementation)');
+  };
+
+  // Load test results
+  const loadResults = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      setResultsState(prev => ({ ...prev, isLoading: true, error: null }));
+
+      // Get the test results - replace with correct API method
+      const results = await aiKnowledgeAPI.getTestResults('latest');
+
       setResultsState(prev => ({
         ...prev,
         isLoading: false,
-        error: 'Please login to view your AI Knowledge test results'
+        resultsData: results.data,
+        canDownloadCertificate: true
       }));
-      return;
-    }
-
-    try {
-      // Get test ID from URL params
-      const urlParams = new URLSearchParams(window.location.search);
-      const testId = urlParams.get('testId');
-
-      if (!testId) {
-        throw new Error('Test ID not found in URL parameters');
-      }
-
-      // Fetch test data and results
-      const [testResponse, resultsResponse] = await Promise.all([
-        aiKnowledgeAPI.getTest(testId),
-        aiKnowledgeAPI.getTestResults(testId)
-      ]);
-
-      setResultsState({
-        isLoading: false,
-        testData: testResponse.data,
-        resultsData: resultsResponse.data,
-        error: null
-      });
-
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to load AI Knowledge test results';
-      console.error('❌ Failed to load AI Knowledge results:', error);
-      setResultsState({
+      console.error('Failed to load results:', error);
+      setResultsState(prev => ({
+        ...prev,
         isLoading: false,
-        testData: null,
-        resultsData: null,
-        error: errorMessage
-      });
+        error: error instanceof Error ? error.message : 'Failed to load results'
+      }));
     }
-  }, [isAuthenticated]);
+  }, [user]);
 
-  // Initialize on mount
   useEffect(() => {
-    initializeResults();
-  }, [initializeResults]);
+    loadResults();
+  }, [loadResults]);
 
-  // Chart configuration for radar chart
-  const getRadarChartOptions = (resultsData: AiKnowledgeTestResultsType) => {
-    const categories = Object.keys(AI_KNOWLEDGE_CATEGORIES);
-    const scores = categories.map(code => {
+  // Create organized data for AI knowledge categories
+  const organizedScores = resultsState.resultsData ? Object.entries(AI_KNOWLEDGE_CATEGORIES).map(([code, info]) => {
+    const score = (() => {
       switch (code) {
-        case 'PE': return resultsData.pe_score;
-        case 'EE': return resultsData.ee_score;
-        case 'SI': return resultsData.si_score;
-        case 'FC': return resultsData.fc_score;
-        case 'HM': return resultsData.hm_score;
-        case 'PV': return resultsData.pv_score;
-        case 'HT': return resultsData.ht_score;
-        case 'BI': return resultsData.bi_score;
+        case 'PE': return resultsState.resultsData!.pe_score;
+        case 'EE': return resultsState.resultsData!.ee_score;
+        case 'SI': return resultsState.resultsData!.si_score;
+        case 'FC': return resultsState.resultsData!.fc_score;
+        case 'HM': return resultsState.resultsData!.hm_score;
+        case 'PV': return resultsState.resultsData!.pv_score;
+        case 'HT': return resultsState.resultsData!.ht_score;
+        case 'BI': return resultsState.resultsData!.bi_score;
         default: return 0;
       }
-    });
+    })();
+
+    const percentage = (score / resultsState.resultsData!.max_score) * 100;
 
     return {
-      series: [{
-        name: 'AI Knowledge Scores',
-        data: scores
-      }],
-      options: {
-        chart: {
-          height: 350,
-          type: 'radar' as const,
-          fontFamily: 'Merriweather Sans, sans-serif'
-        },
-        xaxis: {
-          categories: categories.map(code => AI_KNOWLEDGE_CATEGORIES[code as keyof typeof AI_KNOWLEDGE_CATEGORIES].name)
-        },
-        yaxis: {
-          min: 0,
-          max: resultsData.max_score,
-          tickAmount: 5
-        },
-        colors: ['#2A3262'],
-        fill: {
-          opacity: 0.2
-        },
-        stroke: {
-          width: 2
-        },
-        markers: {
-          size: 6
-        },
-        legend: {
-          show: false
-        }
-      }
+      name: info.name,
+      score,
+      percentage,
+      color: info.color,
+      code
     };
-  };
+  }) : [];
 
-  // Bar chart for individual scores
-  const getBarChartOptions = (resultsData: AiKnowledgeTestResultsType) => {
-    const categories = Object.keys(AI_KNOWLEDGE_CATEGORIES);
-    const scores = categories.map(code => {
-      switch (code) {
-        case 'PE': return resultsData.pe_score;
-        case 'EE': return resultsData.ee_score;
-        case 'SI': return resultsData.si_score;
-        case 'FC': return resultsData.fc_score;
-        case 'HM': return resultsData.hm_score;
-        case 'PV': return resultsData.pv_score;
-        case 'HT': return resultsData.ht_score;
-        case 'BI': return resultsData.bi_score;
-        default: return 0;
-      }
-    });
-
-    const colors = categories.map(code => AI_KNOWLEDGE_CATEGORIES[code as keyof typeof AI_KNOWLEDGE_CATEGORIES].color);
-
-    return {
-      series: [{
-        name: 'Score',
-        data: scores
-      }],
-      options: {
-        chart: {
-          type: 'bar' as const,
-          height: 400,
-          fontFamily: 'Merriweather Sans, sans-serif'
-        },
-        plotOptions: {
-          bar: {
-            horizontal: false,
-            columnWidth: '55%',
-            endingShape: 'rounded'
-          },
-        },
-        dataLabels: {
-          enabled: true,
-          formatter: function(val: number) {
-            return val.toFixed(1);
-          }
-        },
-        stroke: {
-          show: true,
-          width: 2,
-          colors: ['transparent']
-        },
-        xaxis: {
-          categories: categories,
-          labels: {
-            style: {
-              fontSize: '12px'
-            }
-          }
-        },
-        yaxis: {
-          title: {
-            text: 'Score'
-          },
-          min: 0,
-          max: resultsData.max_score
-        },
-        fill: {
-          opacity: 1
-        },
-        colors: colors,
-        tooltip: {
-          y: {
-            formatter: function (val: number, opts: { dataPointIndex: number }) {
-              const categoryCode = categories[opts.dataPointIndex];
-              const categoryInfo = AI_KNOWLEDGE_CATEGORIES[categoryCode as keyof typeof AI_KNOWLEDGE_CATEGORIES];
-              return `${val.toFixed(1)}/${resultsData.max_score} - ${categoryInfo.description}`;
-            }
-          }
-        },
-        legend: {
-          show: false
-        }
-      }
-    };
-  };
-
-  // Loading state
   if (resultsState.isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <h2 className="text-xl font-bold mb-4" style={{ color: '#2A3262' }}>Loading Your AI Knowledge Results...</h2>
-          <p className="text-gray-600">Processing your AI learning attitudes assessment</p>
+      <div className="min-h-screen bg-[#E0E6F6] relative overflow-hidden">
+        <Header currentPage="ai-knowledge-test-results" />
+        <div className="flex-1 py-6 sm:py-12 md:py-24 lg:py-32 z-10 relative">
+          <div className="container px-4 md:px-6 max-w-6xl mx-auto">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+              <p className="mt-4 text-gray-600">Loading your results...</p>
+            </div>
+          </div>
         </div>
+        <Footer />
       </div>
     );
   }
 
-  // Error state
-  if (resultsState.error) {
+  if (resultsState.error || !resultsState.resultsData) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4 text-red-700">Error Loading Results</h2>
-          <p className="text-gray-600 mb-4">{resultsState.error}</p>
-          <Link
-            href="/ai-knowledge-test"
-            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Take Test Again
-          </Link>
+      <div className="min-h-screen bg-[#E0E6F6] relative overflow-hidden">
+        <Header currentPage="ai-knowledge-test-results" />
+        <div className="flex-1 py-6 sm:py-12 md:py-24 lg:py-32 z-10 relative">
+          <div className="container px-4 md:px-6 max-w-6xl mx-auto">
+            <div className="text-center">
+              <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">Unable to Load Results</h2>
+              <p className="text-gray-600 mb-6">
+                {resultsState.error || 'No test results found. Please take the test first.'}
+              </p>
+              <Link
+                href="/ai-knowledge-test"
+                className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200"
+              >
+                Take AI Knowledge Test
+              </Link>
+            </div>
+          </div>
         </div>
-      </div>
-    );
-  }
-
-  // Not authenticated
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4 text-yellow-700">Authentication Required</h2>
-          <p className="text-gray-600 mb-4">Please login to view your AI Knowledge test results</p>
-          <Link
-            href="/login"
-            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Go to Login
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const { resultsData } = resultsState;
-
-  if (!resultsData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center bg-white rounded-lg shadow-lg p-8 max-w-md">
-          <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-          <h2 className="text-xl font-bold mb-4 text-yellow-700">No Results Found</h2>
-          <p className="text-gray-600 mb-4">No results data available for this test</p>
-          <Link
-            href="/ai-knowledge-test"
-            className="inline-block px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Take Test Again
-          </Link>
-        </div>
+        <Footer />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+    <div className="min-h-screen bg-[#E0E6F6] relative overflow-hidden" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Header */}
       <Header currentPage="ai-knowledge-test-results" />
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header Section */}
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center mb-4">
-            <Check className="w-12 h-12 text-green-500 mr-3" />
-            <h1 className="text-3xl sm:text-4xl font-bold" style={{ color: '#2A3262' }}>
-              AI Knowledge Assessment Results
-            </h1>
-          </div>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Your comprehensive analysis of attitudes toward AI usage in learning
-          </p>
-        </div>
-
-        {/* Overall Score Card */}
-        <Card className="mb-8 shadow-lg">
-          <CardHeader className="text-center" style={{ backgroundColor: '#2A3262' }}>
-            <CardTitle className="text-white text-2xl">Overall AI Readiness Score</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <div className="text-6xl font-bold mb-2" style={{ color: '#2A3262' }}>
-                {resultsData.total_score.toFixed(1)}
-              </div>
-              <div className="text-xl text-gray-600 mb-4">
-                out of {resultsData.max_score.toFixed(1)}
-              </div>
-              <div className="text-lg font-medium" style={{ color: '#ABD305' }}>
-                {resultsData.result_description.ai_readiness_level}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-          {/* Radar Chart */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center" style={{ color: '#2A3262' }}>
-                <TrendingUp className="w-5 h-5 mr-2" />
-                AI Attitudes Profile
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {typeof window !== 'undefined' && (
-                <ApexCharts
-                  options={getRadarChartOptions(resultsData).options}
-                  series={getRadarChartOptions(resultsData).series}
-                  type="radar"
-                  height={350}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Bar Chart */}
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center" style={{ color: '#2A3262' }}>
-                <BarChart3 className="w-5 h-5 mr-2" />
-                Category Breakdown
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {typeof window !== 'undefined' && (
-                <ApexCharts
-                  options={getBarChartOptions(resultsData).options}
-                  series={getBarChartOptions(resultsData).series}
-                  type="bar"
-                  height={400}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Detailed Category Scores */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {Object.entries(AI_KNOWLEDGE_CATEGORIES).map(([code, info]) => {
-            const score = (() => {
-              switch (code) {
-                case 'PE': return resultsData.pe_score;
-                case 'EE': return resultsData.ee_score;
-                case 'SI': return resultsData.si_score;
-                case 'FC': return resultsData.fc_score;
-                case 'HM': return resultsData.hm_score;
-                case 'PV': return resultsData.pv_score;
-                case 'HT': return resultsData.ht_score;
-                case 'BI': return resultsData.bi_score;
-                default: return 0;
-              }
-            })();
-
-            const percentage = (score / resultsData.max_score) * 100;
-
-            return (
-              <Card key={code} className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-sm font-medium text-gray-700">{code}</CardTitle>
-                  <div className="text-lg font-bold" style={{ color: info.color }}>
-                    {info.name}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-3">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Score</span>
-                      <span className="font-medium">{score.toFixed(1)}/{resultsData.max_score}</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className="h-2 rounded-full transition-all duration-300"
-                        style={{
-                          backgroundColor: info.color,
-                          width: `${percentage}%`
-                        }}
-                      />
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-600 leading-relaxed">
-                    {info.description}
-                  </p>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-
-        {/* Results Description */}
-        <Card className="mb-8 shadow-lg">
-          <CardHeader>
-            <CardTitle style={{ color: '#2A3262' }}>Your AI Learning Profile</CardTitle>
-          </CardHeader>
-          <CardContent className="prose max-w-none">
-            <h3 className="text-xl font-semibold mb-3" style={{ color: '#2A3262' }}>
-              {resultsData.result_description.title}
-            </h3>
-            <p className="text-gray-700 mb-4 leading-relaxed">
-              {resultsData.result_description.description}
-            </p>
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <h4 className="font-semibold text-blue-900 mb-2">Recommendations:</h4>
-              <p className="text-blue-800">
-                {resultsData.result_description.recommendations}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Buttons */}
-        <div className="text-center space-x-4">
-          <Link
-            href="/ai-knowledge-test"
-            className="inline-block px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-          >
-            Take Test Again
-          </Link>
-          <Link
-            href="/"
-            className="inline-block px-6 py-3 text-white rounded-lg hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            Back to Home
-          </Link>
-        </div>
+      {/* Background Elements */}
+      <div className="absolute top-0 left-0 w-full h-auto opacity-30 z-0 pointer-events-none">
+        <div className="w-64 h-64 sm:w-96 sm:h-96 bg-gradient-to-br from-blue-400 to-purple-400 rounded-full blur-3xl"></div>
+      </div>
+      <div className="absolute bottom-0 right-0 w-full h-auto opacity-50 z-0 pointer-events-none">
+        <div className="w-32 h-32 sm:w-64 sm:h-64 bg-gradient-to-br from-green-400 to-blue-400 rounded-full blur-3xl"></div>
       </div>
 
+      <main className="flex-1 py-6 sm:py-12 md:py-24 lg:py-32 z-10 relative">
+        <div className="container px-4 md:px-6 max-w-6xl mx-auto">
+          {/* User Welcome Section */}
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="flex items-center gap-3">
+              <User className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600" />
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-gray-800">Welcome back, {user?.name || 'Student'}!</h2>
+                <p className="text-gray-600 text-sm sm:text-base">Here are your AI Knowledge Assessment results</p>
+              </div>
+            </div>
+          </div>
+
+
+          {/* Top Section: Final Report */}
+          <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 sm:mb-12">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 sm:mb-8 gap-4">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold" style={{ color: '#4A47A3' }}>
+                Here is your AI readiness report
+              </h1>
+              <div className="text-left sm:text-right">
+                <p className="text-xs sm:text-sm" style={{ color: '#4A47A3' }}>Certificate ID: AI-{Date.now()}</p>
+                <p className="text-xs text-gray-500">Test completed: {new Date().toLocaleDateString()}</p>
+              </div>
+            </div>
+
+            {/* Main content: Responsive Layout */}
+            <div className="flex flex-col lg:flex-row gap-6 lg:gap-12 items-start">
+              {/* Chart Section - Spider/Radar Chart */}
+              <div className="w-full lg:w-1/2 flex justify-center">
+                <Card className="rounded-lg overflow-hidden border-none shadow-lg w-full">
+                  <CardHeader className="bg-[#8BC34A] text-white rounded-t-lg py-3 sm:py-4">
+                    <CardTitle className="text-center text-lg sm:text-2xl font-bold" style={{ color: '#24348C' }}>
+                      AI Knowledge Profile
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-3 sm:p-6 bg-[#F0F2F5]">
+                    {/* ApexCharts Radar Chart */}
+                    {typeof window !== 'undefined' && (
+                      <ApexCharts
+                        options={{
+                          chart: {
+                            height: 350,
+                            type: "radar",
+                            toolbar: {
+                              show: false,
+                            },
+                            fontFamily: 'Merriweather Sans, sans-serif'
+                          },
+                          xaxis: {
+                            categories: organizedScores.map(item => item.code)
+                          },
+                          yaxis: {
+                            min: 0,
+                            max: resultsState.resultsData?.max_score || 5,
+                            tickAmount: 5
+                          },
+                          colors: ['#2A3262'],
+                          fill: {
+                            opacity: 0.2
+                          },
+                          stroke: {
+                            width: 2
+                          },
+                          markers: {
+                            size: 6
+                          },
+                          legend: {
+                            show: false
+                          },
+                          responsive: [
+                            {
+                              breakpoint: 768,
+                              options: {
+                                chart: {
+                                  height: 300,
+                                },
+                              },
+                            },
+                            {
+                              breakpoint: 480,
+                              options: {
+                                chart: {
+                                  height: 250,
+                                },
+                              },
+                            },
+                          ]
+                        }}
+                        series={[{
+                          name: 'AI Knowledge Scores',
+                          data: organizedScores.map(item => item.score)
+                        }]}
+                        type="radar"
+                        height={350}
+                      />
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Descriptions Section */}
+              <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
+                {/* AI Knowledge Category Descriptions - All 8 in Two Columns */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6">
+                  {organizedScores.map((category) => (
+                    <div key={category.code} className="flex items-start gap-3">
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0" style={{ color: '#8BC34A' }} />
+                      <div>
+                        <h3 className="font-bold mb-2 text-sm sm:text-base" style={{ color: '#2A3262' }}>
+                          {category.name} ({category.code})
+                        </h3>
+                        <p className="text-xs sm:text-sm text-gray-700">
+                          {AI_KNOWLEDGE_CATEGORIES[category.code as keyof typeof AI_KNOWLEDGE_CATEGORIES]?.description}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Payment/Download Component */}
+                <div className="mt-6 sm:mt-8">
+                  {isPaid ? (
+                    <button
+                      className="w-full py-2 sm:py-3 rounded-lg text-white font-medium hover:opacity-90 transition-opacity text-sm sm:text-base"
+                      style={{ backgroundColor: '#4A47A3' }}
+                      onClick={handleDownloadCertificate}
+                    >
+                      Download AI Knowledge Certificate
+                    </button>
+                  ) : (
+                    <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
+                      <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
+                      <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                        AI Knowledge Results + Certificate
+                      </h3>
+                      <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                        Get your exclusive AI readiness profile with expert-backed strategies
+                      </p>
+                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                      <button
+                        onClick={handlePurchaseCertificate}
+                        disabled={isProcessingPayment}
+                        className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                        style={{ backgroundColor: '#4A47A3' }}
+                      >
+                        {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+                      </button>
+                      <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                        <Lock className="h-4 w-4" />
+                        <span className="text-xs font-medium">100% Secure</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* NEW SECTION: AI Knowledge Style Section */}
+          <NewAIKnowledgeStyleSection
+            isPaid={isPaid}
+            handlePurchaseCertificate={handlePurchaseCertificate}
+            isProcessingPayment={isProcessingPayment}
+            organizedScores={organizedScores}
+            resultsData={resultsState.resultsData}
+          />
+
+          {/* Test Again Section */}
+          <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 md:p-12 mb-6 sm:mb-12">
+            <div className="text-center">
+              <h2 className="text-xl sm:text-2xl font-bold mb-4" style={{ color: '#4A47A3' }}>
+                Want to retake the AI knowledge assessment?
+              </h2>
+              <p className="text-gray-600 mb-6 text-sm sm:text-base">
+                AI attitudes can evolve over time. Take the test again to see if your AI readiness has changed.
+              </p>
+              <Link
+                href="/ai-knowledge-test"
+                className="inline-block px-4 sm:px-6 py-2 sm:py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium text-sm sm:text-base"
+              >
+                Take Test Again
+              </Link>
+            </div>
+          </div>
+        </div>
+      </main>
+
       {/* Footer */}
-      <Footer />
+      <Footer className="relative z-10" />
+
+      {/* Payment Success Dialog */}
+      <PaymentSuccessDialog
+        isOpen={showPaymentSuccessDialog}
+        onClose={() => setShowPaymentSuccessDialog(false)}
+        onDownloadCertificate={() => {
+          setShowPaymentSuccessDialog(false);
+          handleDownloadCertificate();
+        }}
+      />
     </div>
   );
 };
 
-export default AiKnowledgeTestResults;
+export default EnhancedAIKnowledgeResultsDashboard;
