@@ -7,10 +7,12 @@ This document provides comprehensive context for each major feature in the Cakra
 1. [Project Overview](#project-overview)
 2. [Authentication System Context](#authentication-system-context)
 3. [VARK Test System Context](#vark-test-system-context)
-4. [Payment Integration Context](#payment-integration-context)
-5. [UI/Component System Context](#uicomponent-system-context)
-6. [API Architecture Context](#api-architecture-context)
-7. [Development Guidelines](#development-guidelines)
+4. [AI Knowledge Test System Context](#ai-knowledge-test-system-context)
+5. [Payment Integration Context](#payment-integration-context)
+6. [UI/Component System Context](#uicomponent-system-context)
+7. [API Architecture Context](#api-architecture-context)
+8. [Development Guidelines](#development-guidelines)
+9. [Documentation Maintenance Process](#documentation-maintenance-process)
 
 ---
 
@@ -259,6 +261,290 @@ interface VarkAnswer {
 
 ---
 
+## AI Knowledge Test System Context
+
+### Overview
+The AI Knowledge Test system is a comprehensive psychological assessment that measures users' attitudes toward AI usage in learning across 8 dimensions. It reuses the proven VARK test UI architecture while connecting to specialized AI Knowledge APIs and implementing an 8-category scoring system instead of VARK's 4-category approach.
+
+### Key Components
+
+#### 1. Test Interface (`src/app/ai-knowledge-test/page.tsx`)
+**Purpose**: Main AI Knowledge test UI with chat-based interaction
+**Key Features**:
+- Identical chat-style interface to VARK test
+- 40-question assessment with 1-5 Likert scale
+- Isolated progress saving (separate from VARK)
+- Cross-device continuation support
+- Timer with auto-submission
+- Real-time progress indicators
+
+**State Structure**:
+```typescript
+interface TestState {
+  step: 'loading' | 'ready' | 'testing' | 'submitting' | 'completed' | 'error';
+  questionSet: AiKnowledgeQuestionSet | null;
+  test: AiKnowledgeTest | null;
+  currentQuestionIndex: number;
+  answers: Record<string, AiKnowledgeAnswer>;
+  timeLeft: number;
+  error: string | null;
+}
+```
+
+#### 2. AI Knowledge API (`src/lib/api/aiKnowledge.ts`)
+**Purpose**: All AI Knowledge test-related API communication
+**Key Methods**:
+- `getActiveQuestionSet()` - Fetch current question set
+- `createTest()` - Initialize new test instance
+- `getTest()` - Retrieve existing test data
+- `submitAnswers()` - Submit completed answers
+- `getTestResults()` - Fetch processed results with 8-dimension scoring
+- `startTestFlow()` - Combined initialization helper
+
+**API Endpoints Pattern**:
+- `GET /users/ai_knowledge_tests/active_question_set`
+- `POST /users/ai_knowledge_tests` (with `ai_knowledge_question_set_id`)
+- `GET /users/ai_knowledge_tests/:id`
+- `POST /users/ai_knowledge_tests/:id/submit_answers`
+- `GET /users/ai_knowledge_tests/:id/results`
+
+#### 3. Test Progress Manager (`src/lib/aiKnowledgeTestProgress.ts`)
+**Purpose**: Isolated cross-device progress persistence
+**Features**:
+- Uses `ai_knowledge_test_progress` localStorage key (isolated from VARK)
+- Version-controlled progress format
+- Cross-device warning system
+- Automatic cleanup on completion
+- Same functionality as VARK but completely separate storage
+
+#### 4. Results Dashboard (`src/app/ai-knowledge-test-results/page.tsx`)
+**Purpose**: Comprehensive 8-dimension results visualization
+**Key Features**:
+- Radar chart for 8 psychological dimensions
+- Bar chart for category breakdown
+- Detailed category interpretations
+- AI readiness level assessment
+- Recommendations and insights
+
+### Psychological Dimensions (8 Categories)
+
+#### Dimension Structure
+```typescript
+interface AiKnowledgeCategory {
+  id: string;
+  code: string; // PE, EE, SI, FC, HM, PV, HT, BI
+  name: string;
+}
+```
+
+#### The 8 Dimensions
+1. **PE (Performance Expectancy)** - Belief that AI will improve performance
+2. **EE (Effort Expectancy)** - Ease of using AI tools
+3. **SI (Social Influence)** - Social pressure to use AI
+4. **FC (Facilitating Conditions)** - Resources available for AI use
+5. **HM (Hedonic Motivation)** - Enjoyment from using AI
+6. **PV (Price Value)** - Cost-benefit perception of AI
+7. **HT (Habit)** - Habitual AI usage patterns
+8. **BI (Behavioral Intention)** - Intention to use AI
+
+### Data Models
+
+#### Question Structure
+```typescript
+interface AiKnowledgeQuestion {
+  id: string;
+  body: string;
+  max_weight: number; // Always 5 for Likert scale
+  category: AiKnowledgeCategory;
+}
+```
+
+#### Answer Format
+```typescript
+interface AiKnowledgeAnswer {
+  question_id: string;
+  category_id: string;
+  point: number; // 1.0 to 5.0 for Likert scale
+}
+```
+
+#### Results Structure
+```typescript
+interface AiKnowledgeTestResults {
+  pe_score: number;    // Performance Expectancy score
+  ee_score: number;    // Effort Expectancy score
+  si_score: number;    // Social Influence score
+  fc_score: number;    // Facilitating Conditions score
+  hm_score: number;    // Hedonic Motivation score
+  pv_score: number;    // Price Value score
+  ht_score: number;    // Habit score
+  bi_score: number;    // Behavioral Intention score
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: AiKnowledgeScoreBreakdown[];
+  dominant_categories: string[];
+  category_interpretations: Record<string, string>;
+  result_description: {
+    title: string;
+    description: string;
+    recommendations: string;
+    ai_readiness_level: string;
+  };
+}
+```
+
+### Data Flow Architecture
+
+#### Test Lifecycle
+```
+Test Initialization
+  ↓
+Question Set Fetching → Test Creation → State Initialization
+  ↓
+Testing Phase (40 questions)
+  ↓
+Question Display → User Answer (Likert Scale) → Progress Save → Next Question
+  ↓
+Completion
+  ↓
+Answer Submission → 8-Dimension Analysis → Results Display
+```
+
+#### Progress Saving Flow
+```
+Answer Submission → aiKnowledgeTestProgress.saveProgress()
+  ↓
+localStorage Update (isolated key) → Cross-device Sync Ready
+  ↓
+Page Reload/Navigation → Progress Restoration
+```
+
+### Integration Points
+
+#### Homepage Integration
+**Carousel Item** (`src/app/page.tsx`):
+```typescript
+{
+  title: "Artificial Intelligence Assessment",
+  subtitle: "Measure Your AI Learning Readiness and Attitudes.",
+  description: "Discover your attitudes toward AI usage in learning across 8 psychological dimensions...",
+  available: true, // Updated from false
+  href: "/ai-knowledge-test" // Updated from "#"
+}
+```
+
+**Test Card** (`src/app/page.tsx`):
+```typescript
+{
+  title: "AI Knowledge",
+  buttonText: "Start Exam", // Updated from "Coming Soon"
+  href: "/ai-knowledge-test", // Updated from "#"
+  available: true // Updated from false
+}
+```
+
+#### Scalable Header Component
+**Updated for Multiple Test Types** (`src/components/Header.tsx`):
+```typescript
+interface HeaderProps {
+  currentPage?: string; // Accept any string for unlimited test types
+  transparent?: boolean;
+}
+```
+
+### Architectural Patterns
+
+#### Reusable Test Architecture
+The AI Knowledge Test demonstrates the scalable pattern for multiple test types:
+
+1. **Shared UI Components**: Same chat interface, slider inputs, progress indicators
+2. **Isolated API Services**: Separate API modules for each test type
+3. **Independent Progress Management**: Isolated localStorage keys prevent conflicts
+4. **Consistent Data Models**: Similar interfaces with test-specific extensions
+5. **Scalable Navigation**: Header component accepts any test type string
+
+#### Type Safety Patterns
+```typescript
+// Generic test interfaces that can be extended
+interface BaseTest {
+  id: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+interface BaseTestResults {
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: ScoreBreakdown[];
+}
+
+// Specific implementations extend base interfaces
+interface AiKnowledgeTest extends BaseTest {
+  ai_knowledge_question_set_id: string;
+}
+
+interface AiKnowledgeTestResults extends BaseTestResults {
+  pe_score: number;
+  ee_score: number;
+  // ... other AI-specific fields
+}
+```
+
+### Extension Points
+
+#### Adding New Test Types
+The AI Knowledge Test implementation provides a blueprint for future test types:
+
+1. **Create new API service** following `aiKnowledge.ts` pattern
+2. **Define test-specific interfaces** extending base types
+3. **Create isolated progress manager** with unique localStorage key
+4. **Build test interface** copying the proven chat-based UI
+5. **Implement results dashboard** with test-specific visualizations
+6. **Update homepage integration** with new test cards
+7. **No Header component changes needed** (scalable design)
+
+#### Customizing Scoring Systems
+1. **Modify results interfaces** for new dimension structures
+2. **Update visualization components** for different chart types
+3. **Adapt API response handling** for new scoring algorithms
+4. **Customize category interpretations** and recommendations
+
+### Development Considerations
+
+#### Data Conversion Patterns
+The AI Knowledge API includes automatic string-to-number conversion for scores:
+```typescript
+const convertedData: AiKnowledgeTestResults = {
+  ...rawData,
+  pe_score: typeof rawData.pe_score === 'string' ? parseFloat(rawData.pe_score) : rawData.pe_score,
+  // ... similar conversions for all numeric fields
+};
+```
+
+#### Error Handling Consistency
+All AI Knowledge API methods follow the same error handling pattern as VARK:
+```typescript
+catch (error) {
+  const axiosError = error as AxiosError<ApiErrorResponse>;
+  if (axiosError.response?.data?.message) {
+    throw new Error(axiosError.response.data.message);
+  } else {
+    throw new Error('Failed to [operation]. Please try again.');
+  }
+}
+```
+
+#### Visualization Requirements
+- **ApexCharts integration** for radar and bar charts
+- **8-category color mapping** for consistent visual identity
+- **Responsive design** for mobile and desktop results viewing
+- **Accessibility considerations** for chart data interpretation
+
+---
+
 ## Payment Integration Context
 
 ### Overview
@@ -359,10 +645,21 @@ The UI system is built on Radix UI primitives with Tailwind CSS, providing acces
 - User avatar with automatic fallbacks
 - Authentication state integration
 - Active page indicators
+- Scalable for unlimited test types
+
+**Props Interface** (Updated for Scalability):
+```tsx
+interface HeaderProps {
+  currentPage?: string; // Accept any string for unlimited test types
+  transparent?: boolean;
+}
+```
 
 **Usage Pattern**:
 ```tsx
 <Header currentPage="test" transparent={true} />
+<Header currentPage="ai-knowledge-test" transparent={false} />
+<Header currentPage="future-test-type" transparent={true} />
 ```
 
 #### Protected Route HOC (`src/components/ProtectedRoute.tsx`)
@@ -472,6 +769,14 @@ const apiClient = axios.create({
 - `GET /users/vark_tests/:id` - Get test
 - `POST /users/vark_tests/:id/submit_answers` - Submit answers
 - `GET /users/vark_tests/:id/results` - Get results
+
+#### AI Knowledge API (`src/lib/api/aiKnowledge.ts`)
+**Endpoints**:
+- `GET /users/ai_knowledge_tests/active_question_set` - Active AI questions
+- `POST /users/ai_knowledge_tests` - Create AI test (with `ai_knowledge_question_set_id`)
+- `GET /users/ai_knowledge_tests/:id` - Get AI test
+- `POST /users/ai_knowledge_tests/:id/submit_answers` - Submit AI answers
+- `GET /users/ai_knowledge_tests/:id/results` - Get AI results (8-dimension scoring)
 
 #### Payment API (`src/lib/api/payment.ts`)
 **Endpoints**:
@@ -632,10 +937,194 @@ Other Errors → Pass to Component → User Notification
 
 ---
 
+## Documentation Maintenance Process
+
+### Overview
+This section establishes a systematic process for maintaining the FEATURE_CONTEXTS.md documentation as the codebase evolves, ensuring that documentation remains accurate, comprehensive, and useful for development.
+
+### Documentation Update Requirements
+
+#### When to Update Documentation
+Documentation MUST be updated in the following scenarios:
+
+1. **New Feature Implementation**
+   - Any new major feature or system component
+   - New API endpoints or services
+   - New UI components or patterns
+   - New architectural patterns or approaches
+
+2. **Significant Feature Modifications**
+   - Changes to existing API interfaces
+   - Updates to component props or behaviors
+   - Modifications to data models or types
+   - Changes to authentication or authorization flows
+
+3. **Architectural Changes**
+   - New design patterns introduced
+   - Changes to project structure
+   - Updates to development workflow
+   - New technology integrations
+
+4. **Bug Fixes with Architectural Impact**
+   - Fixes that change component interfaces
+   - Fixes that introduce new patterns
+   - Fixes that affect multiple features
+
+### Documentation Update Process
+
+#### 1. Feature Context Addition Process
+When implementing new features (like AI Knowledge Test), follow this checklist:
+
+- [ ] **Create comprehensive feature section** following existing section patterns
+- [ ] **Update Table of Contents** with new section links
+- [ ] **Document all key components** with purpose, features, and usage patterns
+- [ ] **Include data models and interfaces** with TypeScript examples
+- [ ] **Document API endpoints** and communication patterns
+- [ ] **Explain integration points** with existing features
+- [ ] **Provide extension points** for future development
+- [ ] **Add architectural patterns** that can be reused
+
+#### 2. Existing Section Updates
+When modifying existing features, update relevant sections:
+
+- [ ] **Component interfaces** - Update props, methods, and usage patterns
+- [ ] **API documentation** - Add new endpoints or modify existing ones
+- [ ] **Data models** - Update TypeScript interfaces and structures
+- [ ] **Integration points** - Document new connections between features
+- [ ] **Extension points** - Update guidance for future modifications
+
+#### 3. Cross-Reference Updates
+Ensure consistency across related sections:
+
+- [ ] **Check dependencies** - Update sections that reference modified features
+- [ ] **Verify examples** - Ensure code examples remain accurate
+- [ ] **Update patterns** - Document new patterns introduced
+- [ ] **Check navigation** - Ensure internal links remain valid
+
+### Documentation Standards
+
+#### Section Structure Template
+Follow this template for new feature contexts:
+
+```markdown
+## [Feature Name] Context
+
+### Overview
+Brief description of the feature's purpose and architecture
+
+### Key Components
+#### 1. Component Name (`file/path`)
+**Purpose**: What this component does
+**Key Features**:
+- Feature list with specific capabilities
+- Technical details and patterns
+
+**Usage Pattern**:
+```tsx
+// Code example showing typical usage
+```
+
+### Data Models
+TypeScript interfaces and data structures
+
+### Data Flow Architecture
+Diagrams and flow descriptions
+
+### Integration Points
+How this feature connects to other systems
+
+### Extension Points
+Guidelines for future modifications
+
+### Development Considerations
+Special requirements, patterns, or gotchas
+```
+
+#### Code Documentation Standards
+- **Always include TypeScript interfaces** for data structures
+- **Provide usage examples** for components and functions
+- **Document API endpoints** with request/response patterns
+- **Include error handling patterns** where applicable
+- **Show integration examples** with other features
+
+#### Cross-Reference Standards
+- **Link to specific files** with relative paths
+- **Reference line numbers** when pointing to specific implementations
+- **Use consistent terminology** across all sections
+- **Maintain alphabetical ordering** where applicable
+
+### Automation and Reminders
+
+#### Development Workflow Integration
+To ensure documentation stays current:
+
+1. **Pre-commit Reminder**: Developers should check if their changes require documentation updates
+2. **Pull Request Template**: Include documentation update checklist
+3. **Code Review Process**: Reviewers should verify documentation completeness
+4. **Feature Completion Definition**: No feature is complete without documentation updates
+
+#### Documentation Review Process
+Quarterly review process:
+
+1. **Accuracy Review**: Verify all documented patterns match current implementation
+2. **Completeness Review**: Identify missing documentation for recent features
+3. **Clarity Review**: Improve explanations and examples based on developer feedback
+4. **Structure Review**: Reorganize sections for better developer experience
+
+### Maintenance Responsibilities
+
+#### Developer Responsibilities
+- **Update documentation** for all feature changes
+- **Follow established patterns** in documentation structure
+- **Include complete examples** and TypeScript interfaces
+- **Test documentation accuracy** against actual implementation
+
+#### Code Review Responsibilities
+- **Verify documentation updates** are included with feature changes
+- **Check for consistency** with existing documentation patterns
+- **Ensure completeness** of new feature documentation
+- **Validate accuracy** of code examples and interfaces
+
+#### Project Maintenance
+- **Regular documentation audits** to identify gaps or inconsistencies
+- **Template updates** as project patterns evolve
+- **Cross-reference validation** to ensure internal links remain valid
+- **Version synchronization** between code and documentation
+
+### Success Metrics
+
+#### Documentation Quality Indicators
+- **Developer onboarding time** - How quickly new developers can understand features
+- **Feature implementation speed** - How efficiently developers can add new features
+- **Bug reduction** - Fewer bugs due to misunderstood patterns or interfaces
+- **Code consistency** - More consistent implementation patterns across features
+
+#### Maintenance Success Indicators
+- **Documentation freshness** - Percentage of features with up-to-date documentation
+- **Coverage completeness** - All major features have comprehensive documentation
+- **Cross-reference accuracy** - All internal links and references remain valid
+- **Developer satisfaction** - Positive feedback on documentation usefulness
+
+### Tools and Automation
+
+#### Recommended Tools
+- **Markdown linters** for consistency and formatting
+- **Link checkers** for validating internal references
+- **TypeScript extractors** for automatic interface documentation
+- **Workflow automation** for documentation update reminders
+
+#### Future Enhancements
+- **Automated section generation** from TypeScript interfaces
+- **Documentation testing** to verify code examples remain valid
+- **Integration with development tools** for automatic update notifications
+- **Version tracking** for documentation changes alongside code changes
+
+---
+
 ## Conclusion
 
 This feature context documentation provides a comprehensive guide for understanding and extending the Cakravia application. Each feature is designed with clear separation of concerns, consistent patterns, and extensible architecture.
 
-When adding new features or modifying existing ones, refer to the specific feature contexts and follow the established patterns for maintainable, scalable code.
+When adding new features or modifying existing ones, refer to the specific feature contexts and follow the established patterns for maintainable, scalable code. Always update this documentation as part of your development process to ensure it remains a valuable resource for the entire team.
 
 For questions or clarifications about any feature context, refer to the specific component files and their inline documentation.
