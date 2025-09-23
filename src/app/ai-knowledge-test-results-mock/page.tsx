@@ -5,7 +5,7 @@ import { Check, Lock, AlertCircle, User, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
-import { AiKnowledgeTest, AiKnowledgeTestResults as AiKnowledgeTestResultsType } from '@/lib/types';
+import { AiKnowledgeTestResults as AiKnowledgeTestResultsType } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
