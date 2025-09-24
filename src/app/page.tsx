@@ -37,18 +37,18 @@ const EnhancedHomepage = () => {
       href: "/ai-knowledge-test"
     },
     {
-      title: "Comprehensive Assessment",
-      subtitle: "Build Your Foundation: Discover Your Resilience and Self-Esteem with Cakravia's Comprehensive Assessment.",
-      description: "True learning and growth extend beyond academic knowledge – they are deeply rooted in your inner strength. Cakravia's Comprehensive Assessment offers a profound exploration of two critical pillars of personal development: resilience and self-esteem. This assessment is designed to help you understand your capacity to bounce back from challenges, adapt to change, and maintain a healthy sense of self-worth. Uncover your inherent strengths, identify areas for cultivation, and build an unshakeable foundation for lifelong success and well-being.",
-      available: false,
-      href: "#"
+      title: "Behavioral Assessment",
+      subtitle: "Understand Your Learning Behaviors and Patterns.",
+      description: "Discover your behavioral tendencies and learning patterns with our comprehensive behavioral assessment. This evaluation explores your approach to learning, decision-making, and problem-solving across multiple behavioral dimensions. Understand how your personality traits and behavioral preferences influence your learning effectiveness and get personalized recommendations to optimize your study habits and academic performance.",
+      available: true,
+      href: "/behavioral-test"
     },
     {
-      title: "Behavioral Learning Patterns Assessment",
-      subtitle: "Unpack Your Habits, Optimize Your Learning: Discover Your Behavioral Learning Patterns.",
-      description: "Ever wondered why some study sessions are incredibly productive while others feel like a struggle? Cakravia's Behavioral Learning Patterns assessment delves beyond what you learn to explore how you learn. This insightful tool analyzes your actual learning behaviors, habits, and study patterns, revealing the routines and approaches that either empower or hinder your progress. Gain a deeper understanding of your cognitive tendencies, identify areas for improvement, and cultivate more effective, sustainable learning practices.",
-      available: false,
-      href: "#"
+      title: "Comprehensive Assessment",
+      subtitle: "Complete Learning Profile: VARK + AI Knowledge + Behavioral Combined.",
+      description: "Get the complete picture with our comprehensive assessment that combines VARK learning styles, AI knowledge evaluation, and behavioral analysis in one comprehensive evaluation. This all-in-one assessment provides the most detailed understanding of your learning preferences, technology readiness, and behavioral patterns. Perfect for students, educators, and professionals who want a complete learning profile for optimal academic and career success.",
+      available: true,
+      href: "/comprehensive-test"
     }
   ];
 
@@ -66,16 +66,16 @@ const EnhancedHomepage = () => {
       available: true
     },
     {
-      title: "Learning Behavior",
-      buttonText: "Coming Soon", 
-      href: "#",
-      available: false
+      title: "Behavioral Assessment",
+      buttonText: "Start Exam",
+      href: "/behavioral-test",
+      available: true
     },
     {
-      title: "Additional Measurement",
-      buttonText: "Coming Soon",
-      href: "#",
-      available: false
+      title: "Comprehensive Assessment",
+      buttonText: "Start Exam",
+      href: "/comprehensive-test",
+      available: true
     }
   ];
 

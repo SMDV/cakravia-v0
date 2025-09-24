@@ -240,6 +240,157 @@ export interface AiKnowledgeTestResults {
   };
 }
 
+// Behavioral Test Types
+export interface BehavioralCategory {
+  id: string;
+  code: string; // Behavioral dimension codes (will vary based on actual assessment)
+  name: string;
+}
+
+export interface BehavioralQuestion {
+  id: string;
+  body: string;
+  max_weight: number;
+  category: BehavioralCategory;
+}
+
+export interface BehavioralQuestionSet {
+  id: string;
+  version: number;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  time_limit: number;
+  questions: BehavioralQuestion[];
+}
+
+export interface BehavioralTest {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: 'in_progress' | 'completed';
+  time_limit: number;
+  expires_at: string;
+  questions: BehavioralQuestion[];
+}
+
+export interface BehavioralAnswer {
+  question_id: string;
+  category_id: string;
+  point: number;
+}
+
+export interface BehavioralSubmission {
+  answers: BehavioralAnswer[];
+}
+
+// Behavioral Test Results Types
+export interface BehavioralScoreBreakdown {
+  category: string;
+  code: string;
+  score: number;
+  percentage: number;
+}
+
+export interface BehavioralTestResults {
+  h_score: number; // Habits (kebiasaan)
+  m_score: number; // Motivation (motivasi)
+  r_score: number; // Self-Regulation (regulasi diri)
+  e_score: number; // Engagement (keterlibatan)
+  average_score: number; // Computed average from the 4 dimensions
+  level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: BehavioralScoreBreakdown[];
+  dominant_dimensions: string[];
+  dimension_interpretations: Record<string, string>;
+  result_description: {
+    title: string;
+    description: string;
+    recommendations: string;
+    behavioral_profile: string;
+  };
+}
+
+// Comprehensive Test Types (combines VARK + AI Knowledge + Behavioral)
+export interface ComprehensiveCategory {
+  id: string;
+  code: string; // Can be VARK codes (V, A, R, K), AI codes (PE, EE, SI, etc.), or Behavioral codes
+  name: string;
+  type: 'vark' | 'ai_knowledge' | 'behavioral'; // Indicates which assessment this belongs to
+}
+
+export interface ComprehensiveQuestion {
+  id: string;
+  body: string;
+  max_weight: number;
+  category: ComprehensiveCategory;
+}
+
+export interface ComprehensiveQuestionSet {
+  id: string;
+  version: number;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  time_limit: number;
+  questions: ComprehensiveQuestion[];
+}
+
+export interface ComprehensiveTest {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: 'in_progress' | 'completed';
+  time_limit: number;
+  expires_at: string;
+  questions: ComprehensiveQuestion[];
+}
+
+export interface ComprehensiveAnswer {
+  question_id: string;
+  category_id: string;
+  point: number;
+}
+
+export interface ComprehensiveSubmission {
+  answers: ComprehensiveAnswer[];
+}
+
+// Comprehensive Test Results Types
+export interface ComprehensiveScoreBreakdown {
+  category: string;
+  code: string;
+  score: number;
+  percentage: number;
+  type: 'vark' | 'ai_knowledge' | 'behavioral';
+}
+
+export interface ComprehensiveTestResults {
+  cf_score: number; // Cognitive Flexibility (fleksibilitas kognitif)
+  r_score: number; // Resilience (resiliensi)
+  ma_score: number; // Metacognitive Awareness (kesadaran metakognitif)
+  ag_score: number; // Academic Grit (keteguhan akademik)
+  e_score: number; // Self-Esteem (harga diri)
+  average_score: number; // Computed average from the 5 dimensions
+  level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
+  min_score: number;
+  max_score: number;
+  total_score: number;
+  scores_breakdown: ComprehensiveScoreBreakdown[];
+  dominant_dimensions: string[];
+  dimension_interpretations: Record<string, string>;
+  result_description: {
+    title: string;
+    description: string;
+    recommendations: string;
+    comprehensive_profile: string;
+  };
+}
+
 // Extend the existing User interface with Google fields (fixing duplicate definition)
 declare module './types' {
   interface User {
