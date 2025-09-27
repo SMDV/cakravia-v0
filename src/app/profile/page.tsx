@@ -73,7 +73,7 @@ interface VarkTestHistory {
 // Unified test history interface for display
 interface UnifiedTestHistory {
   id: string;
-  type: 'vark' | 'ai_knowledge' | 'behavioral' | 'comprehensive';
+  type: 'vark' | 'ai_knowledge' | 'behavioral' | 'comprehensive' | 'tpa';
   name: string;
   status: 'in_progress' | 'completed';
   started_at: string;
@@ -156,6 +156,25 @@ interface ComprehensiveTestHistory {
   is_expired: boolean;
 }
 
+interface TpaTestHistory {
+  id: string;
+  status: 'in_progress' | 'completed';
+  started_at: string;
+  completed_at: string | null;
+  question_set: {
+    id: string;
+    name: string;
+    version: number;
+    time_limit: number;
+  };
+  results?: {
+    total_score: number;
+    dominant_reasoning_categories: string[];
+  } | null;
+  time_remaining: number;
+  is_expired: boolean;
+}
+
 interface ProfileFormData {
   name: string;
   email: string;
@@ -172,6 +191,7 @@ const EnhancedProfilePage = () => {
   const [aiKnowledgeHistory, setAiKnowledgeHistory] = useState<AiKnowledgeTestHistory[]>([]);
   const [behavioralHistory, setBehavioralHistory] = useState<BehavioralTestHistory[]>([]);
   const [comprehensiveHistory, setComprehensiveHistory] = useState<ComprehensiveTestHistory[]>([]);
+  const [tpaHistory, setTpaHistory] = useState<TpaTestHistory[]>([]);
   const [unifiedTestHistory, setUnifiedTestHistory] = useState<UnifiedTestHistory[]>([]);
   const [testLoadingErrors, setTestLoadingErrors] = useState<Record<string, string>>({});
   const [profileData, setProfileData] = useState<ProfileFormData>({
@@ -258,6 +278,22 @@ const EnhancedProfilePage = () => {
     dominantStyles: test.results?.dominant_dimensions
   });
 
+  const convertTpaToUnified = (test: TpaTestHistory): UnifiedTestHistory => ({
+    id: test.id,
+    type: 'tpa',
+    name: test.question_set.name,
+    status: test.status,
+    started_at: test.started_at,
+    completed_at: test.completed_at,
+    version: test.question_set.version,
+    time_remaining: test.time_remaining,
+    is_expired: test.is_expired,
+    hasResults: !!test.results,
+    resultsUrl: test.results ? `/tpa-test-results?testId=${test.id}` : undefined,
+    totalScore: test.results?.total_score,
+    dominantStyles: test.results?.dominant_reasoning_categories
+  });
+
   // Load profile data and test history
   useEffect(() => {
     const loadProfileData = async () => {
@@ -305,7 +341,13 @@ const EnhancedProfilePage = () => {
           fetch('https://api.cakravia.com/api/v1/users/comprehensive_assessment_tests', { headers })
             .then(res => res.ok ? res.json() : Promise.reject(`Comprehensive API error: ${res.status}`))
             .then(data => ({ type: 'comprehensive', data: data.data || [] }))
-            .catch(error => ({ type: 'comprehensive', error: error.toString() }))
+            .catch(error => ({ type: 'comprehensive', error: error.toString() })),
+
+          // TPA Tests
+          fetch('https://api.cakravia.com/api/v1/users/tpa_tests', { headers })
+            .then(res => res.ok ? res.json() : Promise.reject(`TPA API error: ${res.status}`))
+            .then(data => ({ type: 'tpa', data: data.data || [] }))
+            .catch(error => ({ type: 'tpa', error: error.toString() }))
         ];
 
         try {
@@ -335,6 +377,10 @@ const EnhancedProfilePage = () => {
                   setComprehensiveHistory(result.data as ComprehensiveTestHistory[]);
                   allUnifiedTests.push(...(result.data as ComprehensiveTestHistory[]).map(convertComprehensiveToUnified));
                   break;
+                case 'tpa':
+                  setTpaHistory(result.data as TpaTestHistory[]);
+                  allUnifiedTests.push(...(result.data as TpaTestHistory[]).map(convertTpaToUnified));
+                  break;
               }
             }
           });
@@ -349,6 +395,7 @@ const EnhancedProfilePage = () => {
             aiKnowledge: aiKnowledgeHistory.length,
             behavioral: behavioralHistory.length,
             comprehensive: comprehensiveHistory.length,
+            tpa: tpaHistory.length,
             total: allUnifiedTests.length,
             errors: Object.keys(loadingErrors)
           });
@@ -550,6 +597,12 @@ const EnhancedProfilePage = () => {
           text: 'Comprehensive',
           className: 'bg-orange-100 text-orange-800 border-orange-200',
           icon: '🎆' // Fireworks for comprehensive
+        };
+      case 'tpa':
+        return {
+          text: 'TPA',
+          className: 'bg-purple-100 text-purple-800 border-purple-200',
+          icon: '🧩' // Puzzle piece for reasoning assessment
         };
       default:
         return {
@@ -1342,6 +1395,13 @@ const EnhancedProfilePage = () => {
                     >
                       <Play className="w-4 h-4" />
                       Comprehensive
+                    </Link>
+                    <Link
+                      href="/tpa-test"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
+                    >
+                      <Play className="w-4 h-4" />
+                      TPA Test
                     </Link>
                   </div>
                 </div>

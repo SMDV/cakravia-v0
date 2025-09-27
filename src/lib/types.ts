@@ -490,3 +490,116 @@ export interface PromptMomentNotification {
   isDismissedMoment: () => boolean;
   getDismissedReason: () => string;
 }
+
+// TPA Test Types (Test of Potential Ability)
+export interface TpaCategory {
+  id: string;
+  code: string; // AR (Analytical), QR (Quantitative), SR (Spatial), VR (Verbal)
+  name: string;
+}
+
+export interface TpaQuestion {
+  id: string;
+  question_text: string;
+  question_image_url?: string; // Visual element - key difference from other tests
+  option_a: string;
+  option_b: string;
+  option_c: string;
+  option_d: string;
+  option_e: string;
+  category: string; // Reasoning category name
+  difficulty_level: number;
+}
+
+export interface TpaQuestionSet {
+  id: string;
+  version: number;
+  name: string;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+  time_limit: number;
+  total_questions: number;
+  questions_by_category: {
+    "Analytical Reasoning": number;
+    "Quantitative Reasoning": number;
+    "Spatial Reasoning": number;
+    "Verbal Reasoning": number;
+  };
+  questions: TpaQuestion[];
+}
+
+export interface TpaTest {
+  id: string;
+  started_at: string;
+  completed_at: string | null;
+  status: 'in_progress' | 'completed';
+  time_limit: number;
+  time_remaining: number;
+  expires_at: string;
+  question_set: {
+    id: string;
+    name: string;
+    version: string;
+    time_limit: number;
+  };
+  questions: TpaQuestion[];
+  created_at: string;
+}
+
+export interface TpaAnswer {
+  tpa_question_id: string;
+  selected_option: 'A' | 'B' | 'C' | 'D' | 'E';
+}
+
+export interface TpaSubmission {
+  answers: TpaAnswer[];
+}
+
+// TPA Test Results Types
+export interface TpaScoreBreakdown {
+  category: string;
+  code: string;
+  score: number;
+  percentage: number;
+}
+
+export interface TpaTestResults {
+  analytical_reasoning_score: number;
+  quantitative_reasoning_score: number;
+  spatial_reasoning_score: number;
+  verbal_reasoning_score: number;
+  total_score: number;
+  average_score: number;
+  min_score: number;
+  max_score: number;
+  scores_breakdown: TpaScoreBreakdown[];
+  dominant_reasoning_categories: string[];
+  category_interpretations: Record<string, string>;
+  result_description: {
+    title: string;
+    description: string;
+    recommendations: string;
+    reasoning_profile: string;
+  };
+}
+
+// TPA Test History (for profile integration)
+export interface TpaTestHistory {
+  id: string;
+  status: 'in_progress' | 'completed';
+  started_at: string;
+  completed_at: string | null;
+  question_set: {
+    id: string;
+    name: string;
+    version: number;
+    time_limit: number;
+  };
+  results?: {
+    total_score: number;
+    dominant_reasoning_categories: string[];
+  } | null;
+  time_remaining: number;
+  is_expired: boolean;
+}

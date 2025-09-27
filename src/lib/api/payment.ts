@@ -111,4 +111,32 @@ export const paymentAPI = {
       paymentToken: tokenResponse.data
     };
   },
+
+  // ===== TPA PAYMENT METHODS =====
+
+  // Create payment order for TPA test
+  createTpaOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.post(`/users/tpa_tests/${testId}/orders`);
+    return response.data;
+  },
+
+  // Get payment token for TPA test
+  getTpaPaymentToken: async (testId: string): Promise<ApiResponse<PaymentToken>> => {
+    const response = await apiClient.post(`/users/tpa_tests/${testId}/orders/payment_token`);
+    return response.data;
+  },
+
+  // Combined method for TPA - creates order then gets payment token
+  initializeTpaPayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order
+    const orderResponse = await paymentAPI.createTpaOrder(testId);
+
+    // Then get the payment token
+    const tokenResponse = await paymentAPI.getTpaPaymentToken(testId);
+
+    return {
+      order: orderResponse.data,
+      paymentToken: tokenResponse.data
+    };
+  },
 };
