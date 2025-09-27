@@ -1,0 +1,495 @@
+# PROJECT FEATURE CONTEXT - CAKRAVIA
+
+You are working on this web development project. Before making any changes or suggestions, always reference this feature context to understand existing functionality and prevent redundancy.
+
+## GLOBAL CONTEXT
+```
+TECH_STACK: Next.js 15.3.4, TypeScript, Tailwind CSS, Radix UI, Axios, React 19, Lucide Icons
+ARCHITECTURE: Next.js App Router with server/client components
+STATE_MANAGEMENT: React Context (AuthContext) + localStorage for test progress
+STYLING: Tailwind CSS with custom design system (#2A3262, #ABD305, #DFE4FF)
+AUTH_SYSTEM: Email/password + Google Sign-In with cross-authentication support
+DATABASE: Remote API at https://api.cakravia.com/api/v1
+PROJECT_STRUCTURE: /src/app (pages), /src/components (reusable), /src/lib (utilities/API), /src/contexts
+API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, UI mockups)
+```
+
+## ACTIVE FEATURES
+
+### FEATURE_1: VARK Learning Style Assessment
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
+
+**PURPOSE:** Assess learning preferences across Visual, Aural, Read/Write, and Kinesthetic dimensions
+**USER_STORY:** As a user, I want to discover my learning style preferences so that I can optimize my study methods
+
+**MAIN_FLOW:**
+1. User navigates to `/test` or starts from homepage
+2. System fetches active question set and creates test session
+3. Chat-based interface with slider input for answers (1.0 to max_weight scale)
+4. Progress saved to localStorage for cross-device continuation
+5. Auto-submit on completion or timer expiration
+6. Results processing with learning style breakdown and recommendations
+7. Optional payment for certificate generation
+
+**API_ENDPOINTS:**
+- GET `/users/vark_tests/active_question_set` - Fetch question set
+- POST `/users/vark_tests` - Create test session
+- GET `/users/vark_tests/{id}` - Resume test
+- POST `/users/vark_tests/{id}/submit_answers` - Submit responses
+- GET `/users/vark_tests/{id}/results` - Get results
+- POST `/users/vark_tests/{id}/orders` - Payment processing
+
+**COMPONENTS:**
+- PRIMARY: VarkTestFlow → Main test orchestration with chat interface
+- SHARED: Header, Footer, CrossDeviceWarning → Consistent across platform
+- UI: Button, Card, Progress, ScrollArea, Slider → Radix-based components
+
+**ROUTES:**
+- `/test` - Main VARK test interface
+- `/results?testId={id}` - VARK results display
+- `/test-vark` - Testing environment
+
+**DEPENDENCIES:**
+- REQUIRES: AuthContext, API client, localStorage progress manager
+- USED_BY: Profile page (test history), Homepage (navigation)
+- EXTERNAL: Axios, js-cookie, Radix UI components
+
+**HOOKS/UTILITIES:**
+- useAuth() - Authentication state
+- VarkTestProgressManager - localStorage persistence
+- useCallback, useEffect - Performance optimization
+
+---
+
+### FEATURE_2: AI Knowledge Assessment
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
+
+**PURPOSE:** Evaluate attitudes toward AI usage across 8 psychological dimensions (PE, EE, SI, FC, HM, PV, HT, BI)
+**USER_STORY:** As a user, I want to understand my AI readiness and attitudes so that I can better integrate AI tools in my learning
+
+**MAIN_FLOW:**
+1. User accesses `/ai-knowledge-test`
+2. System creates AI knowledge test session
+3. Chat-based interface with 8-category questions
+4. Slider responses for agreement levels (1-5 scale typically)
+5. Progress tracking with localStorage backup
+6. Submission and processing of AI readiness profile
+7. Results showing dominant categories and recommendations
+
+**API_ENDPOINTS:**
+- GET `/users/ai_knowledge_tests/active_question_set` - Question set
+- POST `/users/ai_knowledge_tests` - Create session
+- GET `/users/ai_knowledge_tests/{id}` - Resume test
+- POST `/users/ai_knowledge_tests/{id}/submit_answers` - Submit
+- GET `/users/ai_knowledge_tests/{id}/results` - Results
+- POST `/users/ai_knowledge_tests/{id}/orders` - Payment
+
+**COMPONENTS:**
+- PRIMARY: AiKnowledgeTestInterface → Chat-based test flow
+- SHARED: Header, CrossDeviceWarning, test UI components
+- UI: Custom slider components, progress indicators
+
+**ROUTES:**
+- `/ai-knowledge-test` - Main AI assessment
+- `/ai-knowledge-test-results?testId={id}` - Results page
+- `/ai-knowledge-test-results-mock` - Mock results for testing
+
+**DEPENDENCIES:**
+- REQUIRES: AuthContext, comprehensive API client
+- USED_BY: Profile unified test history
+- EXTERNAL: Similar to VARK but different scoring algorithm
+
+**HOOKS/UTILITIES:**
+- AiKnowledgeTestProgressManager - Progress persistence
+- aiKnowledgeAPI - Dedicated API functions
+
+---
+
+### FEATURE_3: Behavioral Assessment
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
+
+**PURPOSE:** Analyze behavioral patterns across 4 dimensions (H-Habits, M-Motivation, R-Regulation, E-Engagement)
+**USER_STORY:** As a user, I want to understand my behavioral learning patterns so that I can improve my study habits
+
+**MAIN_FLOW:**
+1. Access `/behavioral-test` for assessment start
+2. Create behavioral test session with time limits
+3. Answer behavioral dimension questions via chat interface
+4. Track responses across 4 key behavioral areas
+5. Submit for behavioral profile analysis
+6. Receive behavioral insights and improvement recommendations
+
+**API_ENDPOINTS:**
+- GET `/users/behavioral_learning_tests/active_question_set`
+- POST `/users/behavioral_learning_tests` - Create session
+- GET `/users/behavioral_learning_tests/{id}` - Test retrieval
+- POST `/users/behavioral_learning_tests/{id}/submit_answers`
+- GET `/users/behavioral_learning_tests/{id}/results`
+- POST `/users/behavioral_learning_tests/{id}/orders`
+
+**COMPONENTS:**
+- PRIMARY: BehavioralTestInterface → Behavioral assessment flow
+- SHARED: Consistent chat UI pattern, cross-device support
+- UI: Behavioral-specific slider components and progress tracking
+
+**ROUTES:**
+- `/behavioral-test` - Main behavioral assessment
+- `/behavioral-test-results?testId={id}` - Results display
+- `/behavioral-test-results-mock` - Testing environment
+
+**DEPENDENCIES:**
+- REQUIRES: AuthContext, behavioral API endpoints
+- USED_BY: Profile page unified history
+- EXTERNAL: LocalStorage for progress, Midtrans for payments
+
+**HOOKS/UTILITIES:**
+- BehavioralTestProgressManager - Session persistence
+- behavioralAPI - Dedicated API layer
+
+---
+
+### FEATURE_4: Comprehensive Assessment
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 5
+
+**PURPOSE:** Combined assessment integrating VARK, AI Knowledge, and Behavioral dimensions for complete profile
+**USER_STORY:** As a user, I want a complete learning assessment so that I get a holistic understanding of my learning profile
+
+**MAIN_FLOW:**
+1. Start comprehensive assessment via `/comprehensive-test`
+2. Extended test session combining all assessment types
+3. Questions span multiple assessment categories with type indicators
+4. Longer time limits (typically 1.5 hours default)
+5. Comprehensive scoring across 5 dimensions (CF, R, MA, AG, E)
+6. Detailed profile analysis combining all assessment insights
+
+**API_ENDPOINTS:**
+- GET `/users/comprehensive_assessment_tests/active_question_set`
+- POST `/users/comprehensive_assessment_tests` - Session creation
+- GET `/users/comprehensive_assessment_tests/{id}` - Resume
+- POST `/users/comprehensive_assessment_tests/{id}/submit_answers`
+- GET `/users/comprehensive_assessment_tests/{id}/results`
+- POST `/users/comprehensive_assessment_tests/{id}/orders`
+
+**COMPONENTS:**
+- PRIMARY: ComprehensiveTestInterface → Extended test flow
+- SHARED: Enhanced chat interface with category type indicators
+- UI: Multi-type question display, extended progress tracking
+
+**ROUTES:**
+- `/comprehensive-test` - Main comprehensive assessment
+- `/comprehensive-test-results?testId={id}` - Complete results
+- `/comprehensive-test-results-mock` - Testing interface
+
+**DEPENDENCIES:**
+- REQUIRES: All previous test type dependencies
+- USED_BY: Profile page as premium assessment option
+- EXTERNAL: Extended localStorage, comprehensive payment processing
+
+**HOOKS/UTILITIES:**
+- ComprehensiveTestProgressManager - Multi-type progress
+- comprehensiveAPI - Complex assessment API layer
+
+---
+
+### FEATURE_5: User Authentication System
+**STATUS:** ACTIVE | **PRIORITY:** CRITICAL | **COMPLEXITY:** 4
+
+**PURPOSE:** Secure user authentication with email/password and Google Sign-In integration
+**USER_STORY:** As a user, I want to securely access my account so that I can track my assessment progress
+
+**MAIN_FLOW:**
+1. User registration with email/password validation
+2. Email/password login with cross-authentication detection
+3. Google Sign-In integration with account linking
+4. Cross-device authentication warnings and recovery
+5. Password reset and change functionality
+6. Session management with HTTP-only cookies
+
+**API_ENDPOINTS:**
+- POST `/users/register` - User registration
+- POST `/users/login` - Email/password authentication
+- POST `/users/google_login` - Google authentication
+- POST `/users/password_reset` - Password reset request
+- POST `/users/password_reset_confirm` - Reset confirmation
+- PATCH `/users/password_change` - Password update
+- GET `/users/profile` - User profile data
+
+**COMPONENTS:**
+- PRIMARY: AuthContext → Global authentication state
+- SHARED: GoogleSignInButton, ProtectedRoute → Auth utilities
+- UI: Login forms, registration forms, password change
+
+**ROUTES:**
+- `/login` - Main login interface
+- `/register` - User registration
+- `/forgot-password` - Password reset request
+- `/reset-password` - Password reset form
+
+**DEPENDENCIES:**
+- REQUIRES: Google SDK, js-cookie, form validation
+- USED_BY: All protected routes and features
+- EXTERNAL: Google OAuth 2.0, HTTP-only cookies
+
+**HOOKS/UTILITIES:**
+- useAuth() - Primary authentication hook
+- Cross-authentication handling for Google/email conflicts
+
+---
+
+### FEATURE_6: Payment Integration
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 3
+
+**PURPOSE:** Midtrans payment gateway integration for premium features and certificates
+**USER_STORY:** As a user, I want to purchase certificates for my assessments so that I can validate my learning achievements
+
+**MAIN_FLOW:**
+1. Complete assessment (any type)
+2. Initiate payment for certificate generation
+3. Create payment order through Midtrans
+4. Process payment via Midtrans snap interface
+5. Verify payment status and update order
+6. Generate and download certificate upon successful payment
+
+**API_ENDPOINTS:**
+- POST `/users/{test_type}_tests/{id}/orders` - Create payment order
+- POST `/users/{test_type}_tests/{id}/orders/payment_token` - Get payment token
+- GET `/users/{test_type}_tests/{id}/orders/download_certificate` - Certificate download
+
+**COMPONENTS:**
+- PRIMARY: Payment flow integration in test results
+- SHARED: Payment status indicators, certificate download buttons
+- UI: Payment modals, status badges, download interfaces
+
+**ROUTES:**
+- `/test-payment` - Payment testing interface
+- Payment processing integrated into results pages
+
+**DEPENDENCIES:**
+- REQUIRES: Midtrans SDK, payment order management
+- USED_BY: All test types for certificate generation
+- EXTERNAL: Midtrans payment gateway, certificate generation
+
+**HOOKS/UTILITIES:**
+- paymentAPI - Unified payment methods for all test types
+- Payment status tracking and order management
+
+---
+
+### FEATURE_7: Profile Management
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
+
+**PURPOSE:** Comprehensive user profile with unified test history across all assessment types
+**USER_STORY:** As a user, I want to manage my profile and view all my test history so that I can track my learning journey
+
+**MAIN_FLOW:**
+1. Access profile page with authentication check
+2. Display editable profile information (name, phone, birthday)
+3. Show unified test history from all assessment types
+4. Provide action buttons for continuing, viewing results, or retaking tests
+5. Support certificate downloads and payment status
+6. Enable profile picture updates and password changes
+
+**API_ENDPOINTS:**
+- GET `/users/profile` - Profile data
+- PUT `/users` - Profile updates (multipart/form-data)
+- GET `/users/vark_tests` - VARK test history
+- GET `/users/ai_knowledge_tests` - AI Knowledge history
+- GET `/users/behavioral_learning_tests` - Behavioral history
+- GET `/users/comprehensive_assessment_tests` - Comprehensive history
+
+**COMPONENTS:**
+- PRIMARY: EnhancedProfilePage → Complete profile management
+- SHARED: ChangePasswordComponent, profile form components
+- UI: Unified test history table/cards, responsive design
+
+**ROUTES:**
+- `/profile` - Main profile interface
+
+**DEPENDENCIES:**
+- REQUIRES: AuthContext, all test APIs, image upload
+- USED_BY: Header navigation, user management
+- EXTERNAL: File upload, Promise.all for concurrent API calls
+
+**HOOKS/UTILITIES:**
+- Unified test history conversion utilities
+- Profile form validation and error handling
+
+---
+
+### FEATURE_8: Homepage & Navigation
+**STATUS:** ACTIVE | **PRIORITY:** MEDIUM | **COMPLEXITY:** 3
+
+**PURPOSE:** Landing page with assessment carousel and navigation to test types
+**USER_STORY:** As a visitor, I want to understand available assessments so that I can choose the right test for my needs
+
+**MAIN_FLOW:**
+1. Display hero section with value proposition
+2. Interactive carousel showcasing all assessment types
+3. Quick access cards for starting each test type
+4. Authentication-aware navigation (login/logout states)
+5. Responsive design for mobile and desktop
+
+**API_ENDPOINTS:**
+- None directly (navigation to test endpoints)
+
+**COMPONENTS:**
+- PRIMARY: EnhancedHomepage → Landing page with carousel
+- SHARED: Header, Footer, test cards, carousel navigation
+- UI: Responsive carousel, call-to-action buttons
+
+**ROUTES:**
+- `/` - Main homepage
+- `/about` - About page
+
+**DEPENDENCIES:**
+- REQUIRES: AuthContext for state-aware navigation
+- USED_BY: SEO and user acquisition
+- EXTERNAL: Image optimization, responsive design
+
+**HOOKS/UTILITIES:**
+- Carousel state management with auto-advance
+- Authentication-aware component rendering
+
+## SHARED RESOURCES
+
+**REUSABLE_COMPONENTS:**
+- Header → Navigation with auth state, consistent across all pages
+- Footer → Site footer with links and branding
+- VarkTestFlow → Original VARK test interface (being replaced by unified)
+- CrossDeviceWarning → Progress continuation warnings across devices
+- ProtectedRoute → Authentication wrapper for protected pages
+- GoogleSignInButton → Google OAuth integration
+- ChangePasswordComponent → Password change functionality
+- UI Components → Button, Card, Progress, ScrollArea, Slider (Radix-based)
+
+**COMMON_HOOKS:**
+- useAuth() → Primary authentication hook from AuthContext
+- useCallback/useEffect → Performance optimization patterns
+- Custom progress managers for each test type
+
+**SHARED_APIS:**
+- authAPI → Complete authentication management
+- apiClient → Axios instance with token injection and error handling
+- Base URL: https://api.cakravia.com/api/v1
+- Automatic token management via HTTP-only cookies
+
+**UTILITY_FUNCTIONS:**
+- Test progress managers (VarkTestProgressManager, AiKnowledgeTestProgressManager, etc.)
+- formatTime, formatDate, formatDuration → Time formatting utilities
+- Test type conversion utilities for unified profile display
+- Payment initialization methods for all test types
+
+## DEVELOPMENT_PATTERNS
+
+**NAMING_CONVENTIONS:**
+- Pages: PascalCase with descriptive names (EnhancedProfilePage)
+- Components: PascalCase (CrossDeviceWarning, GoogleSignInButton)
+- APIs: camelCase with API suffix (authAPI, varkAPI)
+- Types: PascalCase interfaces (VarkTest, AiKnowledgeResults)
+- Files: kebab-case for pages, PascalCase for components
+
+**CODE_PATTERNS:**
+- Error Handling: try/catch with specific error messages, AxiosError typing
+- Data Fetching: Axios-based with interceptors for tokens and 401 handling
+- Form Handling: Controlled components with validation and error states
+- State Updates: Immutable patterns with spread operators
+- Progress Persistence: localStorage with versioning and expiration checks
+- Authentication: Context-based with automatic redirects
+- API Responses: Consistent { data, status, error } format
+
+**FILE_STRUCTURE_EXAMPLE:**
+```
+src/
+  app/
+    (feature-name)/
+      page.tsx → Main feature page
+    layout.tsx → Global layout
+  components/
+    ui/ → Radix-based components
+    FeatureComponent.tsx → Feature-specific components
+  lib/
+    api/ → API layer organized by feature
+    (feature)Progress.ts → Progress managers
+    types.ts → TypeScript interfaces
+  contexts/
+    AuthContext.tsx → Global state
+```
+
+## API DOCUMENTATION RESOURCES
+
+**TEMPORARY_FOLDER:** `/temporer folder for claude/`
+**PURPOSE:** API reference materials and development documentation for Claude Code sessions
+
+**CONTENTS:**
+- **AI_KNOWLEDGE_TEST_API_DOCS.md** → Comprehensive AI Knowledge API documentation with 8 categories (PE, EE, SI, FC, HM, PV, HT, BI), TypeScript interfaces, and implementation notes
+- **Version 1.postman_collection (7).json** → Complete Postman collection with all API endpoints
+- **Version 1.postman_collection (8).json** → Updated Postman collection version
+- **UI Mockups** → Design references (section 2@2x.png, three combination result v4.png, ss 24 sept no 1.png)
+
+**USAGE_NOTES:**
+- **API Format Verification:** Check Postman collections when implementing new API calls
+- **Backend Comparison:** Use for comparing current implementation with latest API specs
+- **Development Reference:** Consult AI_KNOWLEDGE_TEST_API_DOCS.md for detailed AI assessment implementation
+- **Design Reference:** UI mockups provide visual guidance for feature development
+
+**API_PATTERNS_FROM_DOCS:**
+- Consistent Bearer token authentication across all endpoints
+- Standard `{data, status, error}` response format
+- Question structure with `{question_id, category_id, point}` answer format
+- UUID-based resource identification
+- Time limit and expiration handling patterns
+
+## CRITICAL_ROUTES
+- `/` → Homepage (public)
+- `/login` → Authentication (public)
+- `/test` → VARK Assessment (protected)
+- `/ai-knowledge-test` → AI Assessment (protected)
+- `/behavioral-test` → Behavioral Assessment (protected)
+- `/comprehensive-test` → Comprehensive Assessment (protected)
+- `/profile` → User Profile (protected)
+- `/results?testId={id}` → VARK Results (protected)
+
+## AI_INSTRUCTIONS
+
+**BEFORE_ANY_CHANGES:**
+1. Check if similar functionality exists in ACTIVE_FEATURES
+2. Verify SHARED_RESOURCES for reusable components/hooks
+3. Follow established DEVELOPMENT_PATTERNS discovered in this project
+4. **Consult API_DOCUMENTATION_RESOURCES** for latest API specs and formats
+5. Consider impact on dependent features
+
+**WHEN_ADDING_FEATURES:**
+1. Follow the patterns established in existing test types (chat interface, progress management)
+2. Check for reusable SHARED_RESOURCES first (especially API client, auth context)
+3. **Reference Postman collections** in temporer folder for API endpoint formats
+4. Use established API patterns (consistent error handling, token management)
+5. Follow the PROJECT_STRUCTURE conventions (app router, component organization)
+6. Consider feature dependencies and relationships (especially with profile unified history)
+
+**WHEN_MODIFYING_FEATURES:**
+1. Check DEPENDENCIES to understand impact (especially profile page integration)
+2. Update related components if shared (Header, Footer, auth state)
+3. Maintain consistency with existing patterns (chat interface, progress persistence)
+4. Consider backward compatibility with existing test sessions
+5. Update unified profile display if changing test result structures
+
+**EFFICIENCY_RULES:**
+- ALWAYS check SHARED_RESOURCES before creating new components
+- **VERIFY API formats** against Postman collections in temporer folder before implementation
+- REUSE existing API patterns and error handling (authAPI, apiClient patterns)
+- FOLLOW established naming conventions (PascalCase components, camelCase APIs)
+- CONSIDER feature relationships before making breaking changes (unified test history)
+- UPDATE this context when adding major new features or assessment types
+
+## QUICK_LOOKUP
+**MOST_USED_COMPONENTS:** Header, Footer, Button, Card, AuthContext, CrossDeviceWarning
+**MOST_USED_HOOKS:** useAuth(), useCallback, useEffect, useState
+**MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI)
+**API_REFERENCE:** `/temporer folder for claude/` - Postman collections & AI Knowledge API docs
+**ACTIVE_FEATURE_COUNT:** 8 major features (4 assessment types + auth + payment + profile + homepage)
+
+---
+
+**CONTEXT_VERSION:** 1.1 | **LAST_UPDATED:** 2025-09-27
+
+Remember: This context exists to prevent code duplication and maintain consistency. Always reference it before suggesting new implementations. Check the temporer folder for API documentation and format verification.
