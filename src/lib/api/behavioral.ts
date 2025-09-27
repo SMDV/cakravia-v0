@@ -47,7 +47,7 @@ export const behavioralAPI = {
   getActiveQuestionSet: async (): Promise<ApiResponse<BehavioralQuestionSet>> => {
     try {
       console.log('🔄 Fetching Behavioral Test active question set...');
-      const response = await apiClient.get('/users/behavioral_tests/active_question_set');
+      const response = await apiClient.get('/users/behavioral_learning_tests/active_question_set');
       console.log('✅ Behavioral Test active question set response:', response.data);
       return response.data; // API returns { data: questionSet, status: "ok", error: false }
     } catch (error) {
@@ -64,7 +64,7 @@ export const behavioralAPI = {
   createTest: async (questionSetId: string): Promise<ApiResponse<BehavioralTest>> => {
     try {
       console.log('🔄 Creating Behavioral Test with question set ID:', questionSetId);
-      const response = await apiClient.post('/users/behavioral_tests', {
+      const response = await apiClient.post('/users/behavioral_learning_tests', {
         behavioral_question_set_id: questionSetId
       });
       console.log('✅ Behavioral Test creation response:', response.data);
@@ -90,7 +90,7 @@ export const behavioralAPI = {
   getTest: async (testId: string): Promise<ApiResponse<BehavioralTest>> => {
     try {
       console.log('🔄 Fetching Behavioral Test:', testId);
-      const response = await apiClient.get(`/users/behavioral_tests/${testId}`);
+      const response = await apiClient.get(`/users/behavioral_learning_tests/${testId}`);
       console.log('✅ Behavioral Test response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }
     } catch (error) {
@@ -110,7 +110,7 @@ export const behavioralAPI = {
       console.log('🔄 Submitting Behavioral Test answers for test:', testId);
       console.log('📝 Behavioral Test submission data:', submission);
 
-      const response = await apiClient.post(`/users/behavioral_tests/${testId}/submit_answers`, submission);
+      const response = await apiClient.post(`/users/behavioral_learning_tests/${testId}/submit_answers`, submission);
       console.log('✅ Submit Behavioral Test answers response:', response.data);
       return response.data;
     } catch (error) {
@@ -134,7 +134,7 @@ export const behavioralAPI = {
   getTestResults: async (testId: string): Promise<ApiResponse<BehavioralTestResults>> => {
     try {
       console.log('🔄 Fetching Behavioral Test results for:', testId);
-      const response = await apiClient.get(`/users/behavioral_tests/${testId}/results`);
+      const response = await apiClient.get(`/users/behavioral_learning_tests/${testId}/results`);
       console.log('✅ Behavioral Test results response:', response.data);
 
       // The API might return string values that need to be converted to numbers

@@ -52,7 +52,7 @@ export const comprehensiveAPI = {
   getActiveQuestionSet: async (): Promise<ApiResponse<ComprehensiveQuestionSet>> => {
     try {
       console.log('🔄 Fetching Comprehensive Test active question set...');
-      const response = await apiClient.get('/users/comprehensive_tests/active_question_set');
+      const response = await apiClient.get('/users/comprehensive_assessment_tests/active_question_set');
       console.log('✅ Comprehensive Test active question set response:', response.data);
       return response.data; // API returns { data: questionSet, status: "ok", error: false }
     } catch (error) {
@@ -69,7 +69,7 @@ export const comprehensiveAPI = {
   createTest: async (questionSetId: string): Promise<ApiResponse<ComprehensiveTest>> => {
     try {
       console.log('🔄 Creating Comprehensive Test with question set ID:', questionSetId);
-      const response = await apiClient.post('/users/comprehensive_tests', {
+      const response = await apiClient.post('/users/comprehensive_assessment_tests', {
         comprehensive_question_set_id: questionSetId
       });
       console.log('✅ Comprehensive Test creation response:', response.data);
@@ -95,7 +95,7 @@ export const comprehensiveAPI = {
   getTest: async (testId: string): Promise<ApiResponse<ComprehensiveTest>> => {
     try {
       console.log('🔄 Fetching Comprehensive Test:', testId);
-      const response = await apiClient.get(`/users/comprehensive_tests/${testId}`);
+      const response = await apiClient.get(`/users/comprehensive_assessment_tests/${testId}`);
       console.log('✅ Comprehensive Test response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }
     } catch (error) {
@@ -115,7 +115,7 @@ export const comprehensiveAPI = {
       console.log('🔄 Submitting Comprehensive Test answers for test:', testId);
       console.log('📝 Comprehensive Test submission data:', submission);
 
-      const response = await apiClient.post(`/users/comprehensive_tests/${testId}/submit_answers`, submission);
+      const response = await apiClient.post(`/users/comprehensive_assessment_tests/${testId}/submit_answers`, submission);
       console.log('✅ Submit Comprehensive Test answers response:', response.data);
       return response.data;
     } catch (error) {
@@ -139,7 +139,7 @@ export const comprehensiveAPI = {
   getTestResults: async (testId: string): Promise<ApiResponse<ComprehensiveTestResults>> => {
     try {
       console.log('🔄 Fetching Comprehensive Test results for:', testId);
-      const response = await apiClient.get(`/users/comprehensive_tests/${testId}/results`);
+      const response = await apiClient.get(`/users/comprehensive_assessment_tests/${testId}/results`);
       console.log('✅ Comprehensive Test results response:', response.data);
 
       // The API might return string values that need to be converted to numbers

@@ -296,13 +296,13 @@ const EnhancedProfilePage = () => {
             .catch(error => ({ type: 'ai_knowledge', error: error.toString() })),
 
           // Behavioral Tests
-          fetch('https://api.cakravia.com/api/v1/users/behavioral_tests', { headers })
+          fetch('https://api.cakravia.com/api/v1/users/behavioral_learning_tests', { headers })
             .then(res => res.ok ? res.json() : Promise.reject(`Behavioral API error: ${res.status}`))
             .then(data => ({ type: 'behavioral', data: data.data || [] }))
             .catch(error => ({ type: 'behavioral', error: error.toString() })),
 
           // Comprehensive Tests
-          fetch('https://api.cakravia.com/api/v1/users/comprehensive_tests', { headers })
+          fetch('https://api.cakravia.com/api/v1/users/comprehensive_assessment_tests', { headers })
             .then(res => res.ok ? res.json() : Promise.reject(`Comprehensive API error: ${res.status}`))
             .then(data => ({ type: 'comprehensive', data: data.data || [] }))
             .catch(error => ({ type: 'comprehensive', error: error.toString() }))
@@ -601,9 +601,9 @@ const EnhancedProfilePage = () => {
           <p className="text-sm sm:text-base text-gray-600">Manage your account settings and view your test history</p>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Profile Information Section */}
-          <div className="xl:col-span-1 order-2 xl:order-1">
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
               {/* Profile Picture */}
               <div className="text-center mb-4 sm:mb-6">
@@ -817,7 +817,7 @@ const EnhancedProfilePage = () => {
           </div>
 
           {/* Test History Section - Rest of the component remains the same */}
-          <div className="xl:col-span-2 order-1 xl:order-2">
+          <div className="lg:col-span-2 order-2 lg:order-1">
             <div className="bg-white rounded-lg shadow-lg">
               {/* Header */}
               <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -1026,8 +1026,8 @@ const EnhancedProfilePage = () => {
                                     onClick={() => {
                                       const endpoint = test.type === 'vark' ? 'vark_tests' :
                                                       test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
-                                                      test.type === 'behavioral' ? 'behavioral_tests' :
-                                                      test.type === 'comprehensive' ? 'comprehensive_tests' :
+                                                      test.type === 'behavioral' ? 'behavioral_learning_tests' :
+                                                      test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
                                                       'vark_tests';
                                       window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
                                     }}
@@ -1045,8 +1045,8 @@ const EnhancedProfilePage = () => {
                     </div>
 
                     {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto">
-                      <table className="w-full">
+                    <div className="hidden md:block overflow-x-auto min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                      <table className="w-full min-w-[800px]">
                         <thead>
                           <tr className="bg-gray-50 border-b border-gray-200">
                             <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -1279,8 +1279,8 @@ const EnhancedProfilePage = () => {
                                         onClick={() => {
                                           const endpoint = test.type === 'vark' ? 'vark_tests' :
                                                           test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
-                                                          test.type === 'behavioral' ? 'behavioral_tests' :
-                                                          test.type === 'comprehensive' ? 'comprehensive_tests' :
+                                                          test.type === 'behavioral' ? 'behavioral_learning_tests' :
+                                                          test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
                                                           'vark_tests';
                                           window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
                                         }}
