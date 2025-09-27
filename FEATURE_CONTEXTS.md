@@ -778,6 +778,22 @@ const apiClient = axios.create({
 - `POST /users/ai_knowledge_tests/:id/submit_answers` - Submit AI answers
 - `GET /users/ai_knowledge_tests/:id/results` - Get AI results (8-dimension scoring)
 
+#### Behavioral API (`src/lib/api/behavioral.ts`)
+**Endpoints**:
+- `GET /users/behavioral_tests/active_question_set` - Active behavioral questions
+- `POST /users/behavioral_tests` - Create behavioral test
+- `GET /users/behavioral_tests/:id` - Get behavioral test
+- `POST /users/behavioral_tests/:id/submit_answers` - Submit behavioral answers
+- `GET /users/behavioral_tests/:id/results` - Get behavioral results (4-dimension scoring)
+
+#### Comprehensive API (`src/lib/api/comprehensive.ts`)
+**Endpoints**:
+- `GET /users/comprehensive_tests/active_question_set` - Active comprehensive questions
+- `POST /users/comprehensive_tests` - Create comprehensive test
+- `GET /users/comprehensive_tests/:id` - Get comprehensive test
+- `POST /users/comprehensive_tests/:id/submit_answers` - Submit comprehensive answers
+- `GET /users/comprehensive_tests/:id/results` - Get comprehensive results (5-dimension scoring)
+
 #### Payment API (`src/lib/api/payment.ts`)
 **Endpoints**:
 - `POST /users/vark_tests/:id/orders` - Create order
@@ -824,6 +840,44 @@ API Error → Response Interceptor → Error Classification
 Other Errors → Pass to Component → User Notification
 ```
 
+### Recent API Improvements (2025-09-27)
+
+#### Test Results Endpoint Consistency Fix
+**Issue**: AI Knowledge, Behavioral, and Comprehensive test result pages were using hardcoded `'latest'` instead of specific test IDs from URL parameters, inconsistent with VARK pattern.
+
+**Files Modified**:
+- `/src/app/ai-knowledge-test-results/page.tsx:416` - Fixed to use testId from URL params
+- `/src/app/behavioral-test-results/page.tsx:424` - Fixed to use testId from URL params
+- `/src/app/comprehensive-test-results/page.tsx:103` - Fixed to use testId from URL params
+
+**Pattern Established**:
+```typescript
+// Correct pattern (now consistent across all test types)
+const loadResults = useCallback(async () => {
+  // Get test ID from URL params
+  const urlParams = new URLSearchParams(window.location.search);
+  const testId = urlParams.get('testId');
+
+  if (!testId) {
+    setResultsState(prev => ({
+      ...prev,
+      isLoading: false,
+      error: 'Test ID not found. Cannot load results.'
+    }));
+    return;
+  }
+
+  // Use specific test ID instead of 'latest'
+  const results = await [testAPI].getTestResults(testId);
+}, [user]);
+```
+
+**API Calls Now Consistent**:
+- ✅ VARK: `/users/vark_tests/{testId}/results`
+- ✅ AI Knowledge: `/users/ai_knowledge_tests/{testId}/results`
+- ✅ Behavioral: `/users/behavioral_tests/{testId}/results`
+- ✅ Comprehensive: `/users/comprehensive_tests/{testId}/results`
+
 ### Extension Points
 
 #### Adding New API Endpoints
@@ -831,6 +885,7 @@ Other Errors → Pass to Component → User Notification
 2. **Define TypeScript interfaces** for requests/responses
 3. **Add error handling** for specific endpoint errors
 4. **Export from api index** for easy imports
+5. **Follow established URL parameter pattern** for result pages
 
 #### Modifying Authentication
 1. **Update request interceptor** in `src/lib/api/client.ts`
