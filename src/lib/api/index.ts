@@ -5,6 +5,7 @@ export * from './vark';
 export * from './aiKnowledge';
 export * from './behavioral';
 export * from './comprehensive';
+export * from './tpa';
 export * from './payment';
 
 // Export types
@@ -17,4 +18,5 @@ export { varkAPI } from './vark';
 export { aiKnowledgeAPI } from './aiKnowledge';
 export { behavioralAPI } from './behavioral';
 export { comprehensiveAPI } from './comprehensive';
+export { tpaAPI } from './tpa';
 export { paymentAPI } from './payment';

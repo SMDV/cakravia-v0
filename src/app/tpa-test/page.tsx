@@ -8,7 +8,9 @@ import {
   AlertCircle,
   ArrowRight,
   ZoomIn,
-  X
+  X,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -66,6 +68,9 @@ const TpaTestInterface = () => {
   const [pendingTestId, setPendingTestId] = useState<string | null>(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
+
+  // State for mobile answer panel visibility
+  const [showAnswerPanel, setShowAnswerPanel] = useState(true);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -466,7 +471,7 @@ const TpaTestInterface = () => {
       <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
         <div className="text-center text-white space-y-2">
           <div className="text-lg font-bold">Selected: Option {option}</div>
-          <div className="text-sm opacity-90 italic">"{optionText}"</div>
+          <div className="text-sm opacity-90 italic">&quot;{optionText}&quot;</div>
         </div>
       </div>
     );
@@ -810,63 +815,134 @@ const TpaTestInterface = () => {
         )}
 
         {testState.step === 'testing' && (
-          <>
-            {/* Chat History Container - Takes remaining space and scrolls */}
-            <div
-              className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg mb-4 overflow-y-auto p-4 sm:p-6 min-h-0"
-              ref={chatContainerRef}
-            >
-              <div className="space-y-4 sm:space-y-6">
-                {chatHistory.map((message, index) => (
-                  <EnhancedChatMessage key={index} message={message} index={index} />
-                ))}
+          <div className={`flex-1 flex flex-col sm:flex-row gap-4 min-h-0 relative transition-all duration-300 ${showAnswerPanel ? 'sm:mb-0 mb-[40vh]' : ''}`}>
+            {/* Mobile: Full Screen Question Box */}
+            <div className="flex-1 sm:flex-[2] flex flex-col min-h-0">
+              {/* Chat History Container */}
+              <div
+                className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg overflow-y-auto p-3 sm:p-6 min-h-0"
+                ref={chatContainerRef}
+              >
+                <div className="space-y-3 sm:space-y-6">
+                  {chatHistory.map((message, index) => (
+                    <EnhancedChatMessage key={index} message={message} index={index} />
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Fixed Bottom Section - Input and Controls */}
-            <div className="flex-shrink-0 space-y-4">
-              {/* Current Answer Input */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4">
-                <div className="flex items-center justify-center">
+            {/* Desktop: Right Side Answer Section */}
+            <div className="hidden sm:flex sm:flex-1 flex-col gap-4 min-h-0">
+              {/* Input Section - Desktop Only */}
+              <div className="flex flex-col gap-4">
+                {/* Current Answer Input */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 max-h-[60vh] overflow-y-auto">
                   <MultipleChoiceInput
                     value={currentSelectedOption}
                     onChange={setCurrentSelectedOption}
                   />
                 </div>
+
+                {/* Progress and Controls */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg">
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex flex-col space-y-2">
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className="h-2 rounded-full transition-all duration-300"
+                          style={{
+                            backgroundColor: '#ABD305',
+                            width: `${((testState.currentQuestionIndex + 1) / (testState.test?.questions.length || 1)) * 100}%`
+                          }}
+                        />
+                      </div>
+                      <span className="text-xs sm:text-sm font-medium text-center" style={{ color: '#2A3262' }}>
+                        {testState.currentQuestionIndex + 1} out of {testState.test?.questions.length || 0} answered
+                      </span>
+                    </div>
+
+                    <button
+                      className={`w-full px-4 py-3 rounded-lg font-medium transition-opacity text-sm sm:text-base ${
+                        currentSelectedOption
+                          ? 'text-white hover:opacity-90'
+                          : 'text-gray-400 cursor-not-allowed'
+                      }`}
+                      style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#E5E7EB' }}
+                      onClick={handleNextQuestion}
+                      disabled={!currentSelectedOption}
+                    >
+                      {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Finish Assessment' : 'Next Question'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile: Floating Action Button */}
+        {testState.step === 'testing' && (
+          <div className="sm:hidden fixed bottom-6 right-6 z-20">
+            <button
+              onClick={() => setShowAnswerPanel(!showAnswerPanel)}
+              className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              {showAnswerPanel ? (
+                <X className="w-6 h-6 text-white" />
+              ) : (
+                <ChevronUp className="w-6 h-6 text-white" />
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Mobile: Floating Keyboard-Style Overlay */}
+        {testState.step === 'testing' && showAnswerPanel && (
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10 bg-white border-t border-gray-300 shadow-2xl transform transition-transform duration-300 ease-out h-[40vh]">
+            <div className="p-4 space-y-4 h-full overflow-y-auto">
+              {/* Answer Choices */}
+              <div className="space-y-3">
+                <MultipleChoiceInput
+                  value={currentSelectedOption}
+                  onChange={setCurrentSelectedOption}
+                />
               </div>
 
               {/* Progress and Controls */}
-              <div className="flex flex-col sm:flex-row justify-between items-center bg-white/95 backdrop-blur-sm rounded-lg p-4 shadow-lg gap-4">
-                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
-                  <div className="w-full sm:w-64 bg-gray-200 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full transition-all duration-300"
-                      style={{
-                        backgroundColor: '#ABD305',
-                        width: `${((testState.currentQuestionIndex + 1) / (testState.test?.questions.length || 1)) * 100}%`
-                      }}
-                    />
+              <div className="border-t border-gray-200 pt-4">
+                <div className="flex flex-col space-y-3">
+                  <div className="flex flex-col space-y-2">
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div
+                        className="h-2 rounded-full transition-all duration-300"
+                        style={{
+                          backgroundColor: '#ABD305',
+                          width: `${((testState.currentQuestionIndex + 1) / (testState.test?.questions.length || 1)) * 100}%`
+                        }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-center" style={{ color: '#2A3262' }}>
+                      {testState.currentQuestionIndex + 1} out of {testState.test?.questions.length || 0} answered
+                    </span>
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-center sm:text-left" style={{ color: '#2A3262' }}>
-                    {testState.currentQuestionIndex + 1} out of {testState.test?.questions.length || 0} answered
-                  </span>
-                </div>
 
-                <button
-                  className={`w-full sm:w-auto px-4 sm:px-6 py-2 rounded-lg font-medium transition-opacity text-sm sm:text-base ${
-                    currentSelectedOption
-                      ? 'text-white hover:opacity-90'
-                      : 'text-gray-400 cursor-not-allowed'
-                  }`}
-                  style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#E5E7EB' }}
-                  onClick={handleNextQuestion}
-                  disabled={!currentSelectedOption}
-                >
-                  {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Finish Assessment' : 'Next Question'}
-                </button>
+                  <button
+                    className={`w-full px-4 py-3 rounded-lg font-medium transition-opacity text-sm ${
+                      currentSelectedOption
+                        ? 'text-white hover:opacity-90'
+                        : 'text-gray-400 cursor-not-allowed'
+                    }`}
+                    style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#E5E7EB' }}
+                    onClick={handleNextQuestion}
+                    disabled={!currentSelectedOption}
+                  >
+                    {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Finish Assessment' : 'Next Question'}
+                  </button>
+                </div>
               </div>
             </div>
-          </>
+          </div>
         )}
 
         {testState.step === 'submitting' && (

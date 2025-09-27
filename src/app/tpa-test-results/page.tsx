@@ -419,7 +419,7 @@ const EnhancedTpaResultsDashboard = () => {
         return false;
       }
 
-      const response = await fetch(`https://api.cakravia.com/api/v1/users/tpa_tests/${testId}/check_payment_status`, {
+      const response = await fetch(`https://api.cakravia.com/api/v1/users/tpa_tests/${testId}/orders`, {
         headers: {
           'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
@@ -806,7 +806,7 @@ const EnhancedTpaResultsDashboard = () => {
                           markers: {
                             size: 4,
                             colors: ['#fff'],
-                            strokeColor: '#8979FF',
+                            strokeColors: ['#8979FF'],
                             strokeWidth: 2,
                           },
                           tooltip: {
