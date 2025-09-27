@@ -878,6 +878,49 @@ const loadResults = useCallback(async () => {
 - ✅ Behavioral: `/users/behavioral_tests/{testId}/results`
 - ✅ Comprehensive: `/users/comprehensive_tests/{testId}/results`
 
+#### API Response Structure Fix (2025-09-27)
+**Issue**: AI Knowledge API returned different field names and data types than frontend expected, causing `.toFixed()` errors.
+
+**Root Problem**:
+```typescript
+// API Response (actual)
+{
+  "performance_expectancy_score": "13.2",  // String + full name
+  "effort_expectancy_score": "7.4",       // String + full name
+  // ...
+}
+
+// Frontend Expected (types.ts)
+{
+  pe_score: number,  // Number + abbreviated name
+  ee_score: number,  // Number + abbreviated name
+  // ...
+}
+```
+
+**Fix Applied in `/src/lib/api/aiKnowledge.ts:95-102`**:
+```typescript
+// Map full field names to abbreviated names and convert strings to numbers
+pe_score: typeof rawData.performance_expectancy_score === 'string'
+  ? parseFloat(rawData.performance_expectancy_score)
+  : rawData.performance_expectancy_score || 0,
+ee_score: typeof rawData.effort_expectancy_score === 'string'
+  ? parseFloat(rawData.effort_expectancy_score)
+  : rawData.effort_expectancy_score || 0,
+// ... similar for all 8 dimensions
+```
+
+**Additional Null Safety Added**:
+- All `.toFixed()` calls now use `score?.toFixed(1) || '0.0'` pattern
+- Score calculations include fallbacks: `resultsData!.pe_score || 0`
+- Max score protection: `resultsData!.max_score || 1`
+
+**Files Updated**:
+- `/src/lib/api/aiKnowledge.ts` - Field mapping and type conversion
+- `/src/app/ai-knowledge-test-results/page.tsx` - Null safety checks
+- `/src/app/behavioral-test-results/page.tsx` - Null safety checks
+- `/src/app/comprehensive-test-results/page.tsx` - Null safety checks
+
 ### Extension Points
 
 #### Adding New API Endpoints

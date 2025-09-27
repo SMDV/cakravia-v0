@@ -109,7 +109,7 @@ const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProce
         </div>
         <div className="p-4 sm:p-6 text-center bg-gray-50 h-2/3 flex flex-col justify-center">
           <div className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2" style={{ color: '#24348C' }}>
-            {score.toFixed(1)}
+            {score?.toFixed(1) || '0.0'}
           </div>
           <div className="text-xs sm:text-sm text-gray-600">
             Score
@@ -452,19 +452,20 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   const organizedScores = resultsState.resultsData ? Object.entries(AI_KNOWLEDGE_CATEGORIES).map(([code, info]) => {
     const score = (() => {
       switch (code) {
-        case 'PE': return resultsState.resultsData!.pe_score;
-        case 'EE': return resultsState.resultsData!.ee_score;
-        case 'SI': return resultsState.resultsData!.si_score;
-        case 'FC': return resultsState.resultsData!.fc_score;
-        case 'HM': return resultsState.resultsData!.hm_score;
-        case 'PV': return resultsState.resultsData!.pv_score;
-        case 'HT': return resultsState.resultsData!.ht_score;
-        case 'BI': return resultsState.resultsData!.bi_score;
+        case 'PE': return resultsState.resultsData!.pe_score || 0;
+        case 'EE': return resultsState.resultsData!.ee_score || 0;
+        case 'SI': return resultsState.resultsData!.si_score || 0;
+        case 'FC': return resultsState.resultsData!.fc_score || 0;
+        case 'HM': return resultsState.resultsData!.hm_score || 0;
+        case 'PV': return resultsState.resultsData!.pv_score || 0;
+        case 'HT': return resultsState.resultsData!.ht_score || 0;
+        case 'BI': return resultsState.resultsData!.bi_score || 0;
         default: return 0;
       }
     })();
 
-    const percentage = (score / resultsState.resultsData!.max_score) * 100;
+    const maxScore = resultsState.resultsData!.max_score || 1;
+    const percentage = (score / maxScore) * 100;
 
     return {
       name: info.name,

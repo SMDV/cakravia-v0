@@ -88,7 +88,7 @@ const NewBehavioralStyleSection = ({ isPaid, handlePurchaseCertificate, isProces
         </div>
         <div className="p-4 sm:p-6 text-center bg-gray-50 h-2/3 flex flex-col justify-center">
           <div className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2" style={{ color: '#24348C' }}>
-            {score.toFixed(1)}
+            {score?.toFixed(1) || '0.0'}
           </div>
           <div className="text-xs sm:text-sm text-gray-600">
             Score
@@ -229,7 +229,7 @@ const NewBehavioralStyleSection = ({ isPaid, handlePurchaseCertificate, isProces
               </div>
               <div className="p-6 sm:p-8 text-center bg-gradient-to-br from-purple-50 to-purple-100">
                 <div className="text-5xl sm:text-6xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-                  {resultsData.average_score.toFixed(1)}
+                  {resultsData.average_score?.toFixed(1) || '0.0'}
                 </div>
                 <div className="text-sm sm:text-base text-gray-600 mb-3">
                   Skor Keseluruhan
@@ -460,15 +460,16 @@ const EnhancedBehavioralResultsDashboard = () => {
   const organizedScores = resultsState.resultsData ? Object.entries(BEHAVIORAL_CATEGORIES).map(([code, info]) => {
     const score = (() => {
       switch (code) {
-        case 'H': return resultsState.resultsData!.h_score;
-        case 'M': return resultsState.resultsData!.m_score;
-        case 'R': return resultsState.resultsData!.r_score;
-        case 'E': return resultsState.resultsData!.e_score;
+        case 'H': return resultsState.resultsData!.h_score || 0;
+        case 'M': return resultsState.resultsData!.m_score || 0;
+        case 'R': return resultsState.resultsData!.r_score || 0;
+        case 'E': return resultsState.resultsData!.e_score || 0;
         default: return 0;
       }
     })();
 
-    const percentage = (score / resultsState.resultsData!.max_score) * 100;
+    const maxScore = resultsState.resultsData!.max_score || 1;
+    const percentage = (score / maxScore) * 100;
 
     return {
       name: info.name,

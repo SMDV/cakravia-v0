@@ -89,28 +89,28 @@ export const aiKnowledgeAPI = {
       // Following the same pattern as VARK API
       const rawData = response.data.data;
 
-      // Convert string values to numbers for consistent data handling if needed
+      // Convert API field names and string values to expected frontend format
       const convertedData: AiKnowledgeTestResults = {
-        ...rawData,
-        pe_score: typeof rawData.pe_score === 'string' ? parseFloat(rawData.pe_score) : rawData.pe_score,
-        ee_score: typeof rawData.ee_score === 'string' ? parseFloat(rawData.ee_score) : rawData.ee_score,
-        si_score: typeof rawData.si_score === 'string' ? parseFloat(rawData.si_score) : rawData.si_score,
-        fc_score: typeof rawData.fc_score === 'string' ? parseFloat(rawData.fc_score) : rawData.fc_score,
-        hm_score: typeof rawData.hm_score === 'string' ? parseFloat(rawData.hm_score) : rawData.hm_score,
-        pv_score: typeof rawData.pv_score === 'string' ? parseFloat(rawData.pv_score) : rawData.pv_score,
-        ht_score: typeof rawData.ht_score === 'string' ? parseFloat(rawData.ht_score) : rawData.ht_score,
-        bi_score: typeof rawData.bi_score === 'string' ? parseFloat(rawData.bi_score) : rawData.bi_score,
-        min_score: typeof rawData.min_score === 'string' ? parseFloat(rawData.min_score) : rawData.min_score,
-        max_score: typeof rawData.max_score === 'string' ? parseFloat(rawData.max_score) : rawData.max_score,
-        total_score: typeof rawData.total_score === 'string' ? parseFloat(rawData.total_score) : rawData.total_score,
+        // Map full field names to abbreviated names and convert strings to numbers
+        pe_score: typeof rawData.performance_expectancy_score === 'string' ? parseFloat(rawData.performance_expectancy_score) : rawData.performance_expectancy_score || 0,
+        ee_score: typeof rawData.effort_expectancy_score === 'string' ? parseFloat(rawData.effort_expectancy_score) : rawData.effort_expectancy_score || 0,
+        si_score: typeof rawData.social_influence_score === 'string' ? parseFloat(rawData.social_influence_score) : rawData.social_influence_score || 0,
+        fc_score: typeof rawData.facilitating_conditions_score === 'string' ? parseFloat(rawData.facilitating_conditions_score) : rawData.facilitating_conditions_score || 0,
+        hm_score: typeof rawData.hedonic_motivation_score === 'string' ? parseFloat(rawData.hedonic_motivation_score) : rawData.hedonic_motivation_score || 0,
+        pv_score: typeof rawData.price_value_score === 'string' ? parseFloat(rawData.price_value_score) : rawData.price_value_score || 0,
+        ht_score: typeof rawData.habit_score === 'string' ? parseFloat(rawData.habit_score) : rawData.habit_score || 0,
+        bi_score: typeof rawData.behavioral_intention_score === 'string' ? parseFloat(rawData.behavioral_intention_score) : rawData.behavioral_intention_score || 0,
+        min_score: typeof rawData.min_score === 'string' ? parseFloat(rawData.min_score) : rawData.min_score || 0,
+        max_score: typeof rawData.max_score === 'string' ? parseFloat(rawData.max_score) : rawData.max_score || 0,
+        total_score: typeof rawData.total_score === 'string' ? parseFloat(rawData.total_score) : rawData.total_score || 0,
         scores_breakdown: rawData.scores_breakdown?.map((item: { score: string | number; percentage: string | number; [key: string]: unknown }) => ({
           ...item,
           score: typeof item.score === 'string' ? parseFloat(item.score) : item.score,
           percentage: typeof item.percentage === 'string' ? parseFloat(item.percentage) : item.percentage
         })) || [],
-        // Keep other fields as they are
-        dominant_categories: rawData.dominant_categories || [],
-        category_interpretations: rawData.category_interpretations || {},
+        // Map other field names and provide defaults
+        dominant_categories: rawData.dominant_learning_styles || [],
+        category_interpretations: rawData.learning_style_interpretation || {},
         result_description: rawData.result_description || {
           title: '',
           description: '',

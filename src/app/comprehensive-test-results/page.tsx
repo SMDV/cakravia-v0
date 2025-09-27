@@ -140,16 +140,17 @@ const EnhancedComprehensiveResultsDashboard = () => {
   const organizedScores = resultsState.resultsData ? Object.entries(COMPREHENSIVE_CATEGORIES).map(([code, info]) => {
     const score = (() => {
       switch (code) {
-        case 'CF': return resultsState.resultsData!.cf_score;
-        case 'R': return resultsState.resultsData!.r_score;
-        case 'MA': return resultsState.resultsData!.ma_score;
-        case 'AG': return resultsState.resultsData!.ag_score;
-        case 'E': return resultsState.resultsData!.e_score;
+        case 'CF': return resultsState.resultsData!.cf_score || 0;
+        case 'R': return resultsState.resultsData!.r_score || 0;
+        case 'MA': return resultsState.resultsData!.ma_score || 0;
+        case 'AG': return resultsState.resultsData!.ag_score || 0;
+        case 'E': return resultsState.resultsData!.e_score || 0;
         default: return 0;
       }
     })();
 
-    const percentage = (score / resultsState.resultsData!.max_score) * 100;
+    const maxScore = resultsState.resultsData!.max_score || 1;
+    const percentage = (score / maxScore) * 100;
 
     return {
       name: info.name,
@@ -434,7 +435,7 @@ const EnhancedComprehensiveResultsDashboard = () => {
                     {category.code}
                   </h3>
                   <p className="text-2xl font-bold mb-1" style={{ color: '#24348C' }}>
-                    {category.score.toFixed(1)}
+                    {category.score?.toFixed(1) || '0.0'}
                   </p>
                   <p className="text-xs text-gray-600">
                     {category.name.split(' ')[0]} {/* First word only */}
