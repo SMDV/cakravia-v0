@@ -449,37 +449,103 @@ src/
 - `/profile` → User Profile (protected)
 - `/results?testId={id}` → VARK Results (protected)
 
+## CHANGE-SPECIFIC PROMPTS
+
+When you encounter specific types of changes, use these targeted prompts to ensure comprehensive implementation:
+
+### **API_CHANGE_PROMPT**
+```
+When modifying or adding API endpoints:
+1. ✅ Check `/temporer folder for claude/` for latest API documentation
+2. ✅ Compare current implementation vs Postman collection format
+3. ✅ Update corresponding API service file (e.g., authAPI, varkAPI)
+4. ✅ Update TypeScript interfaces in src/lib/types.ts
+5. ✅ Test API changes with existing error handling patterns
+6. ✅ Update affected components that use this API
+7. ✅ Check profile page integration if test-related API
+8. ✅ Update context documentation if major API change
+```
+
+### **FEATURE_ADDITION_PROMPT**
+```
+When adding a completely new feature:
+1. ✅ Review ACTIVE_FEATURES to avoid duplication
+2. ✅ Check SHARED_RESOURCES for reusable components
+3. ✅ Follow PROJECT_STRUCTURE conventions for file placement
+4. ✅ Implement using established DEVELOPMENT_PATTERNS
+5. ✅ Add to Header navigation if user-facing
+6. ✅ Integrate with AuthContext if authentication required
+7. ✅ Add route to CRITICAL_ROUTES section
+8. ✅ Update unified profile if generates user data
+9. ✅ Document in claude-context.md ACTIVE_FEATURES
+```
+
+### **ASSESSMENT_TYPE_PROMPT**
+```
+When adding a new assessment type (5th test type):
+1. ✅ Follow existing assessment patterns (chat interface, sliders)
+2. ✅ Create API service following varkAPI/aiKnowledgeAPI pattern
+3. ✅ Implement progress manager for localStorage persistence
+4. ✅ Add to unified profile display with conversion utility
+5. ✅ Create dedicated results page following existing pattern
+6. ✅ Add payment integration following paymentAPI pattern
+7. ✅ Add to Header navigation and homepage carousel
+8. ✅ Update profile page API calls (Promise.all pattern)
+9. ✅ Add TypeScript interfaces for all data structures
+10. ✅ Test cross-device continuation with progress manager
+```
+
+### **INTEGRATION_CHANGE_PROMPT**
+```
+When modifying integrations (payment, auth, external APIs):
+1. ✅ Check impact on AuthContext and authentication flow
+2. ✅ Verify all test types still work with integration change
+3. ✅ Update error handling across all affected components
+4. ✅ Test payment flow for all assessment types if payment-related
+5. ✅ Verify Google Sign-In integration if auth-related
+6. ✅ Check cross-device warnings if session-related
+7. ✅ Update API client interceptors if authentication-related
+8. ✅ Test profile page unified display if data structure changes
+```
+
+### **UI_COMPONENT_PROMPT**
+```
+When modifying shared UI components:
+1. ✅ Identify all components using this shared component (Header, Footer, etc.)
+2. ✅ Test impact on all assessment types and pages
+3. ✅ Verify mobile/desktop responsive behavior
+4. ✅ Check authentication state handling if auth-related component
+5. ✅ Ensure consistency with design system (#2A3262, #ABD305, #DFE4FF)
+6. ✅ Test with all user states (logged in, logged out, mid-test)
+7. ✅ Verify accessibility with Radix UI patterns
+8. ✅ Check cross-device behavior if progress-related
+```
+
 ## AI_INSTRUCTIONS
 
 **BEFORE_ANY_CHANGES:**
-1. Check if similar functionality exists in ACTIVE_FEATURES
-2. Verify SHARED_RESOURCES for reusable components/hooks
-3. Follow established DEVELOPMENT_PATTERNS discovered in this project
-4. **Consult API_DOCUMENTATION_RESOURCES** for latest API specs and formats
-5. Consider impact on dependent features
+1. **IDENTIFY CHANGE TYPE** and use appropriate CHANGE-SPECIFIC PROMPT above
+2. Check if similar functionality exists in ACTIVE_FEATURES
+3. Verify SHARED_RESOURCES for reusable components/hooks
+4. Follow established DEVELOPMENT_PATTERNS discovered in this project
+5. **Consult API_DOCUMENTATION_RESOURCES** for latest API specs and formats
+6. Consider impact on dependent features
 
-**WHEN_ADDING_FEATURES:**
-1. Follow the patterns established in existing test types (chat interface, progress management)
-2. Check for reusable SHARED_RESOURCES first (especially API client, auth context)
-3. **Reference Postman collections** in temporer folder for API endpoint formats
-4. Use established API patterns (consistent error handling, token management)
-5. Follow the PROJECT_STRUCTURE conventions (app router, component organization)
-6. Consider feature dependencies and relationships (especially with profile unified history)
-
-**WHEN_MODIFYING_FEATURES:**
-1. Check DEPENDENCIES to understand impact (especially profile page integration)
-2. Update related components if shared (Header, Footer, auth state)
-3. Maintain consistency with existing patterns (chat interface, progress persistence)
-4. Consider backward compatibility with existing test sessions
-5. Update unified profile display if changing test result structures
-
-**EFFICIENCY_RULES:**
-- ALWAYS check SHARED_RESOURCES before creating new components
-- **VERIFY API formats** against Postman collections in temporer folder before implementation
-- REUSE existing API patterns and error handling (authAPI, apiClient patterns)
-- FOLLOW established naming conventions (PascalCase components, camelCase APIs)
-- CONSIDER feature relationships before making breaking changes (unified test history)
+**GENERAL_IMPLEMENTATION_RULES:**
+- ALWAYS start with the relevant CHANGE-SPECIFIC PROMPT checklist
+- Check SHARED_RESOURCES before creating new components
+- VERIFY API formats against Postman collections in temporer folder
+- REUSE existing patterns (authAPI, apiClient, progress managers)
+- FOLLOW naming conventions (PascalCase components, camelCase APIs)
+- CONSIDER feature relationships before making breaking changes
 - UPDATE this context when adding major new features or assessment types
+
+**COMMON_WORKFLOWS:**
+- **New API Endpoint** → Use API_CHANGE_PROMPT
+- **New Page/Feature** → Use FEATURE_ADDITION_PROMPT
+- **New Test Type** → Use ASSESSMENT_TYPE_PROMPT
+- **Auth/Payment Changes** → Use INTEGRATION_CHANGE_PROMPT
+- **Shared Component Updates** → Use UI_COMPONENT_PROMPT
 
 ## QUICK_LOOKUP
 **MOST_USED_COMPONENTS:** Header, Footer, Button, Card, AuthContext, CrossDeviceWarning
@@ -490,6 +556,6 @@ src/
 
 ---
 
-**CONTEXT_VERSION:** 1.1 | **LAST_UPDATED:** 2025-09-27
+**CONTEXT_VERSION:** 1.2 | **LAST_UPDATED:** 2025-09-27
 
-Remember: This context exists to prevent code duplication and maintain consistency. Always reference it before suggesting new implementations. Check the temporer folder for API documentation and format verification.
+Remember: This context exists to prevent code duplication and maintain consistency. Always start with the appropriate CHANGE-SPECIFIC PROMPT for your task type, then reference the relevant sections before suggesting new implementations.
