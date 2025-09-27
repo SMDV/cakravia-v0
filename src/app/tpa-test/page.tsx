@@ -9,8 +9,7 @@ import {
   ArrowRight,
   ZoomIn,
   X,
-  ChevronUp,
-  ChevronDown
+  ChevronUp
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';

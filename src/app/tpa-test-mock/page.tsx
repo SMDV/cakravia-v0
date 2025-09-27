@@ -5,12 +5,9 @@ import {
   User,
   Check,
   Clock,
-  AlertCircle,
-  ArrowRight,
   ZoomIn,
   X,
-  ChevronUp,
-  ChevronDown
+  ChevronUp
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -84,7 +81,7 @@ const MOCK_TPA_QUESTIONS = [
  * Provides a mock UI for testing TPA visual reasoning interface
  */
 const TpaTestMockInterface = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { } = useAuth();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [currentSelectedOption, setCurrentSelectedOption] = useState<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);

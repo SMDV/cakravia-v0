@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState } from 'react';
-import { Check, Lock, User, X, Brain, Calculator, Shapes, MessageCircle } from 'lucide-react';
+import { Lock, User, Brain, Calculator, Shapes, MessageCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
