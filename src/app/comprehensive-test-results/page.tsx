@@ -227,7 +227,8 @@ const EnhancedComprehensiveResultsDashboard = () => {
 
       const script = document.createElement('script');
       script.id = 'midtrans-script';
-      script.src = 'https://app.midtrans.com/snap/snap.js';
+      // script.src = 'https://app.midtrans.com/snap/snap.js'; // Production URL - TODO: use this for production
+      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js'; // Sandbox URL - temporary
       script.setAttribute('data-client-key', 'SB-Mid-client-nKMAqVgSgOIsOQyk');
       document.head.appendChild(script);
 
