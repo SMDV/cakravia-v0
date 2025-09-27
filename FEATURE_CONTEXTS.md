@@ -1219,6 +1219,180 @@ Quarterly review process:
 
 ---
 
+## Midtrans Payment Integration Implementation
+
+### Overview
+This section documents the comprehensive Midtrans payment integration implementation for AI Knowledge, Behavioral, and Comprehensive test results. This implementation was added to match the existing VARK payment flow pattern, providing consistent payment experience across all test types.
+
+### Payment Architecture
+
+#### Core Payment Flow
+1. **Create Order** → **Get Payment Token** → **Midtrans Snap Popup** → **Payment Verification** → **Result Unlocking**
+
+#### Payment API Structure (`/src/lib/api/payment.ts`)
+The payment API follows a consistent pattern for all test types:
+
+**VARK (Reference Implementation):**
+- `createVarkOrder(testId)` - Creates payment order
+- `getVarkPaymentToken(testId)` - Generates Snap token
+- `initializeVarkPayment(testId)` - Combined helper method
+
+**AI Knowledge:**
+- `createAiKnowledgeOrder(testId)` - `/users/ai_knowledge_tests/${testId}/orders`
+- `getAiKnowledgePaymentToken(testId)` - `/users/ai_knowledge_tests/${testId}/orders/payment_token`
+- `initializeAiKnowledgePayment(testId)` - Combined helper method
+
+**Behavioral:**
+- `createBehavioralOrder(testId)` - `/users/behavioral_learning_tests/${testId}/orders`
+- `getBehavioralPaymentToken(testId)` - `/users/behavioral_learning_tests/${testId}/orders/payment_token`
+- `initializeBehavioralPayment(testId)` - Combined helper method
+
+**Comprehensive:**
+- `createComprehensiveOrder(testId)` - `/users/comprehensive_assessment_tests/${testId}/orders`
+- `getComprehensivePaymentToken(testId)` - `/users/comprehensive_assessment_tests/${testId}/orders/payment_token`
+- `initializeComprehensivePayment(testId)` - Combined helper method
+
+### Result Page Implementation Pattern
+
+#### Common Components Added to Each Result Page
+1. **Midtrans Type Definitions**:
+   ```typescript
+   interface MidtransResult {
+     transaction_id: string;
+     payment_type: string;
+     status_message: string;
+   }
+
+   interface OrderError extends Error {
+     response?: {
+       data?: {
+         code?: string;
+         message?: string;
+       };
+     };
+   }
+   ```
+
+2. **Payment State Management**:
+   ```typescript
+   const [isPaid, setIsPaid] = useState(false);
+   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+   const [snapUrl, setSnapUrl] = useState<string | null>(null);
+   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
+   ```
+
+3. **Payment Status Checking Function**:
+   - Checks payment status via API endpoint: `/users/[test_type]/${testId}/check_payment_status`
+   - Uses authentication token from cookies
+   - Automatically updates `isPaid` state when payment is detected
+   - Shows success dialog on auto-detection
+
+4. **Midtrans Script Loading**:
+   - Loads Midtrans Snap script from CDN
+   - Uses sandbox client key: `SB-Mid-client-nKMAqVgSgOIsOQyk`
+   - Prevents duplicate script loading
+
+5. **Snap Popup Integration**:
+   - Handles success, pending, error, and close events
+   - Automatically checks payment status after events
+   - Falls back to external window if Snap fails to load
+   - Implements polling for payment completion detection
+
+6. **Payment Purchase Handler**:
+   - Extracts testId from URL parameters
+   - Creates order and gets payment token
+   - Handles existing order scenarios gracefully
+   - Opens Snap popup with proper error handling
+
+7. **PaymentSuccessDialog Component**:
+   - Consistent success dialog across all test types
+   - Options to download certificate or continue viewing results
+   - Proper close button and overlay handling
+
+### Implementation Files Modified
+
+#### 1. `/src/lib/api/payment.ts`
+- Added 9 new payment methods (3 per test type)
+- All methods follow the same pattern as VARK implementation
+- Proper TypeScript typing with existing PaymentOrder and PaymentToken types
+
+#### 2. `/src/app/ai-knowledge-test-results/page.tsx`
+- Replaced mock `setTimeout` payment with real Midtrans integration
+- Added comprehensive payment status checking
+- Implements complete payment flow with error handling
+
+#### 3. `/src/app/behavioral-test-results/page.tsx`
+- Same implementation pattern as AI Knowledge
+- Uses Behavioral-specific API endpoints
+- Consistent user experience with other test types
+
+#### 4. `/src/app/comprehensive-test-results/page.tsx`
+- Same implementation pattern as AI Knowledge and Behavioral
+- Uses Comprehensive-specific API endpoints
+- Maintains pricing difference (50,000 IDR vs 30,000 IDR)
+
+### Key Implementation Details
+
+#### Error Handling
+- **Existing Order Scenario**: When user already created an order, gracefully gets existing payment token instead of creating new order
+- **Network Errors**: Proper error messages and fallback handling
+- **Payment Failures**: Clear user feedback with retry options
+- **Token Errors**: Handles authentication and authorization issues
+
+#### Payment Status Detection
+- **Auto-checking**: Automatically checks payment status after Snap events
+- **Polling**: For external payment windows, polls status every 10 seconds
+- **Timeout**: Stops polling after 10 minutes to prevent infinite loops
+- **Real-time Updates**: Updates UI immediately when payment is detected
+
+#### Security Considerations
+- **Token-based Authentication**: Uses HTTP-only cookies for auth tokens
+- **CORS Handling**: Proper API endpoint configuration
+- **Client-side Validation**: Validates testId and user authentication
+- **Secure Redirects**: Uses HTTPS endpoints for payment processing
+
+#### Pricing Structure
+- **AI Knowledge**: Rp. 30,000
+- **Behavioral**: Rp. 30,000
+- **Comprehensive**: Rp. 50,000
+- **VARK**: Rp. 30,000
+
+### Testing Considerations
+
+#### Test Endpoints to Use
+- AI Knowledge: `/users/ai_knowledge_tests/${testId}/orders`
+- Behavioral: `/users/behavioral_learning_tests/${testId}/orders`
+- Comprehensive: `/users/comprehensive_assessment_tests/${testId}/orders`
+
+#### Sandbox Environment
+- Uses Midtrans sandbox for development/testing
+- Client key: `SB-Mid-client-nKMAqVgSgOIsOQyk`
+- All test transactions use sandbox environment
+
+#### Manual Testing Scenarios
+1. **New Payment**: Create order → get token → complete payment → verify results unlock
+2. **Existing Order**: Attempt payment with existing order → verify token retrieval
+3. **Payment Cancellation**: Close Snap popup → verify status checking continues
+4. **Network Issues**: Test with poor connectivity → verify error handling
+5. **Authentication Issues**: Test with expired tokens → verify error messages
+
+### Future Enhancements
+
+#### Potential Improvements
+- **Payment History**: Add payment history tracking
+- **Multiple Payment Methods**: Support for different payment types
+- **Automatic Retry**: Implement automatic retry for failed payments
+- **Payment Analytics**: Add payment completion tracking
+- **Certificate Integration**: Direct certificate generation after payment
+
+#### API Optimizations
+- **Caching**: Implement payment status caching to reduce API calls
+- **Webhooks**: Add Midtrans webhook integration for real-time updates
+- **Batch Operations**: Support for bulk payment status checking
+- **Payment Scheduling**: Add support for scheduled or recurring payments
+
+---
+
 ## Conclusion
 
 This feature context documentation provides a comprehensive guide for understanding and extending the Cakravia application. Each feature is designed with clear separation of concerns, consistent patterns, and extensible architecture.
