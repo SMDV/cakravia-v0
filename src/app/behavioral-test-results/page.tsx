@@ -420,8 +420,21 @@ const EnhancedBehavioralResultsDashboard = () => {
     try {
       setResultsState(prev => ({ ...prev, isLoading: true, error: null }));
 
-      // Get the test results - replace with correct API method
-      const results = await behavioralAPI.getTestResults('latest');
+      // Get test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        setResultsState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'Test ID not found. Cannot load results.'
+        }));
+        return;
+      }
+
+      // Get the test results using the specific test ID
+      const results = await behavioralAPI.getTestResults(testId);
 
       setResultsState(prev => ({
         ...prev,
