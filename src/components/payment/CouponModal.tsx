@@ -12,7 +12,7 @@ interface CouponModalProps {
   onProceedWithoutCoupon: () => void;
   onProceedWithCoupon: (couponData: CouponValidationResponse) => void;
   originalAmount: number;
-  testType: 'vark' | 'ai_knowledge' | 'behavioral' | 'comprehensive';
+  testType: 'vark' | 'ai_knowledge' | 'behavioral' | 'comprehensive' | 'tpa';
   validateCoupon?: (request: CouponValidationRequest) => Promise<CouponValidationResponse>;
 }
 
@@ -45,7 +45,8 @@ export const CouponModal: React.FC<CouponModalProps> = ({
       vark: 'VARK Learning Style',
       ai_knowledge: 'AI Knowledge',
       behavioral: 'Behavioral Learning',
-      comprehensive: 'Comprehensive Assessment'
+      comprehensive: 'Comprehensive Assessment',
+      tpa: 'TPA Assessment'
     };
     return names[testType];
   };

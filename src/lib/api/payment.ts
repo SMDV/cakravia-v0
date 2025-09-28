@@ -128,9 +128,17 @@ export const paymentAPI = {
 
   // ===== TPA PAYMENT METHODS =====
 
-  // Create payment order for TPA test
-  createTpaOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
-    const response = await apiClient.post(`/users/tpa_tests/${testId}/orders`);
+  // Create standalone TPA order (payment-first flow)
+  createTpaStandaloneOrder: async (couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post('/users/tpa_tests/order', payload);
+    return response.data;
+  },
+
+  // Create payment order for TPA test (legacy method for compatibility)
+  createTpaOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post(`/users/tpa_tests/${testId}/orders`, payload);
     return response.data;
   },
 
@@ -140,10 +148,10 @@ export const paymentAPI = {
     return response.data;
   },
 
-  // Combined method for TPA - creates order then gets payment token
-  initializeTpaPayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
-    // First create the order
-    const orderResponse = await paymentAPI.createTpaOrder(testId);
+  // Combined method for TPA - creates order then gets payment token (with voucher support)
+  initializeTpaPayment: async (testId: string, couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order (with optional coupon)
+    const orderResponse = await paymentAPI.createTpaOrder(testId, couponCode);
 
     // Then get the payment token
     const tokenResponse = await paymentAPI.getTpaPaymentToken(testId);
@@ -151,6 +159,18 @@ export const paymentAPI = {
     return {
       order: orderResponse.data,
       paymentToken: tokenResponse.data
+    };
+  },
+
+  // Payment-first flow: Create order with voucher, then handle payment
+  initializeTpaOrderWithVoucher: async (couponCode?: string): Promise<{ order: PaymentOrder; paymentToken?: PaymentToken }> => {
+    // Create standalone order first (payment-first approach)
+    const orderResponse = await paymentAPI.createTpaStandaloneOrder(couponCode);
+
+    // Note: For TPA payment-first flow, payment token will be generated after order creation
+    // This follows the new API pattern where order is created first, then payment is processed
+    return {
+      order: orderResponse.data
     };
   },
 };

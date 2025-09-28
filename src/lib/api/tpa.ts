@@ -21,12 +21,34 @@ export const tpaAPI = {
     }
   },
 
-  // Create new TPA test
-  createTest: async (questionSetId: string): Promise<ApiResponse<TpaTest>> => {
+  // Create TPA order (payment-first flow)
+  createOrder: async (couponCode?: string): Promise<ApiResponse<Record<string, unknown>>> => {
     try {
-      console.log('🔄 Creating TPA test with question set ID:', questionSetId);
+      console.log('🔄 Creating TPA order...', couponCode ? `with coupon: ${couponCode}` : 'without coupon');
+      const payload = couponCode ? { coupon_code: couponCode } : {};
+      const response = await apiClient.post('/users/tpa_tests/order', payload);
+      console.log('✅ TPA order creation response:', response.data);
+      return response.data; // API returns { data: order, status: "created", error: false }
+    } catch (error) {
+      console.error('❌ Failed to create TPA order:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to create TPA order. Please try again.');
+      }
+    }
+  },
+
+  // Create new TPA test (requires paid order_id)
+  createTest: async (questionSetId: string, orderId: string): Promise<ApiResponse<TpaTest>> => {
+    try {
+      console.log('🔄 Creating TPA test with question set ID:', questionSetId, 'and order ID:', orderId);
       const response = await apiClient.post('/users/tpa_tests', {
-        tpa_question_set_id: questionSetId
+        tpa_question_set_id: questionSetId,
+        order_id: orderId
       });
       console.log('✅ TPA test creation response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }
@@ -134,17 +156,38 @@ export const tpaAPI = {
     }
   },
 
-  // Helper method to start a complete test flow
-  startTestFlow: async (): Promise<{ questionSet: TpaQuestionSet; test: TpaTest }> => {
+  // Payment-first flow: Create order and get payment token
+  startPaymentFlow: async (couponCode?: string): Promise<{ order: Record<string, unknown>; questionSet: TpaQuestionSet }> => {
     try {
-      console.log('🚀 Starting complete TPA test flow...');
+      console.log('🚀 Starting TPA payment flow...', couponCode ? `with coupon: ${couponCode}` : '');
 
       // 1. Get active question set
       const questionSetResponse = await tpaAPI.getActiveQuestionSet();
       const questionSet = questionSetResponse.data;
 
-      // 2. Create test with the question set
-      const testResponse = await tpaAPI.createTest(questionSet.id);
+      // 2. Create order (with optional coupon)
+      const orderResponse = await tpaAPI.createOrder(couponCode);
+      const order = orderResponse.data;
+
+      console.log('✅ TPA payment flow started successfully');
+      return { order, questionSet };
+    } catch (error) {
+      console.error('❌ Failed to start TPA payment flow:', error);
+      throw error;
+    }
+  },
+
+  // Test creation flow (after payment is completed)
+  startTestFlow: async (orderId: string): Promise<{ questionSet: TpaQuestionSet; test: TpaTest }> => {
+    try {
+      console.log('🚀 Starting TPA test flow with paid order:', orderId);
+
+      // 1. Get active question set
+      const questionSetResponse = await tpaAPI.getActiveQuestionSet();
+      const questionSet = questionSetResponse.data;
+
+      // 2. Create test with the paid order ID
+      const testResponse = await tpaAPI.createTest(questionSet.id, orderId);
       const test = testResponse.data;
 
       console.log('✅ TPA test flow started successfully');
@@ -153,5 +196,11 @@ export const tpaAPI = {
       console.error('❌ Failed to start TPA test flow:', error);
       throw error;
     }
+  },
+
+  // Helper method to validate order payment status before test creation
+  validateOrderPayment: (order: Record<string, unknown>): boolean => {
+    const orderData = order as { status?: string; payment?: { status?: string } };
+    return orderData.status === 'paid' || orderData.payment?.status === 'settlement';
   }
 };

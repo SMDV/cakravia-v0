@@ -178,7 +178,7 @@ const TpaTestInterface = () => {
     window.location.href = '/tpa-test';
   }, []);
 
-  // Initialize test flow with resume capability
+  // Initialize test flow with payment validation and resume capability
   const initializeTest = useCallback(async () => {
     if (!isAuthenticated) {
       setTestState(prev => ({
@@ -193,9 +193,58 @@ const TpaTestInterface = () => {
       addLog('🚀 Starting TPA test initialization...');
       setTestState(prev => ({ ...prev, step: 'loading' }));
 
-      // Check for resume parameter
+      // Check for order ID (payment-first flow)
       const urlParams = new URLSearchParams(window.location.search);
+      const orderId = urlParams.get('orderId');
       const resumeTestId = urlParams.get('resumeTestId');
+
+      // If no order ID and no resume test ID, redirect to payment page
+      if (!orderId && !resumeTestId) {
+        addLog('⚠️ No order ID found - redirecting to payment page');
+        window.location.href = '/tpa-payment';
+        return;
+      }
+
+      // If we have an order ID, validate payment before proceeding
+      if (orderId && !resumeTestId) {
+        try {
+          addLog(`🔍 Validating payment for order: ${orderId}`);
+          // For now, we'll proceed to test creation - the API will validate the order
+          // In a real implementation, you might want to check order status first
+          const { questionSet, test } = await tpaAPI.startTestFlow(orderId);
+
+          setTestState(prev => ({
+            ...prev,
+            step: 'ready',
+            questionSet,
+            test,
+            timeLeft: test.time_limit === 0 ? 3600 : test.time_limit,
+            error: null
+          }));
+
+          addLog('✅ TPA test ready with paid order!');
+          return;
+
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Payment validation failed';
+          addLog(`❌ Payment validation failed: ${errorMessage}`);
+
+          // If payment validation fails, redirect to payment page
+          if (errorMessage.includes('payment') || errorMessage.includes('order')) {
+            addLog('🔄 Redirecting to payment page due to payment issue');
+            window.location.href = '/tpa-payment';
+            return;
+          }
+
+          // For other errors, show error state
+          setTestState(prev => ({
+            ...prev,
+            step: 'error',
+            error: errorMessage
+          }));
+          return;
+        }
+      }
 
       if (resumeTestId) {
         // Check if we have saved progress for this test
@@ -289,23 +338,9 @@ const TpaTestInterface = () => {
         return;
       }
 
-      // Create new test (existing logic)
-      const questionSetResponse = await tpaAPI.getActiveQuestionSet();
-      const questionSet = questionSetResponse.data;
-
-      const testResponse = await tpaAPI.createTest(questionSet.id);
-      const test = testResponse.data;
-
-      setTestState(prev => ({
-        ...prev,
-        step: 'ready',
-        questionSet,
-        test,
-        timeLeft: test.time_limit === 0 ? 3600 : test.time_limit,
-        error: null
-      }));
-
-      addLog('🎯 New TPA test ready to start!');
+      // If we reach here without order ID or resume test ID, redirect to payment
+      addLog('⚠️ No valid order or resume test found - redirecting to payment page');
+      window.location.href = '/tpa-payment';
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Failed to initialize TPA test';

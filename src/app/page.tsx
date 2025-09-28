@@ -554,18 +554,29 @@ const EnhancedHomepage = () => {
                 </div>
                 
                 <p className="text-white text-sm sm:text-base font-semibold opacity-90 mb-4" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
-                  🚧 In Development
+                  ✨ Now Available
                 </p>
-                
-                <button 
-                  disabled
-                  className="w-full py-3 sm:py-4 bg-gray-300 rounded-lg font-semibold text-base sm:text-lg cursor-not-allowed text-gray-500 shadow-md"
-                >
-                  Coming Soon
-                </button>
-                
+
+                {isAuthenticated ? (
+                  <Link
+                    href="/tpa-payment"
+                    className="block w-full py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                    style={{ color: '#2A3262' }}
+                  >
+                    Purchase & Take Test
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="block w-full py-3 sm:py-4 bg-white rounded-lg font-semibold text-base sm:text-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105 shadow-md"
+                    style={{ color: '#2A3262' }}
+                  >
+                    Login to Start
+                  </Link>
+                )}
+
                 <p className="text-white text-xs sm:text-sm mt-3 opacity-80" style={{ textShadow: '1px 1px 2px rgba(0,0,0,0.3)' }}>
-                  Advanced Assessment - Stay Tuned
+                  Payment Required - Certificate Included
                 </p>
               </div>
             </div>

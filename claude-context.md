@@ -194,7 +194,74 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 ---
 
-### FEATURE_5: User Authentication System
+### FEATURE_5: TPA Assessment (Payment-First)
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 5
+
+**PURPOSE:** Test of Potential Ability - Comprehensive reasoning assessment across 4 cognitive dimensions with payment-first architecture
+**USER_STORY:** As a user, I want to take a professional TPA assessment after completing payment so that I can get an official cognitive ability evaluation with certificate
+
+**MAIN_FLOW:**
+1. User discovers TPA from homepage → redirected to `/tpa-payment` (payment landing page)
+2. Payment-first architecture: User must complete payment before test access
+3. CouponModal integration for voucher/discount codes (same system as other tests)
+4. Midtrans payment processing with 50,000 IDR pricing (vs 30,000 IDR for other tests)
+5. After payment success → redirect to `/tpa-test?orderId={id}` (test interface)
+6. Payment validation before test creation (order must be 'paid' status)
+7. Test interface: 4 reasoning categories (Analytical, Quantitative, Spatial, Verbal) - 5 questions each
+8. Results display with immediate certificate download (no additional payment)
+
+**PAYMENT-FIRST ARCHITECTURE:**
+- **Order Creation**: `POST /users/tpa_tests/order` (with optional coupon_code)
+- **Payment Processing**: Midtrans integration with order validation
+- **Test Creation**: `POST /users/tpa_tests` (requires paid order_id)
+- **Access Control**: Test interface validates payment before allowing access
+
+**API_ENDPOINTS:**
+- GET `/users/tpa_tests/active_question_set` - Question set retrieval
+- POST `/users/tpa_tests/order` - Create standalone order (payment-first)
+- POST `/users/tpa_tests` - Create test (requires order_id from paid order)
+- GET `/users/tpa_tests/{id}` - Resume test session
+- POST `/users/tpa_tests/{id}/submit_answers` - Submit responses
+- GET `/users/tpa_tests/{id}/results` - Get reasoning profile results
+- POST `/users/tpa_tests/{id}/orders/payment_token` - Payment token (for existing orders)
+
+**COMPONENTS:**
+- PRIMARY: TpaPaymentLanding → Payment-first landing page with coupon integration
+- PRIMARY: TpaTestInterface → Reasoning assessment with payment validation
+- PRIMARY: TpaResultsPage → Results display with direct certificate download
+- SHARED: CouponModal (updated to support 'tpa' test type)
+- UI: Payment validation, order status checking, 4-category result display
+
+**ROUTES:**
+- `/tpa-payment` - Payment-first landing page (entry point)
+- `/tpa-test?orderId={id}` - Test interface (requires paid order)
+- `/tpa-test-results?testId={id}` - Results with certificate download
+- `/tpa-test?resumeTestId={id}` - Resume existing test session
+
+**DEPENDENCIES:**
+- REQUIRES: Enhanced payment API with standalone order creation
+- REQUIRES: CouponModal component (extended for TPA support)
+- REQUIRES: Order validation logic before test access
+- USED_BY: Homepage navigation, Profile page (test history integration)
+- EXTERNAL: Midtrans payment, TPA question set management
+
+**HOOKS/UTILITIES:**
+- tpaAPI.startPaymentFlow() - Create order with optional coupon
+- tpaAPI.startTestFlow() - Create test with paid order validation
+- tpaAPI.validateOrderPayment() - Check payment status
+- paymentAPI.createTpaStandaloneOrder() - Order creation with coupon support
+- TpaTestProgressManager - Session persistence (same pattern as other tests)
+
+**KEY_DIFFERENCES_FROM_OTHER_TESTS:**
+- **Payment-first**: Must pay before test access (vs pay-after-results for others)
+- **Higher pricing**: 50,000 IDR vs 30,000 IDR for VARK/AI/Behavioral/Comprehensive
+- **Direct certificate**: No additional payment step on results page
+- **Order validation**: Test creation requires validated paid order_id
+- **Separate landing**: `/tpa-payment` entry point vs direct test access
+
+---
+
+### FEATURE_6: User Authentication System
 **STATUS:** ACTIVE | **PRIORITY:** CRITICAL | **COMPLEXITY:** 4
 
 **PURPOSE:** Secure user authentication with email/password and Google Sign-In integration
@@ -239,7 +306,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 ---
 
-### FEATURE_6: Payment Integration
+### FEATURE_7: Payment Integration
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 3
 
 **PURPOSE:** Midtrans payment gateway integration for premium features and certificates
@@ -281,7 +348,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 ---
 
-### FEATURE_7: Coupon/Voucher System
+### FEATURE_8: Coupon/Voucher System
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 3
 
 **PURPOSE:** Discount system allowing users to apply coupon codes for reduced pricing on certificate purchases
@@ -302,7 +369,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 **COMPONENTS:**
 - PRIMARY: CouponModal → Reusable coupon validation interface
-- SHARED: Applied across all 4 test types (VARK, AI Knowledge, Behavioral, Comprehensive)
+- SHARED: Applied across all 5 test types (VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
 - UI: Modal with input field, validation states, pricing breakdown
 
 **ROUTES:**
@@ -311,10 +378,11 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
   - `/ai-knowledge-test-results?testId={id}` - AI Knowledge results
   - `/behavioral-test-results?testId={id}` - Behavioral results
   - `/comprehensive-test-results?testId={id}` - Comprehensive results
+  - `/tpa-payment` - TPA payment landing (payment-first flow)
 
 **DEPENDENCIES:**
 - REQUIRES: paymentAPI, coupon validation endpoint
-- USED_BY: All 4 assessment types for certificate purchases
+- USED_BY: All 5 assessment types for certificate purchases (TPA uses payment-first approach)
 - EXTERNAL: None (pure frontend integration with existing payment flow)
 
 **HOOKS/UTILITIES:**
@@ -333,7 +401,7 @@ const proceedToPayment = (couponCode?: string) => {
 
 ---
 
-### FEATURE_8: Profile Management
+### FEATURE_9: Profile Management
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
 
 **PURPOSE:** Comprehensive user profile with unified test history across all assessment types
@@ -374,7 +442,7 @@ const proceedToPayment = (couponCode?: string) => {
 
 ---
 
-### FEATURE_9: Homepage & Navigation
+### FEATURE_10: Homepage & Navigation
 **STATUS:** ACTIVE | **PRIORITY:** MEDIUM | **COMPLEXITY:** 3
 
 **PURPOSE:** Landing page with assessment carousel and navigation to test types
@@ -614,7 +682,7 @@ When modifying shared UI components:
 **MOST_USED_HOOKS:** useAuth(), useCallback, useEffect, useState
 **MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI)
 **API_REFERENCE:** `/temporer folder for claude/` - Postman collections & AI Knowledge API docs
-**ACTIVE_FEATURE_COUNT:** 9 major features (4 assessment types + auth + payment + coupon system + profile + homepage)
+**ACTIVE_FEATURE_COUNT:** 10 major features (5 assessment types + auth + payment + coupon system + profile + homepage)
 
 ---
 
