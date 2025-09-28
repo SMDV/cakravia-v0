@@ -29,7 +29,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 4. Progress saved to localStorage for cross-device continuation
 5. Auto-submit on completion or timer expiration
 6. Results processing with learning style breakdown and recommendations
-7. Optional payment for certificate generation
+7. Optional payment for certificate generation (with coupon/voucher support)
 
 **API_ENDPOINTS:**
 - GET `/users/vark_tests/active_question_set` - Fetch question set
@@ -37,7 +37,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - GET `/users/vark_tests/{id}` - Resume test
 - POST `/users/vark_tests/{id}/submit_answers` - Submit responses
 - GET `/users/vark_tests/{id}/results` - Get results
-- POST `/users/vark_tests/{id}/orders` - Payment processing
+- POST `/users/vark_tests/{id}/orders` - Payment processing (supports coupon_code)
 
 **COMPONENTS:**
 - PRIMARY: VarkTestFlow → Main test orchestration with chat interface
@@ -75,6 +75,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 5. Progress tracking with localStorage backup
 6. Submission and processing of AI readiness profile
 7. Results showing dominant categories and recommendations
+8. Optional payment with coupon/voucher modal for certificates
 
 **API_ENDPOINTS:**
 - GET `/users/ai_knowledge_tests/active_question_set` - Question set
@@ -82,7 +83,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - GET `/users/ai_knowledge_tests/{id}` - Resume test
 - POST `/users/ai_knowledge_tests/{id}/submit_answers` - Submit
 - GET `/users/ai_knowledge_tests/{id}/results` - Results
-- POST `/users/ai_knowledge_tests/{id}/orders` - Payment
+- POST `/users/ai_knowledge_tests/{id}/orders` - Payment (supports coupon_code)
 
 **COMPONENTS:**
 - PRIMARY: AiKnowledgeTestInterface → Chat-based test flow
@@ -118,6 +119,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 4. Track responses across 4 key behavioral areas
 5. Submit for behavioral profile analysis
 6. Receive behavioral insights and improvement recommendations
+7. Optional payment with coupon/voucher modal for certificates
 
 **API_ENDPOINTS:**
 - GET `/users/behavioral_learning_tests/active_question_set`
@@ -125,7 +127,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - GET `/users/behavioral_learning_tests/{id}` - Test retrieval
 - POST `/users/behavioral_learning_tests/{id}/submit_answers`
 - GET `/users/behavioral_learning_tests/{id}/results`
-- POST `/users/behavioral_learning_tests/{id}/orders`
+- POST `/users/behavioral_learning_tests/{id}/orders` - Payment (supports coupon_code)
 
 **COMPONENTS:**
 - PRIMARY: BehavioralTestInterface → Behavioral assessment flow
@@ -161,6 +163,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 4. Longer time limits (typically 1.5 hours default)
 5. Comprehensive scoring across 5 dimensions (CF, R, MA, AG, E)
 6. Detailed profile analysis combining all assessment insights
+7. Optional payment with coupon/voucher modal for certificates
 
 **API_ENDPOINTS:**
 - GET `/users/comprehensive_assessment_tests/active_question_set`
@@ -168,7 +171,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - GET `/users/comprehensive_assessment_tests/{id}` - Resume
 - POST `/users/comprehensive_assessment_tests/{id}/submit_answers`
 - GET `/users/comprehensive_assessment_tests/{id}/results`
-- POST `/users/comprehensive_assessment_tests/{id}/orders`
+- POST `/users/comprehensive_assessment_tests/{id}/orders` - Payment (supports coupon_code)
 
 **COMPONENTS:**
 - PRIMARY: ComprehensiveTestInterface → Extended test flow
@@ -245,20 +248,22 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 **MAIN_FLOW:**
 1. Complete assessment (any type)
 2. Initiate payment for certificate generation
-3. Create payment order through Midtrans
-4. Process payment via Midtrans snap interface
-5. Verify payment status and update order
-6. Generate and download certificate upon successful payment
+3. **NEW: Coupon/voucher modal appears for discount application**
+4. Create payment order through Midtrans (with optional coupon)
+5. Process payment via Midtrans snap interface
+6. Verify payment status and update order
+7. Generate and download certificate upon successful payment
 
 **API_ENDPOINTS:**
-- POST `/users/{test_type}_tests/{id}/orders` - Create payment order
+- POST `/users/coupons/validate` - Validate coupon code and get pricing
+- POST `/users/{test_type}_tests/{id}/orders` - Create payment order (supports coupon_code)
 - POST `/users/{test_type}_tests/{id}/orders/payment_token` - Get payment token
 - GET `/users/{test_type}_tests/{id}/orders/download_certificate` - Certificate download
 
 **COMPONENTS:**
 - PRIMARY: Payment flow integration in test results
-- SHARED: Payment status indicators, certificate download buttons
-- UI: Payment modals, status badges, download interfaces
+- SHARED: CouponModal, payment status indicators, certificate download buttons
+- UI: Coupon validation modal, payment modals, status badges, download interfaces
 
 **ROUTES:**
 - `/test-payment` - Payment testing interface
@@ -270,12 +275,65 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - EXTERNAL: Midtrans payment gateway, certificate generation
 
 **HOOKS/UTILITIES:**
-- paymentAPI - Unified payment methods for all test types
+- paymentAPI - Unified payment methods for all test types (with coupon support)
+- CouponModal - Reusable coupon validation component
 - Payment status tracking and order management
 
 ---
 
-### FEATURE_7: Profile Management
+### FEATURE_7: Coupon/Voucher System
+**STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 3
+
+**PURPOSE:** Discount system allowing users to apply coupon codes for reduced pricing on certificate purchases
+**USER_STORY:** As a user, I want to apply coupon codes to get discounts on my certificate purchases so that I can save money
+
+**MAIN_FLOW:**
+1. User completes any assessment and clicks payment button
+2. CouponModal appears before Midtrans payment interface
+3. User can enter coupon code or proceed without coupon
+4. System validates coupon code against API
+5. Valid coupons show pricing breakdown with discount
+6. Payment proceeds to Midtrans with discounted amount
+7. Order is created with coupon information applied
+
+**API_ENDPOINTS:**
+- POST `/users/coupons/validate` - Validate coupon and calculate discount
+- All order endpoints accept optional `coupon_code` parameter
+
+**COMPONENTS:**
+- PRIMARY: CouponModal → Reusable coupon validation interface
+- SHARED: Applied across all 4 test types (VARK, AI Knowledge, Behavioral, Comprehensive)
+- UI: Modal with input field, validation states, pricing breakdown
+
+**ROUTES:**
+- Integrated into all test results pages:
+  - `/results?testId={id}` - VARK results
+  - `/ai-knowledge-test-results?testId={id}` - AI Knowledge results
+  - `/behavioral-test-results?testId={id}` - Behavioral results
+  - `/comprehensive-test-results?testId={id}` - Comprehensive results
+
+**DEPENDENCIES:**
+- REQUIRES: paymentAPI, coupon validation endpoint
+- USED_BY: All 4 assessment types for certificate purchases
+- EXTERNAL: None (pure frontend integration with existing payment flow)
+
+**HOOKS/UTILITIES:**
+- handleValidateCoupon - Async coupon validation function
+- handleCouponModalSubmit - Modal completion handler
+- proceedToPayment - Enhanced payment with coupon support
+
+**IMPLEMENTATION_PATTERN:**
+```typescript
+// Standard pattern applied across all test types
+const handlePurchaseCertificate = () => setShowCouponModal(true);
+const proceedToPayment = (couponCode?: string) => {
+  // Payment logic with optional coupon
+};
+```
+
+---
+
+### FEATURE_8: Profile Management
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
 
 **PURPOSE:** Comprehensive user profile with unified test history across all assessment types
@@ -316,7 +374,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 ---
 
-### FEATURE_8: Homepage & Navigation
+### FEATURE_9: Homepage & Navigation
 **STATUS:** ACTIVE | **PRIORITY:** MEDIUM | **COMPLEXITY:** 3
 
 **PURPOSE:** Landing page with assessment carousel and navigation to test types
@@ -355,6 +413,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 **REUSABLE_COMPONENTS:**
 - Header → Navigation with auth state, consistent across all pages
 - Footer → Site footer with links and branding
+- CouponModal → Coupon validation modal (used across all 4 test types)
 - VarkTestFlow → Original VARK test interface (being replaced by unified)
 - CrossDeviceWarning → Progress continuation warnings across devices
 - ProtectedRoute → Authentication wrapper for protected pages
@@ -369,6 +428,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 
 **SHARED_APIS:**
 - authAPI → Complete authentication management
+- paymentAPI → Payment processing with coupon validation support
 - apiClient → Axios instance with token injection and error handling
 - Base URL: https://api.cakravia.com/api/v1
 - Automatic token management via HTTP-only cookies
@@ -377,7 +437,8 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - Test progress managers (VarkTestProgressManager, AiKnowledgeTestProgressManager, etc.)
 - formatTime, formatDate, formatDuration → Time formatting utilities
 - Test type conversion utilities for unified profile display
-- Payment initialization methods for all test types
+- Payment initialization methods for all test types (with coupon support)
+- Coupon validation and modal handling utilities
 
 ## DEVELOPMENT_PATTERNS
 
@@ -396,6 +457,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - Progress Persistence: localStorage with versioning and expiration checks
 - Authentication: Context-based with automatic redirects
 - API Responses: Consistent { data, status, error } format
+- Coupon Integration: Modal-first approach before payment processing
 
 **FILE_STRUCTURE_EXAMPLE:**
 ```
@@ -552,10 +614,10 @@ When modifying shared UI components:
 **MOST_USED_HOOKS:** useAuth(), useCallback, useEffect, useState
 **MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI)
 **API_REFERENCE:** `/temporer folder for claude/` - Postman collections & AI Knowledge API docs
-**ACTIVE_FEATURE_COUNT:** 8 major features (4 assessment types + auth + payment + profile + homepage)
+**ACTIVE_FEATURE_COUNT:** 9 major features (4 assessment types + auth + payment + coupon system + profile + homepage)
 
 ---
 
-**CONTEXT_VERSION:** 1.2 | **LAST_UPDATED:** 2025-09-27
+**CONTEXT_VERSION:** 1.3 | **LAST_UPDATED:** 2025-09-29
 
 Remember: This context exists to prevent code duplication and maintain consistency. Always start with the appropriate CHANGE-SPECIFIC PROMPT for your task type, then reference the relevant sections before suggesting new implementations.
