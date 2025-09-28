@@ -7,7 +7,8 @@ import {
   Clock,
   ZoomIn,
   X,
-  ChevronUp
+  ChevronUp,
+  ArrowRight
 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -92,7 +93,7 @@ const TpaTestMockInterface = () => {
   const [isCompleted, setIsCompleted] = useState(false);
 
   // State for mobile answer panel visibility
-  const [showAnswerPanel, setShowAnswerPanel] = useState(true);
+  const [showAnswerPanel, setShowAnswerPanel] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -383,46 +384,72 @@ const TpaTestMockInterface = () => {
       {/* Main Content Container */}
       <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 py-4 max-w-7xl mx-auto w-full min-h-0">
         {/* Status & Timer */}
-        <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-4 mb-4">
-          {/* Status */}
-          <div
-            className="text-center py-2 sm:py-4 rounded-lg text-white font-bold text-sm sm:text-lg"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            <div className="text-xs sm:text-sm mb-1">Status</div>
-            <div className="capitalize text-xs sm:text-base">
-              {isCompleted ? 'Completed' : 'Testing (Mock)'}
+        <div className="flex-shrink-0 mb-4">
+          {/* Mobile: Single consolidated bar */}
+          <div className="sm:hidden">
+            <div
+              className="flex items-center justify-between px-4 py-3 rounded-lg text-white font-medium text-sm"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="flex items-center gap-2">
+                <span className="capitalize">
+                  {isCompleted ? 'Completed' : 'Testing (Mock)'}
+                </span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Clock className="w-3 h-3" />
+                <span>{formatTime(timeLeft)}</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span>
+                  {Math.min(currentQuestionIndex + 1, MOCK_TPA_QUESTIONS.length)}/{MOCK_TPA_QUESTIONS.length}
+                </span>
+              </div>
             </div>
           </div>
 
-          {/* Timer */}
-          <div
-            className="text-center py-2 sm:py-4 rounded-lg text-white font-bold text-sm sm:text-lg"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            <div className="text-xs sm:text-sm mb-1 flex items-center justify-center gap-1">
-              <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-              Time left
+          {/* Desktop: Original 3-bar layout */}
+          <div className="hidden sm:grid sm:grid-cols-3 gap-4">
+            {/* Status */}
+            <div
+              className="text-center py-4 rounded-lg text-white font-bold text-lg"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="text-sm mb-1">Status</div>
+              <div className="capitalize text-base">
+                {isCompleted ? 'Completed' : 'Testing (Mock)'}
+              </div>
             </div>
-            <div className="text-sm sm:text-2xl">{formatTime(timeLeft)}</div>
-          </div>
 
-          {/* Question Counter */}
-          <div
-            className="text-center py-2 sm:py-4 rounded-lg text-white font-bold text-sm sm:text-lg"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            <div className="text-xs sm:text-sm mb-1">Progress</div>
-            <div className="text-sm sm:text-2xl">
-              {Math.min(currentQuestionIndex + 1, MOCK_TPA_QUESTIONS.length)}/{MOCK_TPA_QUESTIONS.length}
+            {/* Timer */}
+            <div
+              className="text-center py-4 rounded-lg text-white font-bold text-lg"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="text-sm mb-1 flex items-center justify-center gap-1">
+                <Clock className="w-4 h-4" />
+                Time left
+              </div>
+              <div className="text-2xl">{formatTime(timeLeft)}</div>
+            </div>
+
+            {/* Question Counter */}
+            <div
+              className="text-center py-4 rounded-lg text-white font-bold text-lg"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="text-sm mb-1">Progress</div>
+              <div className="text-2xl">
+                {Math.min(currentQuestionIndex + 1, MOCK_TPA_QUESTIONS.length)}/{MOCK_TPA_QUESTIONS.length}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Main Content - Mobile: Full Question, Desktop: Left-Right */}
-        <div className={`flex-1 flex flex-col sm:flex-row gap-4 min-h-0 relative transition-all duration-300 ${showAnswerPanel ? 'sm:mb-0 mb-[40vh]' : ''}`}>
+        <div className={`flex-1 flex flex-col sm:flex-row gap-4 min-h-0 relative transition-all duration-300 ${showAnswerPanel ? 'sm:mb-0 mb-[35vh]' : 'sm:mb-0 mb-20'}`}>
           {/* Mobile: Full Screen Question Box */}
-          <div className="flex-1 sm:flex-[2] flex flex-col min-h-0">
+          <div className="flex-1 sm:flex-[7] flex flex-col min-h-0">
             {/* Chat History Container */}
             <div
               className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg overflow-y-auto p-3 sm:p-6 min-h-0"
@@ -437,20 +464,20 @@ const TpaTestMockInterface = () => {
           </div>
 
           {/* Desktop: Right Side Answer Section */}
-          <div className="hidden sm:flex sm:flex-1 flex-col gap-4 min-h-0">
+          <div className="hidden sm:flex sm:flex-[3] flex-col gap-4 min-h-0">
             {/* Input Section - Desktop Only */}
             {!isCompleted && (
-              <div className="flex flex-col gap-4">
-                {/* Current Answer Input */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 max-h-[60vh] overflow-y-auto">
+              <div className="flex flex-col gap-4 h-full">
+                {/* Current Answer Input - Takes remaining space, scrollable */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 flex-1 min-h-0 overflow-y-auto">
                   <MultipleChoiceInput
                     value={currentSelectedOption}
                     onChange={setCurrentSelectedOption}
                   />
                 </div>
 
-                {/* Progress and Controls */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg">
+                {/* Progress and Controls - Fixed height, always visible */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg flex-shrink-0">
                   <div className="flex flex-col space-y-4">
                     <div className="flex flex-col space-y-2">
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -486,67 +513,114 @@ const TpaTestMockInterface = () => {
           </div>
         </div>
 
-        {/* Mobile: Floating Action Button */}
+        {/* Mobile: Floating Submit/Next Button */}
         {!isCompleted && (
-          <div className="sm:hidden fixed bottom-6 right-6 z-20">
+          <div className={`sm:hidden fixed z-20 transition-all duration-300 ${
+            showAnswerPanel
+              ? 'bottom-[30vh] right-4'
+              : 'bottom-20 right-4'
+          }`}>
             <button
-              onClick={() => setShowAnswerPanel(!showAnswerPanel)}
-              className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
-              style={{ backgroundColor: '#2A3262' }}
+              onClick={handleNextQuestion}
+              disabled={!currentSelectedOption}
+              className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 ${
+                currentSelectedOption
+                  ? 'hover:opacity-90 hover:scale-105'
+                  : 'opacity-60 cursor-not-allowed'
+              }`}
+              style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#94A3B8' }}
             >
-              {showAnswerPanel ? (
-                <X className="w-6 h-6 text-white" />
-              ) : (
-                <ChevronUp className="w-6 h-6 text-white" />
-              )}
+              <div className="flex flex-col items-center">
+                <ArrowRight className="w-4 h-4 text-white mb-0.5" />
+                <span className="text-[10px] text-white font-medium leading-tight">
+                  {currentQuestionIndex >= MOCK_TPA_QUESTIONS.length - 1 ? 'Submit' : 'Next'}
+                </span>
+              </div>
             </button>
           </div>
         )}
 
-        {/* Mobile: Floating Keyboard-Style Overlay */}
-        {!isCompleted && showAnswerPanel && (
-          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10 bg-white border-t border-gray-300 shadow-2xl transform transition-transform duration-300 ease-out h-[40vh]">
-            <div className="p-4 space-y-4 h-full overflow-y-auto">
-              {/* Answer Choices */}
-              <div className="space-y-3">
-                <MultipleChoiceInput
-                  value={currentSelectedOption}
-                  onChange={setCurrentSelectedOption}
-                />
-              </div>
+        {/* Mobile: Smart Choice Status Bar */}
+        {!isCompleted && (
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10">
+            <button
+              onClick={() => setShowAnswerPanel(!showAnswerPanel)}
+              className="w-full bg-white border-t border-gray-300 shadow-2xl p-4 transition-all duration-300 hover:bg-gray-50"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {currentSelectedOption ? (
+                    <>
+                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: '#2A3262' }}>
+                          Selected: {currentSelectedOption}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {(() => {
+                            const currentQuestion = MOCK_TPA_QUESTIONS[currentQuestionIndex];
+                            const optionText = currentQuestion ? currentQuestion[`option_${currentSelectedOption.toLowerCase()}` as keyof typeof currentQuestion] as string : '';
+                            return optionText.length > 40 ? optionText.substring(0, 40) + '...' : optionText;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-400 flex items-center justify-center">
+                        <span className="text-xs text-gray-400">?</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: '#2A3262' }}>
+                          Tap to choose answer
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {MOCK_TPA_QUESTIONS[currentQuestionIndex]?.category || 'Multiple choice question'}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-              {/* Progress and Controls */}
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex flex-col space-y-3">
-                  <div className="flex flex-col space-y-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                {/* Progress and Toggle Indicator */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-600">
+                      {currentQuestionIndex + 1}/{MOCK_TPA_QUESTIONS.length}
+                    </div>
+                    <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
                       <div
-                        className="h-2 rounded-full transition-all duration-300"
+                        className="h-1.5 rounded-full transition-all duration-300"
                         style={{
                           backgroundColor: '#ABD305',
                           width: `${((currentQuestionIndex + 1) / MOCK_TPA_QUESTIONS.length) * 100}%`
                         }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-center" style={{ color: '#2A3262' }}>
-                      {currentQuestionIndex + 1} out of {MOCK_TPA_QUESTIONS.length} answered
-                    </span>
                   </div>
 
-                  <button
-                    className={`w-full px-4 py-3 rounded-lg font-medium transition-opacity text-sm ${
-                      currentSelectedOption
-                        ? 'text-white hover:opacity-90'
-                        : 'text-gray-400 cursor-not-allowed'
+                  <ChevronUp
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                      showAnswerPanel ? 'rotate-180' : ''
                     }`}
-                    style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#E5E7EB' }}
-                    onClick={handleNextQuestion}
-                    disabled={!currentSelectedOption}
-                  >
-                    {currentQuestionIndex >= MOCK_TPA_QUESTIONS.length - 1 ? 'Finish Assessment' : 'Next Question'}
-                  </button>
+                  />
                 </div>
               </div>
+            </button>
+          </div>
+        )}
+
+        {/* Mobile: Collapsible Choice Panel */}
+        {!isCompleted && showAnswerPanel && (
+          <div className="sm:hidden fixed inset-x-0 bottom-20 z-10 bg-white border-t border-gray-300 shadow-2xl transform transition-transform duration-300 ease-out h-[25vh]">
+            <div className="p-4 h-full overflow-y-auto">
+              {/* Answer Choices Only */}
+              <MultipleChoiceInput
+                value={currentSelectedOption}
+                onChange={setCurrentSelectedOption}
+              />
             </div>
           </div>
         )}

@@ -69,7 +69,7 @@ const TpaTestInterface = () => {
   const [modalImageUrl, setModalImageUrl] = useState<string | null>(null);
 
   // State for mobile answer panel visibility
-  const [showAnswerPanel, setShowAnswerPanel] = useState(true);
+  const [showAnswerPanel, setShowAnswerPanel] = useState(false);
 
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
@@ -753,29 +753,59 @@ const TpaTestInterface = () => {
       {/* Main Content Container */}
       <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full min-h-0">
         {/* Status & Timer */}
-        <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {/* Status */}
-          <div
-            className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            <div className="text-xs sm:text-sm mb-1">Status</div>
-            <div className="capitalize text-sm sm:text-base">{testState.step.replace('_', ' ')}</div>
-          </div>
-
-          {/* Timer (only show during testing) */}
-          {testState.step === 'testing' && (
+        <div className="flex-shrink-0 mb-4">
+          {/* Mobile: Single consolidated bar */}
+          <div className="sm:hidden">
             <div
-              className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
+              className="flex items-center justify-between px-4 py-3 rounded-lg text-white font-medium text-sm"
               style={{ backgroundColor: '#2A3262' }}
             >
-              <div className="text-xs sm:text-sm mb-1 flex items-center justify-center gap-1">
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                Time left
+              <div className="flex items-center gap-2">
+                <span className="capitalize">
+                  {testState.step.replace('_', ' ')}
+                </span>
               </div>
-              <div className="text-lg sm:text-2xl">{formatTime(testState.timeLeft)}</div>
+              {testState.step === 'testing' && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(testState.timeLeft)}</span>
+                </div>
+              )}
+              {testState.step === 'testing' && (
+                <div className="flex items-center gap-1">
+                  <span>
+                    {testState.currentQuestionIndex + 1}/{testState.test?.questions.length || 0}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Desktop: Original 2-bar layout */}
+          <div className="hidden sm:grid sm:grid-cols-2 gap-4">
+            {/* Status */}
+            <div
+              className="text-center py-4 rounded-lg text-white font-bold text-lg"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="text-sm mb-1">Status</div>
+              <div className="capitalize text-base">{testState.step.replace('_', ' ')}</div>
+            </div>
+
+            {/* Timer (only show during testing) */}
+            {testState.step === 'testing' && (
+              <div
+                className="text-center py-4 rounded-lg text-white font-bold text-lg"
+                style={{ backgroundColor: '#2A3262' }}
+              >
+                <div className="text-sm mb-1 flex items-center justify-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Time left
+                </div>
+                <div className="text-2xl">{formatTime(testState.timeLeft)}</div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Main Content Area */}
@@ -814,9 +844,9 @@ const TpaTestInterface = () => {
         )}
 
         {testState.step === 'testing' && (
-          <div className={`flex-1 flex flex-col sm:flex-row gap-4 min-h-0 relative transition-all duration-300 ${showAnswerPanel ? 'sm:mb-0 mb-[40vh]' : ''}`}>
+          <div className={`flex-1 flex flex-col sm:flex-row gap-4 min-h-0 relative transition-all duration-300 ${showAnswerPanel ? 'sm:mb-0 mb-[35vh]' : 'sm:mb-0 mb-20'}`}>
             {/* Mobile: Full Screen Question Box */}
-            <div className="flex-1 sm:flex-[2] flex flex-col min-h-0">
+            <div className="flex-1 sm:flex-[7] flex flex-col min-h-0">
               {/* Chat History Container */}
               <div
                 className="flex-1 bg-white/95 backdrop-blur-sm rounded-lg shadow-lg overflow-y-auto p-3 sm:p-6 min-h-0"
@@ -831,19 +861,19 @@ const TpaTestInterface = () => {
             </div>
 
             {/* Desktop: Right Side Answer Section */}
-            <div className="hidden sm:flex sm:flex-1 flex-col gap-4 min-h-0">
+            <div className="hidden sm:flex sm:flex-[3] flex-col gap-4 min-h-0">
               {/* Input Section - Desktop Only */}
-              <div className="flex flex-col gap-4">
-                {/* Current Answer Input */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 max-h-[60vh] overflow-y-auto">
+              <div className="flex flex-col gap-4 h-full">
+                {/* Current Answer Input - Takes remaining space, scrollable */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 flex-1 min-h-0 overflow-y-auto">
                   <MultipleChoiceInput
                     value={currentSelectedOption}
                     onChange={setCurrentSelectedOption}
                   />
                 </div>
 
-                {/* Progress and Controls */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg">
+                {/* Progress and Controls - Fixed height, always visible */}
+                <div className="bg-white/95 backdrop-blur-sm rounded-lg p-3 sm:p-4 shadow-lg flex-shrink-0">
                   <div className="flex flex-col space-y-4">
                     <div className="flex flex-col space-y-2">
                       <div className="w-full bg-gray-200 rounded-full h-2">
@@ -879,67 +909,114 @@ const TpaTestInterface = () => {
           </div>
         )}
 
-        {/* Mobile: Floating Action Button */}
+        {/* Mobile: Floating Submit/Next Button */}
         {testState.step === 'testing' && (
-          <div className="sm:hidden fixed bottom-6 right-6 z-20">
+          <div className={`sm:hidden fixed z-20 transition-all duration-300 ${
+            showAnswerPanel
+              ? 'bottom-[30vh] right-4'
+              : 'bottom-20 right-4'
+          }`}>
             <button
-              onClick={() => setShowAnswerPanel(!showAnswerPanel)}
-              className="w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-300"
-              style={{ backgroundColor: '#2A3262' }}
+              onClick={handleNextQuestion}
+              disabled={!currentSelectedOption}
+              className={`w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-all duration-300 ${
+                currentSelectedOption
+                  ? 'hover:opacity-90 hover:scale-105'
+                  : 'opacity-60 cursor-not-allowed'
+              }`}
+              style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#94A3B8' }}
             >
-              {showAnswerPanel ? (
-                <X className="w-6 h-6 text-white" />
-              ) : (
-                <ChevronUp className="w-6 h-6 text-white" />
-              )}
+              <div className="flex flex-col items-center">
+                <ArrowRight className="w-4 h-4 text-white mb-0.5" />
+                <span className="text-[10px] text-white font-medium leading-tight">
+                  {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Submit' : 'Next'}
+                </span>
+              </div>
             </button>
           </div>
         )}
 
-        {/* Mobile: Floating Keyboard-Style Overlay */}
-        {testState.step === 'testing' && showAnswerPanel && (
-          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10 bg-white border-t border-gray-300 shadow-2xl transform transition-transform duration-300 ease-out h-[40vh]">
-            <div className="p-4 space-y-4 h-full overflow-y-auto">
-              {/* Answer Choices */}
-              <div className="space-y-3">
-                <MultipleChoiceInput
-                  value={currentSelectedOption}
-                  onChange={setCurrentSelectedOption}
-                />
-              </div>
+        {/* Mobile: Smart Choice Status Bar */}
+        {testState.step === 'testing' && (
+          <div className="sm:hidden fixed inset-x-0 bottom-0 z-10">
+            <button
+              onClick={() => setShowAnswerPanel(!showAnswerPanel)}
+              className="w-full bg-white border-t border-gray-300 shadow-2xl p-4 transition-all duration-300 hover:bg-gray-50"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {currentSelectedOption ? (
+                    <>
+                      <div className="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
+                        <Check className="w-4 h-4 text-white" />
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: '#2A3262' }}>
+                          Selected: {currentSelectedOption}
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {(() => {
+                            const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
+                            const optionText = currentQuestion ? currentQuestion[`option_${currentSelectedOption.toLowerCase()}` as keyof typeof currentQuestion] as string : '';
+                            return optionText.length > 40 ? optionText.substring(0, 40) + '...' : optionText;
+                          })()}
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="w-6 h-6 rounded-full border-2 border-gray-400 flex items-center justify-center">
+                        <span className="text-xs text-gray-400">?</span>
+                      </div>
+                      <div className="text-left">
+                        <div className="text-sm font-medium" style={{ color: '#2A3262' }}>
+                          Tap to choose answer
+                        </div>
+                        <div className="text-xs text-gray-600">
+                          {testState.test?.questions[testState.currentQuestionIndex]?.category || 'Multiple choice question'}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                </div>
 
-              {/* Progress and Controls */}
-              <div className="border-t border-gray-200 pt-4">
-                <div className="flex flex-col space-y-3">
-                  <div className="flex flex-col space-y-2">
-                    <div className="w-full bg-gray-200 rounded-full h-2">
+                {/* Progress and Toggle Indicator */}
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <div className="text-xs text-gray-600">
+                      {testState.currentQuestionIndex + 1}/{testState.test?.questions.length || 0}
+                    </div>
+                    <div className="w-16 bg-gray-200 rounded-full h-1.5 mt-1">
                       <div
-                        className="h-2 rounded-full transition-all duration-300"
+                        className="h-1.5 rounded-full transition-all duration-300"
                         style={{
                           backgroundColor: '#ABD305',
                           width: `${((testState.currentQuestionIndex + 1) / (testState.test?.questions.length || 1)) * 100}%`
                         }}
                       />
                     </div>
-                    <span className="text-xs font-medium text-center" style={{ color: '#2A3262' }}>
-                      {testState.currentQuestionIndex + 1} out of {testState.test?.questions.length || 0} answered
-                    </span>
                   </div>
 
-                  <button
-                    className={`w-full px-4 py-3 rounded-lg font-medium transition-opacity text-sm ${
-                      currentSelectedOption
-                        ? 'text-white hover:opacity-90'
-                        : 'text-gray-400 cursor-not-allowed'
+                  <ChevronUp
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${
+                      showAnswerPanel ? 'rotate-180' : ''
                     }`}
-                    style={{ backgroundColor: currentSelectedOption ? '#2A3262' : '#E5E7EB' }}
-                    onClick={handleNextQuestion}
-                    disabled={!currentSelectedOption}
-                  >
-                    {testState.currentQuestionIndex >= (testState.test?.questions.length || 1) - 1 ? 'Finish Assessment' : 'Next Question'}
-                  </button>
+                  />
                 </div>
               </div>
+            </button>
+          </div>
+        )}
+
+        {/* Mobile: Collapsible Choice Panel */}
+        {testState.step === 'testing' && showAnswerPanel && (
+          <div className="sm:hidden fixed inset-x-0 bottom-20 z-10 bg-white border-t border-gray-300 shadow-2xl transform transition-transform duration-300 ease-out h-[25vh]">
+            <div className="p-4 h-full overflow-y-auto">
+              {/* Answer Choices Only */}
+              <MultipleChoiceInput
+                value={currentSelectedOption}
+                onChange={setCurrentSelectedOption}
+              />
             </div>
           </div>
         )}
