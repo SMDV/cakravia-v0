@@ -7,9 +7,10 @@ import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { behavioralAPI, paymentAPI } from '@/lib/api';
-import { BehavioralTest, BehavioralTestResults as BehavioralTestResultsType } from '@/lib/types';
+import { BehavioralTest, BehavioralTestResults as BehavioralTestResultsType, CouponValidationRequest, CouponValidationResponse } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { CouponModal } from '@/components/payment';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -394,6 +395,10 @@ const EnhancedBehavioralResultsDashboard = () => {
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
+  // Coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
+
   // Payment status checking function
   const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
     try {
@@ -538,7 +543,57 @@ const EnhancedBehavioralResultsDashboard = () => {
   }, [checkPaymentStatus, snapUrl]);
 
   // Enhanced certificate purchase handler with existing order check
-  const handlePurchaseCertificate = async () => {
+  // Coupon validation handler
+  const handleValidateCoupon = useCallback(async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
+    try {
+      const response = await paymentAPI.validateCoupon(request);
+      return response.data;
+    } catch (error) {
+      console.error('Coupon validation error:', error);
+      return {
+        valid: false,
+        message: 'Failed to validate coupon. Please try again.',
+        coupon: {
+          code: request.coupon_code,
+          discount_type: 'percentage',
+          display_discount: '0%'
+        },
+        pricing: {
+          original_amount: parseFloat(request.amount),
+          discount_amount: '0',
+          final_amount: request.amount
+        }
+      };
+    }
+  }, []);
+
+  // Coupon modal handlers
+  const handleOpenCouponModal = () => {
+    setShowCouponModal(true);
+  };
+
+  const handleCloseCouponModal = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+  };
+
+  const handleProceedWithoutCoupon = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+    proceedToPayment();
+  };
+
+  const handleProceedWithCoupon = (couponData: CouponValidationResponse) => {
+    setAppliedCoupon(couponData);
+    setShowCouponModal(false);
+    proceedToPayment(couponData.coupon.code);
+  };
+
+  const handlePurchaseCertificate = () => {
+    handleOpenCouponModal();
+  };
+
+  const proceedToPayment = async (couponCode?: string) => {
     try {
       setIsProcessingPayment(true);
 
@@ -552,7 +607,7 @@ const EnhancedBehavioralResultsDashboard = () => {
 
       try {
         // First, try to initialize payment (create new order)
-        const paymentResult = await paymentAPI.initializeBehavioralPayment(testId);
+        const paymentResult = await paymentAPI.initializeBehavioralPayment(testId, couponCode);
 
         const snapToken = paymentResult.paymentToken.snap_token;
         const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
@@ -950,6 +1005,17 @@ const EnhancedBehavioralResultsDashboard = () => {
           setShowPaymentSuccessDialog(false);
           handleDownloadCertificate();
         }}
+      />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={handleCloseCouponModal}
+        onProceedWithoutCoupon={handleProceedWithoutCoupon}
+        onProceedWithCoupon={handleProceedWithCoupon}
+        originalAmount={30000}
+        testType="behavioral"
+        validateCoupon={handleValidateCoupon}
       />
     </div>
   );

@@ -7,9 +7,10 @@ import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { varkAPI, paymentAPI } from '@/lib/api';
-import { VarkTest, VarkTestResults } from '@/lib/types';
+import { VarkTest, VarkTestResults, CouponValidationResponse, CouponValidationRequest } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { CouponModal } from '@/components/payment';
 // import Image from 'next/image';
 // import TestChatBg from '@/assets/background/TestChatbg.png';
 
@@ -82,6 +83,10 @@ const EnhancedResultsDashboard = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
+
+  // Coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
 
 
 // Payment Success Dialog Component
@@ -555,95 +560,135 @@ const openSnapPopup = useCallback((snapToken: string) => {
   }
 }, [checkPaymentStatus, snapUrl]);
 
-  // Enhanced certificate purchase handler with existing order check
-  const handlePurchaseCertificate = async () => {
+  // Coupon validation handler
+  const handleValidateCoupon = useCallback(async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
+    try {
+      const response = await paymentAPI.validateCoupon(request);
+      return response.data;
+    } catch (error) {
+      console.error('Coupon validation error:', error);
+      // Return invalid coupon response
+      return {
+        valid: false,
+        message: 'Failed to validate coupon. Please try again.',
+        coupon: {
+          code: request.coupon_code,
+          discount_type: 'percentage',
+          display_discount: '0%'
+        },
+        pricing: {
+          original_amount: parseFloat(request.amount),
+          discount_amount: '0',
+          final_amount: request.amount
+        }
+      };
+    }
+  }, []);
+
+  // Coupon modal handlers
+  const handleOpenCouponModal = () => {
+    setShowCouponModal(true);
+  };
+
+  const handleCloseCouponModal = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+  };
+
+  const handleProceedWithoutCoupon = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+    proceedToPayment();
+  };
+
+  const handleProceedWithCoupon = (couponData: CouponValidationResponse) => {
+    setAppliedCoupon(couponData);
+    setShowCouponModal(false);
+    proceedToPayment(couponData.coupon.code);
+  };
+
+  // Actual payment processing function
+  const proceedToPayment = async (couponCode?: string) => {
     try {
       setIsProcessingPayment(true);
-      
+
       // Get the test ID from URL params
       const urlParams = new URLSearchParams(window.location.search);
       const testId = urlParams.get('testId');
-      
+
       if (!testId) {
         throw new Error('Test ID not found. Cannot process payment.');
       }
-      
+
       try {
-        // First, try to initialize payment (create new order)
-        const paymentResult = await paymentAPI.initializeVarkPayment(testId);
-        
+        // Initialize payment with optional coupon
+        const paymentResult = await paymentAPI.initializeVarkPayment(testId, couponCode);
+
         const snapToken = paymentResult.paymentToken.snap_token;
         const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
         const snapUrl = midtransResponse.redirect_url;
         setSnapUrl(snapUrl);
-        
+
         openSnapPopup(snapToken);
-        
+
       } catch (orderError: unknown) {
-        // Type guard to check if it's an error with the expected structure
+        // Handle existing order logic (same as before)
         const isOrderError = (error: unknown): error is OrderError => {
-          return typeof error === 'object' && 
-                 error !== null && 
+          return typeof error === 'object' &&
+                 error !== null &&
                  'response' in error;
         };
 
-        // Check if error is about existing order
-        if (isOrderError(orderError) && 
-            orderError?.response?.data?.code === 'CKV-422' && 
-            orderError?.response?.data?.errors?.test?.includes('already has an order')) {
-          
+        if (isOrderError(orderError) &&
+            orderError.response?.data?.code === 'existing_order') {
+
+          console.log('📦 Order already exists, getting payment token...');
+
           try {
-            // Get auth token for direct API call
-            const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
-            if (!authToken) {
-              throw new Error('Authentication token not found');
-            }
-            
-            // Call payment token endpoint directly for existing order
-            const tokenResponse = await fetch(
-              `https://api.cakravia.com/api/v1/users/vark_tests/${testId}/orders/payment_token`,
-              {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${authToken}`,
-                  'Content-Type': 'application/json'
-                }
+            const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/vark_tests/${testId}/orders/payment_token`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${document.cookie.split('auth_token=')[1]?.split(';')[0]}`,
+                'Content-Type': 'application/json'
               }
-            );
-            
+            });
+
             if (!tokenResponse.ok) {
               const errorData = await tokenResponse.json().catch(() => ({}));
               throw new Error(errorData.message || `Failed to get payment token: ${tokenResponse.status}`);
             }
-            
+
             const tokenData = await tokenResponse.json();
-            
-            // Extract snap URL from token response
+
             const midtransResponse = JSON.parse(tokenData.data.midtrans_response);
             const snapUrl = midtransResponse.redirect_url;
             setSnapUrl(snapUrl);
-            
-            // Open payment popup with existing order token
+
             openSnapPopup(tokenData.data.snap_token);
-            
+
           } catch (tokenError) {
             const tokenErrorMessage = tokenError instanceof Error ? tokenError.message : 'Failed to get payment token';
             throw new Error(`Could not retrieve payment token: ${tokenErrorMessage}`);
           }
-          
+
         } else {
-          // Re-throw if it's a different error
           throw orderError;
         }
       }
-      
+
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to process payment';
-      console.error('Payment error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed';
+      console.error('💳 Payment error:', error);
       alert(`Payment failed: ${errorMessage}`);
     } finally {
       setIsProcessingPayment(false);
     }
+  };
+
+  // Enhanced certificate purchase handler with existing order check
+  const handlePurchaseCertificate = () => {
+    // Simply open the coupon modal instead of proceeding directly to payment
+    handleOpenCouponModal();
   };
 
   // Certificate download handler
@@ -1224,6 +1269,17 @@ const openSnapPopup = useCallback((snapToken: string) => {
           setShowPaymentSuccessDialog(false);
           handleDownloadCertificate();
         }}
+      />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={handleCloseCouponModal}
+        onProceedWithoutCoupon={handleProceedWithoutCoupon}
+        onProceedWithCoupon={handleProceedWithCoupon}
+        originalAmount={30000}
+        testType="vark"
+        validateCoupon={handleValidateCoupon}
       />
     </div>
   );

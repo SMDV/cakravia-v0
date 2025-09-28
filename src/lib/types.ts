@@ -119,6 +119,31 @@ export interface VarkTestResults {
   result_description: VarkResultDescription; // NEW FIELD ADDED
 }
 
+// Coupon Types
+export interface Coupon {
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  display_discount: string;
+}
+
+export interface CouponValidationRequest {
+  coupon_code: string;
+  amount: string;
+}
+
+export interface CouponPricing {
+  original_amount: number;
+  discount_amount: string;
+  final_amount: string;
+}
+
+export interface CouponValidationResponse {
+  valid: boolean;
+  message: string;
+  coupon: Coupon;
+  pricing: CouponPricing;
+}
+
 // Payment Types
 export interface PaymentOrder {
   id: string;
@@ -136,6 +161,15 @@ export interface PaymentOrder {
   };
   payment: Record<string, unknown> | null;
   can_download_certificate: boolean;
+  // Enhanced fields for coupon support
+  original_amount?: string;
+  coupon_discount_amount?: string;
+  coupon?: Coupon | null;
+  pricing?: {
+    final_amount: string;
+    has_discount: boolean;
+    discount_percentage: number;
+  };
 }
 
 export interface PaymentToken {

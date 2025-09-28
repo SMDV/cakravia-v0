@@ -7,9 +7,10 @@ import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { aiKnowledgeAPI, paymentAPI } from '@/lib/api';
-import { AiKnowledgeTest, AiKnowledgeTestResults as AiKnowledgeTestResultsType } from '@/lib/types';
+import { AiKnowledgeTest, AiKnowledgeTestResults as AiKnowledgeTestResultsType, CouponValidationRequest, CouponValidationResponse } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { CouponModal } from '@/components/payment';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -379,6 +380,10 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
+  // Coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
+
   // Payment status checking function
   const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
     try {
@@ -522,8 +527,139 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
     }
   }, [checkPaymentStatus, snapUrl]);
 
-  // Enhanced certificate purchase handler with existing order check
-  const handlePurchaseCertificate = async () => {
+  // Coupon validation handler
+  const handleValidateCoupon = useCallback(async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
+    try {
+      const response = await paymentAPI.validateCoupon(request);
+      return response.data;
+    } catch (error) {
+      console.error('Coupon validation error:', error);
+      // Return invalid coupon response
+      return {
+        valid: false,
+        message: 'Failed to validate coupon. Please try again.',
+        coupon: {
+          code: request.coupon_code,
+          discount_type: 'percentage',
+          display_discount: '0%'
+        },
+        pricing: {
+          original_amount: parseFloat(request.amount),
+          discount_amount: '0',
+          final_amount: request.amount
+        }
+      };
+    }
+  }, []);
+
+  // Coupon modal handlers
+  const handleOpenCouponModal = () => {
+    setShowCouponModal(true);
+  };
+
+  const handleCloseCouponModal = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+  };
+
+  const handleProceedWithoutCoupon = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+    proceedToPayment();
+  };
+
+  const handleProceedWithCoupon = (couponData: CouponValidationResponse) => {
+    setAppliedCoupon(couponData);
+    setShowCouponModal(false);
+    proceedToPayment(couponData.coupon.code);
+  };
+
+  // Actual payment processing function
+  const proceedToPayment = async (couponCode?: string) => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot process payment.');
+      }
+
+      try {
+        // Initialize payment with optional coupon
+        const paymentResult = await paymentAPI.initializeAiKnowledgePayment(testId, couponCode);
+
+        const snapToken = paymentResult.paymentToken.snap_token;
+        const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
+        const snapUrl = midtransResponse.redirect_url;
+        setSnapUrl(snapUrl);
+
+        openSnapPopup(snapToken);
+
+      } catch (orderError: unknown) {
+        // Handle existing order logic (same as before)
+        const isOrderError = (error: unknown): error is OrderError => {
+          return typeof error === 'object' &&
+                 error !== null &&
+                 'response' in error;
+        };
+
+        if (isOrderError(orderError) &&
+            orderError.response?.data?.code === 'existing_order') {
+
+          console.log('📦 Order already exists, getting payment token...');
+
+          try {
+            const tokenResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/ai_knowledge_tests/${testId}/orders/payment_token`, {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${document.cookie.split('auth_token=')[1]?.split(';')[0]}`,
+                'Content-Type': 'application/json'
+              }
+            });
+
+            if (!tokenResponse.ok) {
+              const errorData = await tokenResponse.json().catch(() => ({}));
+              throw new Error(errorData.message || `Failed to get payment token: ${tokenResponse.status}`);
+            }
+
+            const tokenData = await tokenResponse.json();
+
+            const midtransResponse = JSON.parse(tokenData.data.midtrans_response);
+            const snapUrl = midtransResponse.redirect_url;
+            setSnapUrl(snapUrl);
+
+            openSnapPopup(tokenData.data.snap_token);
+
+          } catch (tokenError) {
+            const tokenErrorMessage = tokenError instanceof Error ? tokenError.message : 'Failed to get payment token';
+            throw new Error(`Could not retrieve payment token: ${tokenErrorMessage}`);
+          }
+
+        } else {
+          throw orderError;
+        }
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Payment initialization failed';
+      console.error('💳 Payment error:', error);
+      alert(`Payment failed: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  // Enhanced certificate purchase handler - now opens coupon modal first
+  const handlePurchaseCertificate = () => {
+    // Simply open the coupon modal instead of proceeding directly to payment
+    handleOpenCouponModal();
+  };
+
+  // Original certificate purchase handler with existing order check
+  const originalHandlePurchaseCertificate = async () => {
     try {
       setIsProcessingPayment(true);
 
@@ -919,6 +1055,17 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
           setShowPaymentSuccessDialog(false);
           handleDownloadCertificate();
         }}
+      />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={handleCloseCouponModal}
+        onProceedWithoutCoupon={handleProceedWithoutCoupon}
+        onProceedWithCoupon={handleProceedWithCoupon}
+        originalAmount={30000}
+        testType="ai_knowledge"
+        validateCoupon={handleValidateCoupon}
       />
     </div>
   );

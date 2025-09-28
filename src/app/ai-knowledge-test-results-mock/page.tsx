@@ -5,9 +5,10 @@ import { Check, Lock, AlertCircle, User, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import dynamic from "next/dynamic"
 import Link from 'next/link';
-import { AiKnowledgeTestResults as AiKnowledgeTestResultsType } from '@/lib/types';
+import { AiKnowledgeTestResults as AiKnowledgeTestResultsType, CouponValidationRequest, CouponValidationResponse } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { CouponModal } from '@/components/payment';
 
 // Import ApexCharts dynamically for client-side rendering
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
@@ -422,8 +423,105 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
-  // Mock handlers
-  const handlePurchaseCertificate = async () => {
+  // Coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
+
+  // Mock coupon validation function
+  const mockValidateCoupon = async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const originalAmount = parseFloat(request.amount);
+    const mockCoupons = {
+      'SAVE30': {
+        valid: true,
+        message: 'Coupon applied successfully',
+        coupon: {
+          code: 'SAVE30',
+          discount_type: 'percentage' as const,
+          display_discount: '30%'
+        },
+        pricing: {
+          original_amount: originalAmount,
+          discount_amount: (originalAmount * 0.3).toString(),
+          final_amount: (originalAmount * 0.7).toString()
+        }
+      },
+      'WELCOME20': {
+        valid: true,
+        message: 'Welcome discount applied',
+        coupon: {
+          code: 'WELCOME20',
+          discount_type: 'percentage' as const,
+          display_discount: '20%'
+        },
+        pricing: {
+          original_amount: originalAmount,
+          discount_amount: (originalAmount * 0.2).toString(),
+          final_amount: (originalAmount * 0.8).toString()
+        }
+      },
+      'FIXED5000': {
+        valid: true,
+        message: 'Fixed discount applied',
+        coupon: {
+          code: 'FIXED5000',
+          discount_type: 'fixed' as const,
+          display_discount: 'Rp 5.000'
+        },
+        pricing: {
+          original_amount: originalAmount,
+          discount_amount: '5000',
+          final_amount: (originalAmount - 5000).toString()
+        }
+      }
+    };
+
+    const coupon = mockCoupons[request.coupon_code as keyof typeof mockCoupons];
+    if (coupon) {
+      return coupon;
+    } else {
+      return {
+        valid: false,
+        message: 'Invalid coupon code. Please check and try again.',
+        coupon: {
+          code: request.coupon_code,
+          discount_type: 'percentage',
+          display_discount: '0%'
+        },
+        pricing: {
+          original_amount: originalAmount,
+          discount_amount: '0',
+          final_amount: originalAmount.toString()
+        }
+      };
+    }
+  };
+
+  // Coupon modal handlers
+  const handleOpenCouponModal = () => {
+    setShowCouponModal(true);
+  };
+
+  const handleCloseCouponModal = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+  };
+
+  const handleProceedWithoutCoupon = () => {
+    setShowCouponModal(false);
+    setAppliedCoupon(null);
+    proceedToPayment();
+  };
+
+  const handleProceedWithCoupon = (couponData: CouponValidationResponse) => {
+    setAppliedCoupon(couponData);
+    setShowCouponModal(false);
+    proceedToPayment();
+  };
+
+  // Actual payment processing function
+  const proceedToPayment = () => {
     setIsProcessingPayment(true);
     // Simulate payment processing
     setTimeout(() => {
@@ -431,6 +529,12 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
       setIsPaid(true);
       setShowPaymentSuccessDialog(true);
     }, 2000);
+  };
+
+  // Mock handlers
+  const handlePurchaseCertificate = () => {
+    // Open coupon modal instead of proceeding directly to payment
+    handleOpenCouponModal();
   };
 
   const handleDownloadCertificate = async () => {
@@ -693,6 +797,18 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
           handleDownloadCertificate();
         }}
       />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={handleCloseCouponModal}
+        onProceedWithoutCoupon={handleProceedWithoutCoupon}
+        onProceedWithCoupon={handleProceedWithCoupon}
+        originalAmount={30000}
+        testType="ai_knowledge"
+        validateCoupon={mockValidateCoupon}
+      />
+
     </div>
   );
 };

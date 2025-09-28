@@ -7,9 +7,10 @@ import dynamic from "next/dynamic"
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { comprehensiveAPI, paymentAPI } from '@/lib/api';
-import { ComprehensiveTest, ComprehensiveTestResults as ComprehensiveTestResultsType } from '@/lib/types';
+import { ComprehensiveTest, ComprehensiveTestResults as ComprehensiveTestResultsType, CouponValidationRequest, CouponValidationResponse, Coupon } from '@/lib/types';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import CouponModal from '@/components/payment/CouponModal';
 
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -174,6 +175,10 @@ const EnhancedComprehensiveResultsDashboard = () => {
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
   const [showPaymentSuccessDialog, setShowPaymentSuccessDialog] = useState(false);
 
+  // Coupon modal state
+  const [showCouponModal, setShowCouponModal] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
+
   // Payment status checking function
   const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
     try {
@@ -317,8 +322,32 @@ const EnhancedComprehensiveResultsDashboard = () => {
     }
   }, [checkPaymentStatus, snapUrl]);
 
-  // Enhanced certificate purchase handler with existing order check
+  // Handle coupon validation
+  const handleValidateCoupon = async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
+    try {
+      const response = await paymentAPI.validateCoupon(request);
+      return response.data;
+    } catch (error) {
+      console.error('Coupon validation failed:', error);
+      throw error;
+    }
+  };
+
+  // Handle modal submission
+  const handleCouponModalSubmit = (coupon: Coupon | null) => {
+    setAppliedCoupon(coupon);
+    setShowCouponModal(false);
+    // Proceed with payment using the coupon
+    proceedToPayment(coupon?.code);
+  };
+
+  // Enhanced certificate purchase handler - now opens coupon modal first
   const handlePurchaseCertificate = async () => {
+    setShowCouponModal(true);
+  };
+
+  // Actual payment processing with coupon support
+  const proceedToPayment = async (couponCode?: string) => {
     try {
       setIsProcessingPayment(true);
 
@@ -331,8 +360,8 @@ const EnhancedComprehensiveResultsDashboard = () => {
       }
 
       try {
-        // First, try to initialize payment (create new order)
-        const paymentResult = await paymentAPI.initializeComprehensivePayment(testId);
+        // First, try to initialize payment (create new order) with optional coupon
+        const paymentResult = await paymentAPI.initializeComprehensivePayment(testId, couponCode);
 
         const snapToken = paymentResult.paymentToken.snap_token;
         const midtransResponse = JSON.parse(paymentResult.paymentToken.midtrans_response);
@@ -769,6 +798,16 @@ const EnhancedComprehensiveResultsDashboard = () => {
           setShowPaymentSuccessDialog(false);
           handleDownloadCertificate();
         }}
+      />
+
+      {/* Coupon Modal */}
+      <CouponModal
+        isOpen={showCouponModal}
+        onClose={() => setShowCouponModal(false)}
+        onSubmit={handleCouponModalSubmit}
+        onValidateCoupon={handleValidateCoupon}
+        originalAmount="50000"
+        testType="Comprehensive"
       />
     </div>
   );

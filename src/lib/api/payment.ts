@@ -1,10 +1,21 @@
 import { apiClient } from './client';
-import { ApiResponse, PaymentOrder, PaymentToken } from '../types';
+import { ApiResponse, PaymentOrder, PaymentToken, CouponValidationRequest, CouponValidationResponse } from '../types';
 
 export const paymentAPI = {
+  // ===== COUPON VALIDATION =====
+
+  // Validate coupon code
+  validateCoupon: async (request: CouponValidationRequest): Promise<ApiResponse<CouponValidationResponse>> => {
+    const response = await apiClient.post('/users/coupons/validate', request);
+    return response.data;
+  },
+
+  // ===== VARK PAYMENT METHODS =====
+
   // Create payment order for VARK test
-  createVarkOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
-    const response = await apiClient.post(`/users/vark_tests/${testId}/orders`);
+  createVarkOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post(`/users/vark_tests/${testId}/orders`, payload);
     return response.data;
   },
 
@@ -15,9 +26,9 @@ export const paymentAPI = {
   },
 
   // Combined method for easier use - creates order then gets payment token
-  initializeVarkPayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
-    // First create the order
-    const orderResponse = await paymentAPI.createVarkOrder(testId);
+  initializeVarkPayment: async (testId: string, couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order (with optional coupon)
+    const orderResponse = await paymentAPI.createVarkOrder(testId, couponCode);
 
     // Then get the payment token
     const tokenResponse = await paymentAPI.getVarkPaymentToken(testId);
@@ -31,8 +42,9 @@ export const paymentAPI = {
   // ===== AI KNOWLEDGE PAYMENT METHODS =====
 
   // Create payment order for AI Knowledge test
-  createAiKnowledgeOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
-    const response = await apiClient.post(`/users/ai_knowledge_tests/${testId}/orders`);
+  createAiKnowledgeOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post(`/users/ai_knowledge_tests/${testId}/orders`, payload);
     return response.data;
   },
 
@@ -43,9 +55,9 @@ export const paymentAPI = {
   },
 
   // Combined method for AI Knowledge - creates order then gets payment token
-  initializeAiKnowledgePayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
-    // First create the order
-    const orderResponse = await paymentAPI.createAiKnowledgeOrder(testId);
+  initializeAiKnowledgePayment: async (testId: string, couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order (with optional coupon)
+    const orderResponse = await paymentAPI.createAiKnowledgeOrder(testId, couponCode);
 
     // Then get the payment token
     const tokenResponse = await paymentAPI.getAiKnowledgePaymentToken(testId);
@@ -59,8 +71,9 @@ export const paymentAPI = {
   // ===== BEHAVIORAL PAYMENT METHODS =====
 
   // Create payment order for Behavioral test
-  createBehavioralOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
-    const response = await apiClient.post(`/users/behavioral_learning_tests/${testId}/orders`);
+  createBehavioralOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post(`/users/behavioral_learning_tests/${testId}/orders`, payload);
     return response.data;
   },
 
@@ -71,9 +84,9 @@ export const paymentAPI = {
   },
 
   // Combined method for Behavioral - creates order then gets payment token
-  initializeBehavioralPayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
-    // First create the order
-    const orderResponse = await paymentAPI.createBehavioralOrder(testId);
+  initializeBehavioralPayment: async (testId: string, couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order (with optional coupon)
+    const orderResponse = await paymentAPI.createBehavioralOrder(testId, couponCode);
 
     // Then get the payment token
     const tokenResponse = await paymentAPI.getBehavioralPaymentToken(testId);
@@ -87,8 +100,9 @@ export const paymentAPI = {
   // ===== COMPREHENSIVE PAYMENT METHODS =====
 
   // Create payment order for Comprehensive test
-  createComprehensiveOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
-    const response = await apiClient.post(`/users/comprehensive_assessment_tests/${testId}/orders`);
+  createComprehensiveOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
+    const payload = couponCode ? { coupon_code: couponCode } : {};
+    const response = await apiClient.post(`/users/comprehensive_assessment_tests/${testId}/orders`, payload);
     return response.data;
   },
 
@@ -99,9 +113,9 @@ export const paymentAPI = {
   },
 
   // Combined method for Comprehensive - creates order then gets payment token
-  initializeComprehensivePayment: async (testId: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
-    // First create the order
-    const orderResponse = await paymentAPI.createComprehensiveOrder(testId);
+  initializeComprehensivePayment: async (testId: string, couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // First create the order (with optional coupon)
+    const orderResponse = await paymentAPI.createComprehensiveOrder(testId, couponCode);
 
     // Then get the payment token
     const tokenResponse = await paymentAPI.getComprehensivePaymentToken(testId);
