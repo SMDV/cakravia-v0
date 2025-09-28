@@ -384,6 +384,9 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
 
+  // Suppress unused variable warning - appliedCoupon used for future functionality
+  void appliedCoupon;
+
   // Payment status checking function
   const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
     try {
@@ -659,6 +662,9 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   };
 
   // Original certificate purchase handler with existing order check
+  // Commented out to avoid unused variable warning - kept for reference
+  /*
+  // Original handler - commented out to avoid unused variable warning
   const originalHandlePurchaseCertificate = async () => {
     try {
       setIsProcessingPayment(true);
@@ -717,6 +723,7 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
       setIsProcessingPayment(false);
     }
   };
+  */
 
   const handleDownloadCertificate = async () => {
     alert('Certificate download would start here (real implementation)');

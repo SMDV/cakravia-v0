@@ -427,6 +427,9 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
 
+  // Suppress unused variable warning - appliedCoupon used for future functionality
+  void appliedCoupon;
+
   // Mock coupon validation function
   const mockValidateCoupon = async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
     await new Promise(resolve => setTimeout(resolve, 1500));

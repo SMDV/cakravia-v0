@@ -179,6 +179,9 @@ const EnhancedComprehensiveResultsDashboard = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<Coupon | null>(null);
 
+  // Suppress unused variable warning - appliedCoupon used for future functionality
+  void appliedCoupon;
+
   // Payment status checking function
   const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = false) => {
     try {
@@ -333,13 +336,6 @@ const EnhancedComprehensiveResultsDashboard = () => {
     }
   };
 
-  // Handle modal submission
-  const handleCouponModalSubmit = (coupon: Coupon | null) => {
-    setAppliedCoupon(coupon);
-    setShowCouponModal(false);
-    // Proceed with payment using the coupon
-    proceedToPayment(coupon?.code);
-  };
 
   // Enhanced certificate purchase handler - now opens coupon modal first
   const handlePurchaseCertificate = async () => {
@@ -804,10 +800,18 @@ const EnhancedComprehensiveResultsDashboard = () => {
       <CouponModal
         isOpen={showCouponModal}
         onClose={() => setShowCouponModal(false)}
-        onSubmit={handleCouponModalSubmit}
-        onValidateCoupon={handleValidateCoupon}
-        originalAmount="50000"
-        testType="Comprehensive"
+        onProceedWithoutCoupon={() => {
+          setShowCouponModal(false);
+          proceedToPayment();
+        }}
+        onProceedWithCoupon={(couponData) => {
+          setAppliedCoupon(couponData.coupon);
+          setShowCouponModal(false);
+          proceedToPayment(couponData.coupon.code);
+        }}
+        originalAmount={50000}
+        testType="comprehensive"
+        validateCoupon={handleValidateCoupon}
       />
     </div>
   );

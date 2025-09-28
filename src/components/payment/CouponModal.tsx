@@ -142,6 +142,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
         setValidationError(result.message);
       }
     } catch (error) {
+      void error; // Suppress unused variable warning
       setValidationError('Failed to validate coupon. Please try again.');
     } finally {
       setIsValidating(false);

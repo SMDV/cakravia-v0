@@ -88,6 +88,9 @@ const EnhancedResultsDashboard = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
 
+  // Suppress unused variable warning - appliedCoupon used for future functionality
+  void appliedCoupon;
+
 
 // Payment Success Dialog Component
 interface PaymentSuccessDialogProps {
