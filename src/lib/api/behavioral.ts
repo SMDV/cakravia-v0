@@ -49,8 +49,6 @@ export const behavioralAPI = {
       console.log('🔄 Fetching Behavioral Test active question set...');
       const response = await apiClient.get('/users/behavioral_learning_tests/active_question_set');
       console.log('✅ Behavioral Test active question set response:', response.data);
-      console.log('🔍 Question set ID received:', response.data?.data?.id);
-      console.log('🔍 Question set data structure:', JSON.stringify(response.data?.data, null, 2));
       return response.data; // API returns { data: questionSet, status: "ok", error: false }
     } catch (error) {
       console.error('❌ Failed to fetch Behavioral Test active question set:', error);
@@ -66,20 +64,9 @@ export const behavioralAPI = {
   createTest: async (questionSetId: string): Promise<ApiResponse<BehavioralTest>> => {
     try {
       console.log('🔄 Creating Behavioral Test with question set ID:', questionSetId);
-      console.log('🔍 questionSetId type:', typeof questionSetId);
-      console.log('🔍 questionSetId is null?', questionSetId === null);
-      console.log('🔍 questionSetId is undefined?', questionSetId === undefined);
-      console.log('🔍 questionSetId stringified:', JSON.stringify(questionSetId));
-
-      const payload = {
+      const response = await apiClient.post('/users/behavioral_learning_tests', {
         behavioral_learning_question_set_id: questionSetId
-      };
-
-      console.log('🔍 Final payload object:', JSON.stringify(payload, null, 2));
-      console.log('🔍 Payload stringified:', JSON.stringify(payload));
-      console.log('🚀 About to make POST request to /users/behavioral_learning_tests');
-
-      const response = await apiClient.post('/users/behavioral_learning_tests', payload);
+      });
       console.log('✅ Behavioral Test creation response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }
     } catch (error) {
@@ -210,16 +197,10 @@ export const behavioralAPI = {
       console.log('🚀 Starting complete Behavioral Test flow...');
 
       // 1. Get active question set
-      console.log('📝 Step 1: Getting active question set...');
       const questionSetResponse = await behavioralAPI.getActiveQuestionSet();
       const questionSet = questionSetResponse.data;
 
-      console.log('🔍 FLOW - Question set response:', questionSetResponse);
-      console.log('🔍 FLOW - Question set data:', questionSet);
-      console.log('🔍 FLOW - Question set ID about to pass:', questionSet.id);
-
       // 2. Create test with the question set
-      console.log('📝 Step 2: Creating test with question set ID:', questionSet.id);
       const testResponse = await behavioralAPI.createTest(questionSet.id);
       const test = testResponse.data;
 
