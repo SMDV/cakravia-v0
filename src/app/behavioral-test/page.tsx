@@ -343,7 +343,7 @@ const BehavioralTestInterface = () => {
     if (!test) return;
 
     const currentQuestion = test.questions[currentQuestionIndex];
-    const maxWeight = currentQuestion.max_weight;
+    const maxWeight = 5; // Hardcoded for behavioral tests since backend doesn't provide max_weight
 
     // Convert slider value directly to answer (now using decimal values)
     const answer: BehavioralAnswer = {
@@ -428,9 +428,8 @@ const BehavioralTestInterface = () => {
   }, [testState, currentSliderValue, addLog]);
 
   // SliderAnswer Component for displaying answers in chat
-  const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
-    const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
-    const maxWeight = currentQuestion?.max_weight || 5;
+  const SliderAnswer = useCallback(({ value }: { value: number; questionId?: string }) => {
+    const maxWeight = 5; // Hardcoded for behavioral tests since backend doesn't provide max_weight
     const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
 
     return (
@@ -462,12 +461,11 @@ const BehavioralTestInterface = () => {
         </div>
       </div>
     );
-  }, [testState.test]);
+  }, []);
 
   // SliderInput Component for user input
   const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
-    const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
-    const maxWeight = currentQuestion?.max_weight || 5;
+    const maxWeight = 5; // Hardcoded for behavioral tests since backend doesn't provide max_weight
 
     return (
       <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
@@ -510,7 +508,7 @@ const BehavioralTestInterface = () => {
 
         <div className="text-center">
           <div className="text-xs text-gray-500">
-            Value: {value.toFixed(1)} | Category: {currentQuestion?.category.name || 'Unknown'}
+            Value: {value.toFixed(1)} | Category: Behavioral
           </div>
         </div>
 
@@ -566,7 +564,7 @@ const BehavioralTestInterface = () => {
         `}</style>
       </div>
     );
-  }, [testState.test, testState.currentQuestionIndex]);
+  }, []);
 
   // Auto-scroll chat to bottom
   useEffect(() => {

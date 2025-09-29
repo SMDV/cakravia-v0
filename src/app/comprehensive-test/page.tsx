@@ -342,7 +342,7 @@ const ComprehensiveTestInterface = () => {
     if (!test) return;
 
     const currentQuestion = test.questions[currentQuestionIndex];
-    const maxWeight = currentQuestion.max_weight;
+    const maxWeight = 5; // Hardcoded for comprehensive tests since backend doesn't provide max_weight
 
     const answer: ComprehensiveAnswer = {
       question_id: currentQuestion.id,
@@ -422,9 +422,8 @@ const ComprehensiveTestInterface = () => {
   }, [testState, currentSliderValue, addLog]);
 
   // SliderAnswer and SliderInput components (same as previous tests)
-  const SliderAnswer = useCallback(({ value, questionId }: { value: number; questionId?: string }) => {
-    const currentQuestion = testState.test?.questions.find(q => q.id === questionId);
-    const maxWeight = currentQuestion?.max_weight || 5;
+  const SliderAnswer = useCallback(({ value }: { value: number; questionId?: string }) => {
+    const maxWeight = 5; // Hardcoded for comprehensive tests since backend doesn't provide max_weight
     const actualPoints = Math.round((value / maxWeight) * maxWeight * 10) / 10;
 
     return (
@@ -454,11 +453,11 @@ const ComprehensiveTestInterface = () => {
         </div>
       </div>
     );
-  }, [testState.test]);
+  }, []);
 
   const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
     const currentQuestion = testState.test?.questions[testState.currentQuestionIndex];
-    const maxWeight = currentQuestion?.max_weight || 5;
+    const maxWeight = 5; // Hardcoded for comprehensive tests since backend doesn't provide max_weight
 
     return (
       <div className="w-full max-w-md bg-white p-4 rounded-xl shadow-lg border border-gray-100">
