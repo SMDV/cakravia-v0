@@ -18,6 +18,23 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // DETAILED logging for behavioral tests
+    if (config.url?.includes('behavioral_learning_tests')) {
+      console.log('🔍 AXIOS INTERCEPTOR - Full URL:', config.baseURL + config.url);
+      console.log('🔍 AXIOS INTERCEPTOR - Method:', config.method?.toUpperCase());
+      console.log('🔍 AXIOS INTERCEPTOR - Headers:', JSON.stringify(config.headers, null, 2));
+      console.log('🔍 AXIOS INTERCEPTOR - Raw data:', config.data);
+      console.log('🔍 AXIOS INTERCEPTOR - Data type:', typeof config.data);
+      console.log('🔍 AXIOS INTERCEPTOR - Data stringified:', JSON.stringify(config.data, null, 2));
+      console.log('🔍 AXIOS INTERCEPTOR - Config:', {
+        url: config.url,
+        method: config.method,
+        baseURL: config.baseURL,
+        timeout: config.timeout
+      });
+    }
+
     return config;
   },
   (error) => {
