@@ -386,6 +386,7 @@ export interface ComprehensiveTest {
 
 export interface ComprehensiveAnswer {
   question_id: string;
+  category_id: string;
   point: number;
 }
 
