@@ -1175,23 +1175,24 @@ const EnhancedProfilePage = () => {
                     </div>
 
                     {/* Desktop Table View */}
-                    <div className="hidden md:block overflow-x-auto min-h-0 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
-                      <table className="w-full min-w-[800px]">
-                        <thead>
-                          <tr className="bg-gray-50 border-b border-gray-200">
-                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <div className="hidden md:block">
+                      <div className="overflow-x-auto max-h-[70vh] overflow-y-auto border border-gray-200 rounded-lg scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100">
+                        <table className="w-full min-w-[800px]">
+                        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                          <tr>
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                               Test Info & Type
                             </th>
-                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                               Status & Timer
                             </th>
-                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                               Results
                             </th>
-                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                               Payment & Certificate
                             </th>
-                            <th className="px-4 lg:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                               Actions
                             </th>
                           </tr>
@@ -1204,7 +1205,7 @@ const EnhancedProfilePage = () => {
                             return (
                               <tr key={test.id} className="hover:bg-gray-50 transition-colors">
                                 {/* Test Info & Type */}
-                                <td className="px-4 lg:px-6 py-4">
+                                <td className="px-3 lg:px-4 py-4">
                                   <div>
                                     <div className="flex items-center gap-2 mb-1">
                                       <div className="text-sm font-medium text-gray-900">
@@ -1226,13 +1227,13 @@ const EnhancedProfilePage = () => {
                                       </div>
                                     )}
                                     <div className="text-xs text-blue-600 font-mono">
-                                      ID: {test.id.slice(0, 8)}...
+                                      {test.id.slice(0, 6)}...
                                     </div>
                                   </div>
                                 </td>
 
                                 {/* Status & Timer */}
-                                <td className="px-4 lg:px-6 py-4">
+                                <td className="px-3 lg:px-4 py-4">
                                   <div className="space-y-2">
                                     {/* Main Test Status */}
                                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(testStatus)}`}>
@@ -1276,7 +1277,7 @@ const EnhancedProfilePage = () => {
                                 </td>
 
                                 {/* Results */}
-                                <td className="px-4 lg:px-6 py-4">
+                                <td className="px-3 lg:px-4 py-4">
                                   {test.hasResults && test.totalScore !== undefined ? (
                                     <div className="space-y-1">
                                       <div className="text-sm font-medium text-gray-900">
@@ -1314,7 +1315,7 @@ const EnhancedProfilePage = () => {
                                 </td>
 
                                 {/* Payment & Certificate */}
-                                <td className="px-4 lg:px-6 py-4">
+                                <td className="px-3 lg:px-4 py-4">
                                   <div className="space-y-2">
                                     {/* Payment Status */}
                                     {test.payment ? (
@@ -1360,7 +1361,7 @@ const EnhancedProfilePage = () => {
                                 </td>
 
                                 {/* Actions */}
-                                <td className="px-4 lg:px-6 py-4">
+                                <td className="px-3 lg:px-4 py-4">
                                   <div className="flex flex-col gap-2">
                                     {/* View Results */}
                                     {test.status === 'completed' && test.hasResults && test.resultsUrl ? (
@@ -1436,6 +1437,7 @@ const EnhancedProfilePage = () => {
                           })}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   </>
                 )}
