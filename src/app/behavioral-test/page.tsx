@@ -691,29 +691,59 @@ const BehavioralTestInterface = () => {
       {/* Main Content Container */}
       <div className="relative z-10 flex-1 flex flex-col px-4 sm:px-6 py-4 max-w-6xl mx-auto w-full min-h-0">
         {/* Status & Timer */}
-        <div className="flex-shrink-0 grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-          {/* Status */}
-          <div
-            className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
-            style={{ backgroundColor: '#2A3262' }}
-          >
-            <div className="text-xs sm:text-sm mb-1">Status</div>
-            <div className="capitalize text-sm sm:text-base">{testState.step.replace('_', ' ')}</div>
-          </div>
-
-          {/* Timer (only show during testing) */}
-          {testState.step === 'testing' && (
+        <div className="flex-shrink-0 mb-4">
+          {/* Mobile: Single consolidated bar */}
+          <div className="sm:hidden">
             <div
-              className="text-center py-3 sm:py-4 rounded-lg text-white font-bold text-base sm:text-lg"
+              className="flex items-center justify-between px-4 py-3 rounded-lg text-white font-medium text-sm"
               style={{ backgroundColor: '#2A3262' }}
             >
-              <div className="text-xs sm:text-sm mb-1 flex items-center justify-center gap-1">
-                <Clock className="w-3 h-3 sm:w-4 sm:h-4" />
-                Time left
+              <div className="flex items-center gap-2">
+                <span className="capitalize">
+                  {testState.step.replace('_', ' ')}
+                </span>
               </div>
-              <div className="text-lg sm:text-2xl">{formatTime(testState.timeLeft)}</div>
+              {testState.step === 'testing' && (
+                <div className="flex items-center gap-1">
+                  <Clock className="w-3 h-3" />
+                  <span>{formatTime(testState.timeLeft)}</span>
+                </div>
+              )}
+              {testState.step === 'testing' && (
+                <div className="flex items-center gap-1">
+                  <span>
+                    {testState.currentQuestionIndex + 1}/{testState.test?.questions.length || 0}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Desktop: Original 2-bar layout */}
+          <div className="hidden sm:grid sm:grid-cols-2 gap-4">
+            {/* Status */}
+            <div
+              className="text-center py-4 rounded-lg text-white font-bold text-lg"
+              style={{ backgroundColor: '#2A3262' }}
+            >
+              <div className="text-sm mb-1">Status</div>
+              <div className="capitalize text-base">{testState.step.replace('_', ' ')}</div>
+            </div>
+
+            {/* Timer (only show during testing) */}
+            {testState.step === 'testing' && (
+              <div
+                className="text-center py-4 rounded-lg text-white font-bold text-lg"
+                style={{ backgroundColor: '#2A3262' }}
+              >
+                <div className="text-sm mb-1 flex items-center justify-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  Time left
+                </div>
+                <div className="text-2xl">{formatTime(testState.timeLeft)}</div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Main Content Area */}
