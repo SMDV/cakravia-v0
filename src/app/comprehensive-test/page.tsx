@@ -347,7 +347,6 @@ const ComprehensiveTestInterface = () => {
 
     const answer: ComprehensiveAnswer = {
       question_id: currentQuestion.id,
-      category_id: currentQuestion.category.id,
       point: Math.round((currentSliderValue / maxWeight) * maxWeight * 10) / 10
     };
 
@@ -542,7 +541,6 @@ const ComprehensiveTestInterface = () => {
               ...(currentSliderValue > 0 && test.questions[prev.currentQuestionIndex] ? {
                 [test.questions[prev.currentQuestionIndex].id]: {
                   question_id: test.questions[prev.currentQuestionIndex].id,
-                  category_id: test.questions[prev.currentQuestionIndex].category.id,
                   point: Math.round((currentSliderValue / 5) * 5 * 10) / 10
                 }
               } : {})
