@@ -104,19 +104,6 @@ const AI_KNOWLEDGE_CATEGORIES = {
 };
 
 
-const exclusiveBadgeStyle = {
-  position: 'absolute' as const,
-  top: '-8px',
-  right: '-8px',
-  backgroundColor: '#fbbf24',
-  color: '#000',
-  fontSize: '10px',
-  fontWeight: 'bold',
-  padding: '4px 8px',
-  borderRadius: '6px',
-  transform: 'rotate(12deg)',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-};
 
 // New AI Knowledge Style Section Component (adapted from VARK)
 const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProcessingPayment, organizedScores, resultsData }: {
@@ -196,12 +183,11 @@ const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProce
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
             <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-              <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 AI Knowledge Results + Certificate
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                Get your exclusive AI readiness profile with expert-backed strategies tailored just for you!
+                Get your AI readiness profile with expert-backed strategies tailored just for you!
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               <button
@@ -656,9 +642,62 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   };
 
   // Enhanced certificate purchase handler - now opens coupon modal first
-  const handlePurchaseCertificate = () => {
-    // Simply open the coupon modal instead of proceeding directly to payment
-    handleOpenCouponModal();
+  const handlePurchaseCertificate = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot process payment.');
+      }
+
+      // First, check if there's an existing order
+      try {
+        console.log('🔍 Checking for existing AI Knowledge order...');
+        const existingOrderResponse = await paymentAPI.getAiKnowledgeOrder(testId);
+        const existingOrder = existingOrderResponse.data;
+
+        console.log('📊 Existing AI Knowledge order found:', existingOrder);
+
+        // If order exists and is still pending (not expired)
+        if (existingOrder && existingOrder.status === 'pending') {
+          console.log('✅ Found pending AI Knowledge order, proceeding directly to payment...');
+
+          // Get payment token for existing order and proceed to Midtrans
+          const tokenResponse = await paymentAPI.getAiKnowledgePaymentToken(testId);
+          const snapToken = tokenResponse.data.snap_token;
+          const midtransResponse = JSON.parse(tokenResponse.data.midtrans_response);
+          const snapUrl = midtransResponse.redirect_url;
+          setSnapUrl(snapUrl);
+
+          openSnapPopup(snapToken);
+          return;
+        } else if (existingOrder && existingOrder.status === 'paid') {
+          console.log('💰 AI Knowledge order already paid, updating UI...');
+          setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+          return;
+        } else {
+          console.log('📝 No pending AI Knowledge order found, showing coupon modal...');
+        }
+      } catch (orderError) {
+        // If no order exists (404), that's expected - continue with coupon modal
+        console.log('ℹ️ No existing AI Knowledge order found, proceeding with new order flow...', orderError);
+      }
+
+      // If no existing pending order, show coupon modal for new order
+      handleOpenCouponModal();
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check existing order';
+      console.error('❌ Error checking existing AI Knowledge order:', error);
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   // Original certificate purchase handler with existing order check
@@ -995,12 +1034,11 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
                     </button>
                   ) : (
                     <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                      <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
-                      <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                         AI Knowledge Results + Certificate
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                        Get your exclusive AI readiness profile with expert-backed strategies
+                        Get your AI readiness profile with expert-backed strategies
                       </p>
                       <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
                       <button

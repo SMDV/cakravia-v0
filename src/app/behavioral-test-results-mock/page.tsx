@@ -68,12 +68,12 @@ const mockResultsData = {
   }
 };
 
-const exclusiveBadgeStyle = {
+const mockBadgeStyle = {
   position: 'absolute' as const,
   top: '-8px',
   right: '-8px',
-  backgroundColor: '#fbbf24',
-  color: '#000',
+  backgroundColor: '#10B981',
+  color: '#fff',
   fontSize: '10px',
   fontWeight: 'bold',
   padding: '4px 8px',
@@ -295,7 +295,7 @@ const BehavioralTestResultsMock = () => {
                 {/* Mock Payment Component */}
                 <div className="mt-6 sm:mt-8">
                   <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                    <div style={exclusiveBadgeStyle}>MOCK</div>
+                    <div style={mockBadgeStyle}>MOCK</div>
                     <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                       Behavioral Results + Certificate
                     </h3>

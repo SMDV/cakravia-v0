@@ -108,19 +108,6 @@ const mockUser = {
   updated_at: new Date().toISOString()
 };
 
-const exclusiveBadgeStyle = {
-  position: 'absolute' as const,
-  top: '-8px',
-  right: '-8px',
-  backgroundColor: '#fbbf24',
-  color: '#000',
-  fontSize: '10px',
-  fontWeight: 'bold',
-  padding: '4px 8px',
-  borderRadius: '6px',
-  transform: 'rotate(12deg)',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-};
 
 // New AI Knowledge Style Section Component (adapted from VARK)
 const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProcessingPayment, organizedScores }: {
@@ -200,7 +187,6 @@ const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProce
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
             <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-              <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 AI Knowledge Results + Certificate
               </h3>
@@ -733,8 +719,7 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
                     </button>
                   ) : (
                     <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                      <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
-                      <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                         AI Knowledge Results + Certificate
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">

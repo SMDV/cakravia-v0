@@ -58,9 +58,18 @@ const COMPREHENSIVE_CATEGORIES = {
   }
 };
 
-const exclusiveBadgeStyle = {
-  position: 'absolute' as const, top: '-8px', right: '-8px', backgroundColor: '#fbbf24', color: '#000',
-  fontSize: '10px', fontWeight: 'bold', padding: '4px 8px', borderRadius: '6px', transform: 'rotate(12deg)', boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+const mockBadgeStyle = {
+  position: 'absolute' as const,
+  top: '-8px',
+  right: '-8px',
+  backgroundColor: '#10B981',
+  color: '#fff',
+  fontSize: '10px',
+  fontWeight: 'bold',
+  padding: '4px 8px',
+  borderRadius: '6px',
+  transform: 'rotate(12deg)',
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
 };
 
 /**
@@ -225,7 +234,7 @@ const ComprehensiveTestResultsMock = () => {
                 {/* Mock Payment Component */}
                 <div className="mt-6 sm:mt-8">
                   <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                    <div style={exclusiveBadgeStyle}>MOCK</div>
+                    <div style={mockBadgeStyle}>MOCK</div>
                     <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                       Complete Results + Certificate
                     </h3>

@@ -86,12 +86,12 @@ const TPA_CATEGORIES = {
   }
 };
 
-const exclusiveBadgeStyle = {
+const mockBadgeStyle = {
   position: 'absolute' as const,
   top: '-8px',
   right: '-8px',
-  backgroundColor: '#fbbf24',
-  color: '#000',
+  backgroundColor: '#10B981',
+  color: '#fff',
   fontSize: '10px',
   fontWeight: 'bold',
   padding: '4px 8px',
@@ -186,7 +186,7 @@ const MockTpaReasoningStyleSection = ({ isPaid, handlePurchaseCertificate, isPro
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
             <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-              <div style={exclusiveBadgeStyle}>MOCK EXCLUSIVE</div>
+              <div style={mockBadgeStyle}>MOCK</div>
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 TPA Reasoning Results + Certificate
               </h3>
@@ -577,7 +577,7 @@ const EnhancedTpaResultsMockDashboard = () => {
                     </button>
                   ) : (
                     <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                      <div style={exclusiveBadgeStyle}>MOCK</div>
+                      <div style={mockBadgeStyle}>MOCK</div>
                       <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                         TPA Results + Certificate
                       </h3>

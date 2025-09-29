@@ -99,19 +99,6 @@ interface PaymentSuccessDialogProps {
   onDownloadCertificate: () => void;
 }
 
-const exclusiveBadgeStyle = {
-  position: 'absolute' as const,
-  top: '-8px',
-  right: '-8px',
-  backgroundColor: '#fbbf24',
-  color: '#000',
-  fontSize: '10px',
-  fontWeight: 'bold',
-  padding: '4px 8px',
-  borderRadius: '6px',
-  transform: 'rotate(12deg)',
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-};
 
 // New Learning Style Section Component
 const NewLearningStyleSection = () => {
@@ -197,12 +184,11 @@ const NewLearningStyleSection = () => {
         {!isPaid && (
           <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
             <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-              <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
               <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                 VARK Results + Report Certificate
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                Get your exclusive learning profile with expert-backed strategies tailored just for you!
+                Get your learning profile with expert-backed strategies tailored just for you!
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               <button 
@@ -689,9 +675,62 @@ const openSnapPopup = useCallback((snapToken: string) => {
   };
 
   // Enhanced certificate purchase handler with existing order check
-  const handlePurchaseCertificate = () => {
-    // Simply open the coupon modal instead of proceeding directly to payment
-    handleOpenCouponModal();
+  const handlePurchaseCertificate = async () => {
+    try {
+      setIsProcessingPayment(true);
+
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot process payment.');
+      }
+
+      // First, check if there's an existing order
+      try {
+        console.log('🔍 Checking for existing order...');
+        const existingOrderResponse = await paymentAPI.getVarkOrder(testId);
+        const existingOrder = existingOrderResponse.data;
+
+        console.log('📊 Existing order found:', existingOrder);
+
+        // If order exists and is still pending (not expired)
+        if (existingOrder && existingOrder.status === 'pending') {
+          console.log('✅ Found pending order, proceeding directly to payment...');
+
+          // Get payment token for existing order and proceed to Midtrans
+          const tokenResponse = await paymentAPI.getVarkPaymentToken(testId);
+          const snapToken = tokenResponse.data.snap_token;
+          const midtransResponse = JSON.parse(tokenResponse.data.midtrans_response);
+          const snapUrl = midtransResponse.redirect_url;
+          setSnapUrl(snapUrl);
+
+          openSnapPopup(snapToken);
+          return;
+        } else if (existingOrder && existingOrder.status === 'paid') {
+          console.log('💰 Order already paid, updating UI...');
+          setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
+          return;
+        } else {
+          console.log('📝 No pending order found, showing coupon modal...');
+        }
+      } catch (orderError) {
+        // If no order exists (404), that's expected - continue with coupon modal
+        console.log('ℹ️ No existing order found, proceeding with new order flow...', orderError);
+      }
+
+      // If no existing pending order, show coupon modal for new order
+      handleOpenCouponModal();
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to check existing order';
+      console.error('❌ Error checking existing order:', error);
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsProcessingPayment(false);
+    }
   };
 
   // Certificate download handler
@@ -1211,12 +1250,11 @@ const openSnapPopup = useCallback((snapToken: string) => {
                     </button>
                   ) : (
                     <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl w-full" style={{ borderColor: '#4A47A3' }}>
-                      <div style={exclusiveBadgeStyle}>EXCLUSIVE</div>
                       <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
                         VARK Results + Report Certificate
                       </h3>
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                        Get your exclusive learning profile with expert-backed strategies tailored just for you
+                        Get your learning profile with expert-backed strategies tailored just for you
                       </p>
                       <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
                       <button 

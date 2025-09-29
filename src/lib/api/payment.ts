@@ -12,6 +12,12 @@ export const paymentAPI = {
 
   // ===== VARK PAYMENT METHODS =====
 
+  // Get existing order for VARK test
+  getVarkOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/vark_tests/${testId}/orders`);
+    return response.data;
+  },
+
   // Create payment order for VARK test
   createVarkOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
     const payload = couponCode ? { coupon_code: couponCode } : {};
@@ -40,6 +46,12 @@ export const paymentAPI = {
   },
 
   // ===== AI KNOWLEDGE PAYMENT METHODS =====
+
+  // Get existing order for AI Knowledge test
+  getAiKnowledgeOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/ai_knowledge_tests/${testId}/orders`);
+    return response.data;
+  },
 
   // Create payment order for AI Knowledge test
   createAiKnowledgeOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
@@ -70,6 +82,12 @@ export const paymentAPI = {
 
   // ===== BEHAVIORAL PAYMENT METHODS =====
 
+  // Get existing order for Behavioral test
+  getBehavioralOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/behavioral_learning_tests/${testId}/orders`);
+    return response.data;
+  },
+
   // Create payment order for Behavioral test
   createBehavioralOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
     const payload = couponCode ? { coupon_code: couponCode } : {};
@@ -99,6 +117,12 @@ export const paymentAPI = {
 
   // ===== COMPREHENSIVE PAYMENT METHODS =====
 
+  // Get existing order for Comprehensive test
+  getComprehensiveOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/comprehensive_assessment_tests/${testId}/orders`);
+    return response.data;
+  },
+
   // Create payment order for Comprehensive test
   createComprehensiveOrder: async (testId: string, couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
     const payload = couponCode ? { coupon_code: couponCode } : {};
@@ -127,6 +151,12 @@ export const paymentAPI = {
   },
 
   // ===== TPA PAYMENT METHODS =====
+
+  // Get existing order for TPA test
+  getTpaOrder: async (testId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/tpa_tests/${testId}/orders`);
+    return response.data;
+  },
 
   // Create standalone TPA order (payment-first flow)
   createTpaStandaloneOrder: async (couponCode?: string): Promise<ApiResponse<PaymentOrder>> => {
