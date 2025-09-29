@@ -321,33 +321,98 @@ const EnhancedProfilePage = () => {
         const testHistoryPromises = [
           // VARK Tests
           fetch('https://api.cakravia.com/api/v1/users/vark_tests', { headers })
-            .then(res => res.ok ? res.json() : Promise.reject(`VARK API error: ${res.status}`))
-            .then(data => ({ type: 'vark', data: data.data || [] }))
-            .catch(error => ({ type: 'vark', error: error.toString() })),
+            .then(async res => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`VARK API error ${res.status}:`, errorText);
+                return Promise.reject(`VARK API error: ${res.status} - ${errorText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('VARK API response:', data);
+              return { type: 'vark', data: data.data || [] };
+            })
+            .catch(error => {
+              console.error('VARK fetch error:', error);
+              return { type: 'vark', error: error.toString() };
+            }),
 
           // AI Knowledge Tests
           fetch('https://api.cakravia.com/api/v1/users/ai_knowledge_tests', { headers })
-            .then(res => res.ok ? res.json() : Promise.reject(`AI Knowledge API error: ${res.status}`))
-            .then(data => ({ type: 'ai_knowledge', data: data.data || [] }))
-            .catch(error => ({ type: 'ai_knowledge', error: error.toString() })),
+            .then(async res => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`AI Knowledge API error ${res.status}:`, errorText);
+                return Promise.reject(`AI Knowledge API error: ${res.status} - ${errorText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('AI Knowledge API response:', data);
+              return { type: 'ai_knowledge', data: data.data || [] };
+            })
+            .catch(error => {
+              console.error('AI Knowledge fetch error:', error);
+              return { type: 'ai_knowledge', error: error.toString() };
+            }),
 
           // Behavioral Tests
           fetch('https://api.cakravia.com/api/v1/users/behavioral_learning_tests', { headers })
-            .then(res => res.ok ? res.json() : Promise.reject(`Behavioral API error: ${res.status}`))
-            .then(data => ({ type: 'behavioral', data: data.data || [] }))
-            .catch(error => ({ type: 'behavioral', error: error.toString() })),
+            .then(async res => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`Behavioral API error ${res.status}:`, errorText);
+                return Promise.reject(`Behavioral API error: ${res.status} - ${errorText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('Behavioral API response:', data);
+              return { type: 'behavioral', data: data.data || [] };
+            })
+            .catch(error => {
+              console.error('Behavioral fetch error:', error);
+              return { type: 'behavioral', error: error.toString() };
+            }),
 
           // Comprehensive Tests
           fetch('https://api.cakravia.com/api/v1/users/comprehensive_assessment_tests', { headers })
-            .then(res => res.ok ? res.json() : Promise.reject(`Comprehensive API error: ${res.status}`))
-            .then(data => ({ type: 'comprehensive', data: data.data || [] }))
-            .catch(error => ({ type: 'comprehensive', error: error.toString() })),
+            .then(async res => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`Comprehensive API error ${res.status}:`, errorText);
+                return Promise.reject(`Comprehensive API error: ${res.status} - ${errorText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('Comprehensive API response:', data);
+              return { type: 'comprehensive', data: data.data || [] };
+            })
+            .catch(error => {
+              console.error('Comprehensive fetch error:', error);
+              return { type: 'comprehensive', error: error.toString() };
+            }),
 
           // TPA Tests
           fetch('https://api.cakravia.com/api/v1/users/tpa_tests', { headers })
-            .then(res => res.ok ? res.json() : Promise.reject(`TPA API error: ${res.status}`))
-            .then(data => ({ type: 'tpa', data: data.data || [] }))
-            .catch(error => ({ type: 'tpa', error: error.toString() }))
+            .then(async res => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error(`TPA API error ${res.status}:`, errorText);
+                return Promise.reject(`TPA API error: ${res.status} - ${errorText}`);
+              }
+              return res.json();
+            })
+            .then(data => {
+              console.log('TPA API response:', data);
+              return { type: 'tpa', data: data.data || [] };
+            })
+            .catch(error => {
+              console.error('TPA fetch error:', error);
+              return { type: 'tpa', error: error.toString() };
+            })
         ];
 
         try {
@@ -360,27 +425,39 @@ const EnhancedProfilePage = () => {
               console.warn(`Failed to load ${result.type} test history:`, result.error);
               loadingErrors[result.type] = result.error;
             } else {
-              switch (result.type) {
-                case 'vark':
-                  setTestHistory(result.data as VarkTestHistory[]);
-                  allUnifiedTests.push(...(result.data as VarkTestHistory[]).map(convertVarkToUnified));
-                  break;
-                case 'ai_knowledge':
-                  setAiKnowledgeHistory(result.data as AiKnowledgeTestHistory[]);
-                  allUnifiedTests.push(...(result.data as AiKnowledgeTestHistory[]).map(convertAiKnowledgeToUnified));
-                  break;
-                case 'behavioral':
-                  setBehavioralHistory(result.data as BehavioralTestHistory[]);
-                  allUnifiedTests.push(...(result.data as BehavioralTestHistory[]).map(convertBehavioralToUnified));
-                  break;
-                case 'comprehensive':
-                  setComprehensiveHistory(result.data as ComprehensiveTestHistory[]);
-                  allUnifiedTests.push(...(result.data as ComprehensiveTestHistory[]).map(convertComprehensiveToUnified));
-                  break;
-                case 'tpa':
-                  setTpaHistory(result.data as TpaTestHistory[]);
-                  allUnifiedTests.push(...(result.data as TpaTestHistory[]).map(convertTpaToUnified));
-                  break;
+              // Add robust data validation
+              if (!result.data || !Array.isArray(result.data)) {
+                console.warn(`Invalid data structure for ${result.type}:`, result);
+                loadingErrors[result.type] = `Invalid data format - expected array but got ${typeof result.data}`;
+                return;
+              }
+
+              try {
+                switch (result.type) {
+                  case 'vark':
+                    setTestHistory(result.data as VarkTestHistory[]);
+                    allUnifiedTests.push(...(result.data as VarkTestHistory[]).map(convertVarkToUnified));
+                    break;
+                  case 'ai_knowledge':
+                    setAiKnowledgeHistory(result.data as AiKnowledgeTestHistory[]);
+                    allUnifiedTests.push(...(result.data as AiKnowledgeTestHistory[]).map(convertAiKnowledgeToUnified));
+                    break;
+                  case 'behavioral':
+                    setBehavioralHistory(result.data as BehavioralTestHistory[]);
+                    allUnifiedTests.push(...(result.data as BehavioralTestHistory[]).map(convertBehavioralToUnified));
+                    break;
+                  case 'comprehensive':
+                    setComprehensiveHistory(result.data as ComprehensiveTestHistory[]);
+                    allUnifiedTests.push(...(result.data as ComprehensiveTestHistory[]).map(convertComprehensiveToUnified));
+                    break;
+                  case 'tpa':
+                    setTpaHistory(result.data as TpaTestHistory[]);
+                    allUnifiedTests.push(...(result.data as TpaTestHistory[]).map(convertTpaToUnified));
+                    break;
+                }
+              } catch (mapError) {
+                console.error(`Error processing ${result.type} test data:`, mapError);
+                loadingErrors[result.type] = `Failed to process test data: ${mapError instanceof Error ? mapError.message : 'Unknown error'}`;
               }
             }
           });
