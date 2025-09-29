@@ -70,7 +70,7 @@ export const comprehensiveAPI = {
     try {
       console.log('🔄 Creating Comprehensive Test with question set ID:', questionSetId);
       const response = await apiClient.post('/users/comprehensive_assessment_tests', {
-        comprehensive_question_set_id: questionSetId
+        comprehensive_assessment_question_set_id: questionSetId
       });
       console.log('✅ Comprehensive Test creation response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }

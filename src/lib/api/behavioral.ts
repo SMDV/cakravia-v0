@@ -65,7 +65,7 @@ export const behavioralAPI = {
     try {
       console.log('🔄 Creating Behavioral Test with question set ID:', questionSetId);
       const response = await apiClient.post('/users/behavioral_learning_tests', {
-        behavioral_question_set_id: questionSetId
+        behavioral_learning_question_set_id: questionSetId
       });
       console.log('✅ Behavioral Test creation response:', response.data);
       return response.data; // API returns { data: test, status: "ok", error: false }
