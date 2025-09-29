@@ -238,7 +238,8 @@ const BehavioralTestInterface = () => {
           const currentQuestion = test.questions[savedProgress.currentQuestionIndex];
           const savedAnswer = savedProgress.answers[currentQuestion?.id];
           if (savedAnswer && currentQuestion) {
-            const sliderValue = (savedAnswer.point / currentQuestion.max_weight) * currentQuestion.max_weight;
+            const maxWeight = 5; // Hardcoded for behavioral tests since backend doesn't provide max_weight
+            const sliderValue = (savedAnswer.point / maxWeight) * maxWeight;
             setCurrentSliderValue(Math.max(1.0, sliderValue));
           }
 
@@ -584,7 +585,18 @@ const BehavioralTestInterface = () => {
           // Auto-submit when time is up
           const { test, answers } = prev;
           if (test) {
-            const submission = { answers: Object.values(answers) };
+            // Include current unsaved answer if exists
+            const finalAnswers = {
+              ...answers,
+              ...(currentSliderValue > 0 && test.questions[prev.currentQuestionIndex] ? {
+                [test.questions[prev.currentQuestionIndex].id]: {
+                  question_id: test.questions[prev.currentQuestionIndex].id,
+                  category_id: test.questions[prev.currentQuestionIndex].category.id,
+                  point: Math.round((currentSliderValue / 5) * 5 * 10) / 10
+                }
+              } : {})
+            };
+            const submission = { answers: Object.values(finalAnswers) };
             behavioralAPI.submitAnswers(test.id, submission)
               .then(() => {
                 addLog('✅ Time up - Behavioral answers submitted successfully!');
@@ -610,7 +622,7 @@ const BehavioralTestInterface = () => {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [testState.step, testState.timeLeft, addLog]);
+  }, [testState.step, testState.timeLeft, addLog, currentSliderValue]);
 
   // Auto-save progress whenever state changes during testing
   useEffect(() => {
