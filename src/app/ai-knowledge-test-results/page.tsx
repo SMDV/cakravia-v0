@@ -141,7 +141,7 @@ const NewAIKnowledgeStyleSection = ({ organizedScores, resultsData }: {
   };
 
   return (
-    <div className={`rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden ${!isPaid ? 'overflow-hidden' : ''}`} style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+    <div className="rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
       {/* Magazine-style Background - White background with decorative elements */}
       <div
         className="absolute inset-0 z-0"
