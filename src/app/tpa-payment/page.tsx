@@ -188,10 +188,9 @@ const TpaPaymentLanding = () => {
 
       console.log('✅ TPA order created:', order);
 
-      // For now, we'll use the existing payment token method with the order ID
-      // This may need adjustment based on the actual API implementation
+      // Get payment token using standalone order endpoint (NEW API)
       const orderData = order as { id: string };
-      const tokenResponse = await paymentAPI.getTpaPaymentToken(orderData.id);
+      const tokenResponse = await paymentAPI.getStandaloneOrderPaymentToken(orderData.id);
       const paymentToken = tokenResponse.data;
 
       const snapToken = paymentToken.snap_token;

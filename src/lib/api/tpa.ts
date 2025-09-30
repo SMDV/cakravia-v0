@@ -182,11 +182,19 @@ export const tpaAPI = {
     try {
       console.log('🚀 Starting TPA test flow with paid order:', orderId);
 
-      // 1. Get active question set
+      // 1. Validate order payment status using standalone order endpoint
+      const { paymentAPI } = await import('./payment');
+      const isOrderReady = await paymentAPI.isOrderPaidAndReady(orderId);
+
+      if (!isOrderReady) {
+        throw new Error('Order payment has not been completed. Please complete payment first.');
+      }
+
+      // 2. Get active question set
       const questionSetResponse = await tpaAPI.getActiveQuestionSet();
       const questionSet = questionSetResponse.data;
 
-      // 2. Create test with the paid order ID
+      // 3. Create test with the paid order ID
       const testResponse = await tpaAPI.createTest(questionSet.id, orderId);
       const test = testResponse.data;
 
@@ -198,9 +206,23 @@ export const tpaAPI = {
     }
   },
 
-  // Helper method to validate order payment status before test creation
+  // Helper method to validate order payment status before test creation (deprecated - use paymentAPI.isOrderPaidAndReady)
   validateOrderPayment: (order: Record<string, unknown>): boolean => {
     const orderData = order as { status?: string; payment?: { status?: string } };
     return orderData.status === 'paid' || orderData.payment?.status === 'settlement';
+  },
+
+  // Get order details for TPA test (uses standalone order endpoint)
+  getOrderDetails: async (orderId: string): Promise<unknown> => {
+    try {
+      console.log('🔄 Fetching TPA order details:', orderId);
+      const { paymentAPI } = await import('./payment');
+      const response = await paymentAPI.getStandaloneOrder(orderId);
+      console.log('✅ TPA order details:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to fetch TPA order details:', error);
+      throw error;
+    }
   }
 };

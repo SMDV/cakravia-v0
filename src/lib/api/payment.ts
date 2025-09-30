@@ -150,6 +150,20 @@ export const paymentAPI = {
     };
   },
 
+  // ===== STANDALONE ORDER METHODS (for payment-first flows) =====
+
+  // Get standalone order details (works for any test type)
+  getStandaloneOrder: async (orderId: string): Promise<ApiResponse<PaymentOrder>> => {
+    const response = await apiClient.get(`/users/orders/${orderId}`);
+    return response.data;
+  },
+
+  // Generate payment token for standalone order (works for any test type)
+  getStandaloneOrderPaymentToken: async (orderId: string): Promise<ApiResponse<PaymentToken>> => {
+    const response = await apiClient.post(`/users/orders/${orderId}/payment_token`);
+    return response.data;
+  },
+
   // ===== TPA PAYMENT METHODS =====
 
   // Get existing order for TPA test
@@ -192,15 +206,33 @@ export const paymentAPI = {
     };
   },
 
-  // Payment-first flow: Create order with voucher, then handle payment
-  initializeTpaOrderWithVoucher: async (couponCode?: string): Promise<{ order: PaymentOrder; paymentToken?: PaymentToken }> => {
-    // Create standalone order first (payment-first approach)
+  // Payment-first flow: Create order with voucher, get payment token using standalone endpoint
+  initializeTpaOrderWithVoucher: async (couponCode?: string): Promise<{ order: PaymentOrder; paymentToken: PaymentToken }> => {
+    // 1. Create standalone order first (payment-first approach)
     const orderResponse = await paymentAPI.createTpaStandaloneOrder(couponCode);
+    const order = orderResponse.data;
 
-    // Note: For TPA payment-first flow, payment token will be generated after order creation
-    // This follows the new API pattern where order is created first, then payment is processed
+    // 2. Generate payment token using standalone order endpoint
+    const orderData = order as { id: string };
+    const tokenResponse = await paymentAPI.getStandaloneOrderPaymentToken(orderData.id);
+
     return {
-      order: orderResponse.data
+      order: orderResponse.data,
+      paymentToken: tokenResponse.data
     };
+  },
+
+  // Helper: Check if standalone order is paid and ready for test creation
+  isOrderPaidAndReady: async (orderId: string): Promise<boolean> => {
+    try {
+      const orderResponse = await paymentAPI.getStandaloneOrder(orderId);
+      const orderData = orderResponse.data as { status?: string; payment?: { status?: string } };
+
+      // Order is ready if status is 'paid' or payment status is 'settlement'
+      return orderData.status === 'paid' || orderData.payment?.status === 'settlement';
+    } catch (error) {
+      console.error('Error checking order status:', error);
+      return false;
+    }
   },
 };
