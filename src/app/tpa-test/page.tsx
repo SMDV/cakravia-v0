@@ -143,7 +143,7 @@ const TpaTestInterface = () => {
         test: test,
         currentQuestionIndex: 0,
         answers: {},
-        timeLeft: test.time_limit,
+        timeLeft: Math.floor(test.time_remaining / 1000), // Convert milliseconds to seconds
         error: null
       }));
 
@@ -218,7 +218,7 @@ const TpaTestInterface = () => {
             step: 'ready',
             questionSet,
             test,
-            timeLeft: test.time_limit === 0 ? 3600 : test.time_limit,
+            timeLeft: Math.floor(test.time_remaining / 1000), // Convert milliseconds to seconds
             error: null
           }));
 
