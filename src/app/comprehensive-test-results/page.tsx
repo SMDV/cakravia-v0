@@ -564,11 +564,9 @@ const EnhancedComprehensiveResultsDashboard = () => {
 
   // Create organized data for comprehensive categories - 5 dimensions
   const organizedScores = resultsState.resultsData ? Object.entries(COMPREHENSIVE_CATEGORIES).map(([code, info]) => {
-    // Parse score from scores_breakdown array
-    const breakdown = resultsState.resultsData!.scores_breakdown || [];
-    const scoreData = breakdown.find((item) => item.code === code);
-    // API returns 'average' field, but TypeScript expects 'score'
-    const score = (scoreData as { average?: number })?.average || scoreData?.score || 0;
+    // Get score directly from category_scores using lowercase code
+    const lowercaseCode = code.toLowerCase() as 'cf' | 'r' | 'e' | 'ag' | 'ma';
+    const score = resultsState.resultsData!.category_scores[lowercaseCode] || 0;
 
     // Calculate percentage based on 5.0 scale (typical Likert scale max)
     const maxScore = 5.0;
@@ -680,8 +678,8 @@ const EnhancedComprehensiveResultsDashboard = () => {
                 Your comprehensive learning profile
               </h1>
               <div className="text-left sm:text-right">
-                <p className="text-xs sm:text-sm" style={{ color: '#4A47A3' }}>Certificate ID: COMP-{Date.now()}</p>
-                <p className="text-xs text-gray-500">Test completed: {new Date().toLocaleDateString()}</p>
+                <p className="text-xs sm:text-sm" style={{ color: '#4A47A3' }}>Test ID: {resultsState.resultsData?.id.slice(0, 8).toUpperCase()}</p>
+                <p className="text-xs text-gray-500">Test completed: {resultsState.resultsData?.test_info?.completed_at ? new Date(resultsState.resultsData.test_info.completed_at).toLocaleDateString() : new Date().toLocaleDateString()}</p>
               </div>
             </div>
 
@@ -843,10 +841,13 @@ const EnhancedComprehensiveResultsDashboard = () => {
               <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: '#24348C' }}>
                 Your Comprehensive Profile
               </h2>
-              <p className="text-gray-600">
-                {resultsState.resultsData?.result_description?.description ||
-                'Your comprehensive assessment evaluates your cognitive flexibility, resilience, metacognitive awareness, academic grit, and self-esteem to create a complete psychological profile.'}
-              </p>
+              <div
+                className="text-gray-600"
+                dangerouslySetInnerHTML={{
+                  __html: resultsState.resultsData?.detailed_analysis?.description ||
+                  '<p>Your comprehensive assessment evaluates your cognitive flexibility, resilience, metacognitive awareness, academic grit, and self-esteem to create a complete psychological profile.</p>'
+                }}
+              />
             </div>
 
             {/* Summary Cards - Score Highlights */}

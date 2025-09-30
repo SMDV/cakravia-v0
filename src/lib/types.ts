@@ -398,30 +398,49 @@ export interface ComprehensiveSubmission {
 export interface ComprehensiveScoreBreakdown {
   category: string;
   code: string;
-  score: number;
-  percentage: number;
-  type: 'vark' | 'ai_knowledge' | 'behavioral';
+  score?: number;
+  average?: number; // API returns 'average' instead of 'score'
+  percentage?: number;
+  type?: 'vark' | 'ai_knowledge' | 'behavioral';
 }
 
 export interface ComprehensiveTestResults {
-  cf_score: number; // Cognitive Flexibility (fleksibilitas kognitif)
-  r_score: number; // Resilience (resiliensi)
-  ma_score: number; // Metacognitive Awareness (kesadaran metakognitif)
-  ag_score: number; // Academic Grit (keteguhan akademik)
-  e_score: number; // Self-Esteem (harga diri)
-  average_score: number; // Computed average from the 5 dimensions
-  level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
-  min_score: number;
-  max_score: number;
+  id: string;
   total_score: number;
-  scores_breakdown: ComprehensiveScoreBreakdown[];
-  dominant_dimensions: string[];
-  dimension_interpretations: Record<string, string>;
-  result_description: {
-    title: string;
-    description: string;
-    recommendations: string;
-    comprehensive_profile: string;
+  total_questions: number;
+  average_score: string; // API returns as string
+  level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
+  level_message: string;
+  created_at: string;
+  category_scores: {
+    cf: number; // Cognitive Flexibility (fleksibilitas kognitif)
+    r: number; // Resilience (resiliensi)
+    e: number; // Self-Esteem (harga diri)
+    ag: number; // Academic Grit (keteguhan akademik)
+    ma: number; // Metacognitive Awareness (kesadaran metakognitif)
+  };
+  category_breakdown: {
+    CF: number;
+    R: number;
+    E: number;
+    AG: number;
+    MA: number;
+  };
+  strongest_categories: string[];
+  weakest_categories: string[];
+  detailed_analysis: {
+    description: string; // HTML string
+    study_recommendations: string; // HTML string
+  };
+  scores_breakdown?: ComprehensiveScoreBreakdown[]; // Optional for backward compatibility
+  test_info: {
+    id: string;
+    completed_at: string;
+    question_set: {
+      id: string;
+      name: string;
+      version: number;
+    };
   };
 }
 
