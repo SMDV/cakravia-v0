@@ -187,7 +187,7 @@ const NewAIKnowledgeStyleSection = ({ isPaid, handlePurchaseCertificate, isProce
                 AI Knowledge Results + Certificate
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                Get your AI readiness profile with expert-backed strategies tailored just for you!
+                Get your AI knowledge profile with expert-backed insights
               </p>
               <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
               <button
@@ -983,6 +983,30 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
             </div>
           </div>
 
+          {/* Payment/Download Card - Top Priority */}
+          {!isPaid && (
+            <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 border-2 max-w-sm mx-auto text-center" style={{ borderColor: '#4A47A3' }}>
+              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                AI Knowledge Results + Certificate
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                Get your AI knowledge profile with expert-backed insights
+              </p>
+              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+              <button
+                onClick={handlePurchaseCertificate}
+                disabled={isProcessingPayment}
+                className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                style={{ backgroundColor: '#4A47A3' }}
+              >
+                {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+              </button>
+              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                <Lock className="h-4 w-4" />
+                <span className="text-xs font-medium">100% Secure</span>
+              </div>
+            </div>
+          )}
 
           {/* Top Section: Final Report */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8 md:p-12 mb-6 sm:mb-12">
