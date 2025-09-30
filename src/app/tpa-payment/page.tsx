@@ -109,12 +109,8 @@ const TpaPaymentLanding = () => {
   // Load Midtrans snap script
   useEffect(() => {
     const snapScript = 'https://app.sandbox.midtrans.com/snap/snap.js';
-    const clientKey = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY;
-
-    if (!clientKey) {
-      console.error('Midtrans client key not found');
-      return;
-    }
+    // Use hardcoded sandbox client key (matching other test pages)
+    const clientKey = 'SB-Mid-client-BnZAW_h-FqRtI-kz';
 
     const script = document.createElement('script');
     script.src = snapScript;
