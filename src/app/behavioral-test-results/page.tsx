@@ -85,10 +85,7 @@ const BEHAVIORAL_CATEGORIES = {
 
 
 // New Behavioral Style Section Component (adapted from AI Knowledge)
-const NewBehavioralStyleSection = ({ isPaid, handlePurchaseCertificate, isProcessingPayment, organizedScores, resultsData }: {
-  isPaid: boolean;
-  handlePurchaseCertificate: () => void;
-  isProcessingPayment: boolean;
+const NewBehavioralStyleSection = ({ organizedScores, resultsData }: {
   organizedScores: Array<{
     name: string;
     score: number;
@@ -158,33 +155,6 @@ const NewBehavioralStyleSection = ({ isPaid, handlePurchaseCertificate, isProces
 
       {/* Content Container */}
       <div className="relative z-10 bg-white p-4 sm:p-8 md:p-12">
-        {/* Blur overlay for locked content */}
-        {!isPaid && (
-          <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-20 flex items-center justify-center p-4">
-            <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
-              <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
-                Behavioral Results + Certificate
-              </h3>
-              <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
-                Get your behavioral profile with expert-backed insights
-              </p>
-              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
-              <button
-                onClick={handlePurchaseCertificate}
-                disabled={isProcessingPayment}
-                className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                style={{ backgroundColor: '#4A47A3' }}
-              >
-                {isProcessingPayment ? 'Processing...' : 'Get My Results'}
-              </button>
-              <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
-                <Lock className="h-4 w-4" />
-                <span className="text-xs font-medium">100% Secure</span>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Magazine-style Header - Adapted for "Your Behavioral Profile" */}
         <div className="text-center mb-8 sm:mb-12 relative z-10">
           <div
@@ -898,6 +868,33 @@ const EnhancedBehavioralResultsDashboard = () => {
 
       <main className="flex-1 py-6 sm:py-12 md:py-24 lg:py-32 z-10 relative">
         <div className="container px-4 md:px-6 max-w-6xl mx-auto">
+          {/* Full-page blur overlay for unpaid users */}
+          {!isPaid && (
+            <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white p-4 sm:p-6 text-center border-2 shadow-md rounded-xl max-w-sm w-full" style={{ borderColor: '#4A47A3' }}>
+                <h3 className="text-lg sm:text-xl font-bold mb-2 text-gray-900">
+                  Behavioral Results + Certificate
+                </h3>
+                <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
+                  Get your behavioral profile with expert-backed insights
+                </p>
+                <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                <button
+                  onClick={handlePurchaseCertificate}
+                  disabled={isProcessingPayment}
+                  className="w-full py-2 sm:py-3 text-base sm:text-lg text-white font-medium rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                  style={{ backgroundColor: '#4A47A3' }}
+                >
+                  {isProcessingPayment ? 'Processing...' : 'Get My Results'}
+                </button>
+                <div className="flex items-center justify-center gap-2 mt-4 text-green-600">
+                  <Lock className="h-4 w-4" />
+                  <span className="text-xs font-medium">100% Secure</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* User Welcome Section */}
           <div className="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
             <div className="flex items-center gap-3">
@@ -1077,9 +1074,6 @@ const EnhancedBehavioralResultsDashboard = () => {
 
           {/* NEW SECTION: Behavioral Style Section */}
           <NewBehavioralStyleSection
-            isPaid={isPaid}
-            handlePurchaseCertificate={handlePurchaseCertificate}
-            isProcessingPayment={isProcessingPayment}
             organizedScores={organizedScores}
             resultsData={resultsState.resultsData}
           />
