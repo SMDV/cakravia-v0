@@ -811,17 +811,17 @@ const EnhancedBehavioralResultsDashboard = () => {
 
   // Create organized data for behavioral categories - 4 dimensions
   const organizedScores = resultsState.resultsData ? Object.entries(BEHAVIORAL_CATEGORIES).map(([code, info]) => {
-    const score = (() => {
-      switch (code) {
-        case 'H': return resultsState.resultsData!.h_score || 0;
-        case 'M': return resultsState.resultsData!.m_score || 0;
-        case 'R': return resultsState.resultsData!.r_score || 0;
-        case 'E': return resultsState.resultsData!.e_score || 0;
-        default: return 0;
-      }
-    })();
+    // Parse score from scores_breakdown array
+    const breakdown = resultsState.resultsData!.scores_breakdown || [];
 
-    const maxScore = resultsState.resultsData!.max_score || 1;
+    // Handle code mismatch: API uses "A" for Engagement but frontend expects "E"
+    const apiCode = code === 'E' ? 'A' : code;
+
+    const scoreData = breakdown.find((item: { code: string }) => item.code === apiCode);
+    const score = scoreData?.average || 0;
+
+    // Calculate percentage based on 5.0 scale (typical Likert scale max)
+    const maxScore = 5.0;
     const percentage = (score / maxScore) * 100;
 
     return {

@@ -558,18 +558,13 @@ const EnhancedComprehensiveResultsDashboard = () => {
 
   // Create organized data for comprehensive categories - 5 dimensions
   const organizedScores = resultsState.resultsData ? Object.entries(COMPREHENSIVE_CATEGORIES).map(([code, info]) => {
-    const score = (() => {
-      switch (code) {
-        case 'CF': return resultsState.resultsData!.cf_score || 0;
-        case 'R': return resultsState.resultsData!.r_score || 0;
-        case 'MA': return resultsState.resultsData!.ma_score || 0;
-        case 'AG': return resultsState.resultsData!.ag_score || 0;
-        case 'E': return resultsState.resultsData!.e_score || 0;
-        default: return 0;
-      }
-    })();
+    // Parse score from scores_breakdown array
+    const breakdown = resultsState.resultsData!.scores_breakdown || [];
+    const scoreData = breakdown.find((item: { code: string }) => item.code === code);
+    const score = scoreData?.average || 0;
 
-    const maxScore = resultsState.resultsData!.max_score || 1;
+    // Calculate percentage based on 5.0 scale (typical Likert scale max)
+    const maxScore = 5.0;
     const percentage = (score / maxScore) * 100;
 
     return {
