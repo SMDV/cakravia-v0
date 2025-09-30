@@ -481,6 +481,14 @@ const ComprehensiveTestInterface = () => {
             value={value}
             onChange={(e) => onChange(parseFloat(e.target.value))}
             className="slider w-full h-6 bg-transparent appearance-none cursor-pointer focus:outline-none"
+            style={{
+              background: `linear-gradient(to right,
+                #f87171 0%,
+                #fbbf24 ${((value - 1) / (maxWeight - 1)) * 50}%,
+                #34d399 ${((value - 1) / (maxWeight - 1)) * 100}%,
+                #e5e7eb ${((value - 1) / (maxWeight - 1)) * 100}%,
+                #e5e7eb 100%)`
+            }}
           />
           <div className="flex justify-between text-xs text-gray-400 mt-2 px-1">
             <span>1.0</span>
@@ -513,6 +521,28 @@ const ComprehensiveTestInterface = () => {
             cursor: grabbing;
             transform: scale(1.15);
             box-shadow: 0 2px 8px rgba(42, 50, 98, 0.6);
+          }
+          .slider::-moz-range-thumb {
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #2A3262;
+            cursor: grab;
+            border: 4px solid #ffffff;
+            box-shadow: 0 4px 12px rgba(42, 50, 98, 0.4);
+            transition: all 0.2s ease-in-out;
+          }
+          .slider::-moz-range-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(42, 50, 98, 0.5);
+          }
+          .slider::-moz-range-thumb:active {
+            cursor: grabbing;
+            transform: scale(1.15);
+          }
+          .slider::-moz-range-track {
+            height: 8px;
+            border-radius: 4px;
           }
         `}</style>
       </div>
