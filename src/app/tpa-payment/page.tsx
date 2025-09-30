@@ -44,7 +44,7 @@ declare global {
 }
 
 interface PaymentState {
-  step: 'loading' | 'ready' | 'processing' | 'success' | 'error';
+  step: 'loading' | 'ready' | 'processing' | 'success' | 'verification_error' | 'error';
   questionSet: TpaQuestionSet | null;
   error: string | null;
   orderId: string | null;
@@ -68,6 +68,10 @@ const TpaPaymentLanding = () => {
   const [showCouponModal, setShowCouponModal] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<CouponValidationResponse | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+  // Verification error state
+  const [verificationError, setVerificationError] = useState<string | null>(null);
+  const [isRetryingVerification, setIsRetryingVerification] = useState(false);
 
   const TPA_PRICE = 50000; // 50,000 IDR
 
@@ -124,7 +128,7 @@ const TpaPaymentLanding = () => {
     };
   }, []);
 
-  // Check payment status function (like VARK)
+  // Check payment status function (with error handling)
   const checkPaymentStatus = useCallback(async (orderId: string) => {
     try {
       console.log('🔍 Checking payment status for order:', orderId);
@@ -137,13 +141,27 @@ const TpaPaymentLanding = () => {
       if (isPaid) {
         console.log('✅ Payment verified - order is paid');
         setPaymentState(prev => ({ ...prev, step: 'success' }));
+        setVerificationError(null);
+        return true;
       } else {
-        console.log('⚠️ Payment not confirmed yet. Status:', order.status);
+        console.log('⏳ Payment still pending. Status:', order.status);
+        setVerificationError(
+          'Payment is still being processed. Please wait a moment and retry.'
+        );
+        return false;
       }
-
-      return isPaid;
     } catch (error) {
-      console.error('❌ Payment status check failed:', error);
+      console.error('❌ Payment verification failed:', error);
+
+      // Show error with retry option
+      const errorMessage = error instanceof Error
+        ? `Unable to verify payment: ${error.message}`
+        : 'Unable to verify payment status. Please check your connection and try again.';
+
+      setVerificationError(
+        errorMessage + ' Your payment may have been successful - please click retry to check.'
+      );
+      setPaymentState(prev => ({ ...prev, step: 'verification_error' }));
       return false;
     }
   }, []);
@@ -171,6 +189,21 @@ const TpaPaymentLanding = () => {
       };
     }
   }, []);
+
+  // Retry verification function
+  const retryVerification = useCallback(async () => {
+    if (!paymentState.orderId) {
+      console.error('❌ No order ID to verify');
+      return;
+    }
+
+    setIsRetryingVerification(true);
+    setVerificationError(null);
+
+    await checkPaymentStatus(paymentState.orderId);
+
+    setIsRetryingVerification(false);
+  }, [paymentState.orderId, checkPaymentStatus]);
 
   // Coupon modal handlers
   const handleOpenCouponModal = () => {
@@ -503,6 +536,68 @@ const TpaPaymentLanding = () => {
                 <p className="text-sm text-gray-500 mt-4">
                   You have {formatDuration(paymentState.questionSet?.time_limit || 3600)} to complete the test
                 </p>
+              </div>
+            </div>
+          )}
+
+          {paymentState.step === 'verification_error' && (
+            <div className="text-center">
+              <div className="bg-white rounded-lg shadow-lg p-8 max-w-lg mx-auto">
+                <AlertCircle className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
+
+                <h2 className="text-2xl font-bold mb-4 text-yellow-700">
+                  Payment Verification Issue
+                </h2>
+
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 text-left">
+                  <p className="text-sm text-yellow-800 mb-2">
+                    <strong>Your payment may have been processed.</strong>
+                  </p>
+                  <p className="text-sm text-gray-700">
+                    We couldn&apos;t verify your payment due to a connection issue.
+                    This doesn&apos;t mean your payment failed - please retry the verification.
+                  </p>
+                </div>
+
+                {verificationError && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-red-700">{verificationError}</p>
+                  </div>
+                )}
+
+                <button
+                  onClick={retryVerification}
+                  disabled={isRetryingVerification}
+                  className="w-full mb-4 px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isRetryingVerification ? (
+                    <>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                      Checking Payment Status...
+                    </>
+                  ) : (
+                    <>
+                      Check Payment Status
+                    </>
+                  )}
+                </button>
+
+                <div className="border-t pt-4 mt-4">
+                  <p className="text-xs text-gray-500 mb-2">For reference:</p>
+                  <p className="text-sm text-gray-700 font-mono bg-gray-100 p-2 rounded break-all">
+                    Order ID: {paymentState.orderId}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    Save this order ID if you need to contact support
+                  </p>
+                </div>
+
+                <button
+                  onClick={() => setPaymentState(prev => ({ ...prev, step: 'ready' }))}
+                  className="mt-4 text-sm text-gray-600 hover:text-gray-800 underline"
+                >
+                  Back to payment page
+                </button>
               </div>
             </div>
           )}
