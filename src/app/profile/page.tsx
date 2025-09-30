@@ -204,6 +204,7 @@ const EnhancedProfilePage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
+  const [selectedFilter, setSelectedFilter] = useState<UnifiedTestHistory['type'] | 'all'>('all');
 
   // Utility functions to convert different test types to unified format
   const convertVarkToUnified = (test: VarkTestHistory): UnifiedTestHistory => {
@@ -703,6 +704,11 @@ const EnhancedProfilePage = () => {
     return test.status;
   };
 
+  // Filter tests based on selected filter
+  const filteredTestHistory = selectedFilter === 'all'
+    ? unifiedTestHistory
+    : unifiedTestHistory.filter(test => test.type === selectedFilter);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -961,7 +967,8 @@ const EnhancedProfilePage = () => {
                   <div className="flex items-center gap-2">
                     <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500" />
                     <span className="text-xs sm:text-sm font-medium text-gray-600">
-                      {unifiedTestHistory.length} test{unifiedTestHistory.length !== 1 ? 's' : ''}
+                      {filteredTestHistory.length} test{filteredTestHistory.length !== 1 ? 's' : ''}
+                      {selectedFilter !== 'all' && ` (${unifiedTestHistory.length} total)`}
                     </span>
                   </div>
                 </div>
@@ -988,25 +995,32 @@ const EnhancedProfilePage = () => {
 
               {/* Test History Content */}
               <div>
-                {unifiedTestHistory.length === 0 ? (
+                {filteredTestHistory.length === 0 ? (
                   <div className="p-6 sm:p-8 text-center">
                     <FileText className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No tests taken yet</h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4">Start your learning journey by taking your first VARK assessment</p>
-                    <Link
-                      href="/test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors"
-                    >
-                      <Play className="w-4 h-4" />
-                      Take Your First Test
-                    </Link>
+                    <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
+                      {selectedFilter === 'all' ? 'No tests taken yet' : `No ${getTestTypeBadge(selectedFilter).text} tests found`}
+                    </h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">
+                      {selectedFilter === 'all'
+                        ? 'Start your learning journey by taking your first assessment'
+                        : 'Try selecting a different filter or take a new test'}
+                    </p>
+                    {selectedFilter !== 'all' && (
+                      <button
+                        onClick={() => setSelectedFilter('all')}
+                        className="inline-flex items-center gap-2 px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
+                      >
+                        Show All Tests
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <>
                     {/* Mobile Card View */}
                     <div className="block md:hidden">
                       <div className="divide-y divide-gray-200">
-                        {unifiedTestHistory.map((test) => {
+                        {filteredTestHistory.map((test) => {
                           const testStatus = getUnifiedTestStatus(test);
                           const typeBadge = getTestTypeBadge(test.type);
 
@@ -1198,7 +1212,7 @@ const EnhancedProfilePage = () => {
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
-                          {unifiedTestHistory.map((test) => {
+                          {filteredTestHistory.map((test) => {
                             const testStatus = getUnifiedTestStatus(test);
                             const typeBadge = getTestTypeBadge(test.type);
 
@@ -1443,45 +1457,71 @@ const EnhancedProfilePage = () => {
                 )}
               </div>
 
-              {/* Footer with action to take new test */}
+              {/* Footer with filters */}
               {unifiedTestHistory.length > 0 && (
                 <div className="p-4 sm:p-6 border-t border-gray-200 text-center">
-                  <div className="flex flex-wrap justify-center gap-3">
-                    <Link
-                      href="/test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors font-medium text-sm"
+                  <p className="text-xs sm:text-sm text-gray-600 mb-3">Filter by test type:</p>
+                  <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+                    <button
+                      onClick={() => setSelectedFilter('all')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'all'
+                          ? 'bg-gray-700 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
-                      <Play className="w-4 h-4" />
-                      VARK Test
-                    </Link>
-                    <Link
-                      href="/ai-knowledge-test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
+                      All Tests
+                    </button>
+                    <button
+                      onClick={() => setSelectedFilter('vark')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'vark'
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                      }`}
                     >
-                      <Play className="w-4 h-4" />
-                      AI Knowledge
-                    </Link>
-                    <Link
-                      href="/behavioral-test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium text-sm"
+                      🎨 VARK
+                    </button>
+                    <button
+                      onClick={() => setSelectedFilter('ai_knowledge')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'ai_knowledge'
+                          ? 'bg-purple-500 text-white'
+                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      }`}
                     >
-                      <Play className="w-4 h-4" />
-                      Behavioral
-                    </Link>
-                    <Link
-                      href="/comprehensive-test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium text-sm"
+                      🤖 AI Knowledge
+                    </button>
+                    <button
+                      onClick={() => setSelectedFilter('behavioral')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'behavioral'
+                          ? 'bg-green-500 text-white'
+                          : 'bg-green-100 text-green-700 hover:bg-green-200'
+                      }`}
                     >
-                      <Play className="w-4 h-4" />
-                      Comprehensive
-                    </Link>
-                    <Link
-                      href="/tpa-test"
-                      className="inline-flex items-center gap-2 px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium text-sm"
+                      🧠 Behavioral
+                    </button>
+                    <button
+                      onClick={() => setSelectedFilter('comprehensive')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'comprehensive'
+                          ? 'bg-orange-500 text-white'
+                          : 'bg-orange-100 text-orange-700 hover:bg-orange-200'
+                      }`}
                     >
-                      <Play className="w-4 h-4" />
-                      TPA Test
-                    </Link>
+                      🎆 Comprehensive
+                    </button>
+                    <button
+                      onClick={() => setSelectedFilter('tpa')}
+                      className={`inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg transition-colors font-medium text-xs sm:text-sm ${
+                        selectedFilter === 'tpa'
+                          ? 'bg-purple-500 text-white'
+                          : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                      }`}
+                    >
+                      🧩 TPA
+                    </button>
                   </div>
                 </div>
               )}
