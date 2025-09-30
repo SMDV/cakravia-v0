@@ -195,18 +195,55 @@ const TpaPaymentLanding = () => {
       // Open Midtrans snap popup
       if (window.snap) {
         window.snap.pay(snapToken, {
-          onSuccess: (result) => {
-            console.log('✅ Payment successful:', result);
-            setPaymentState(prev => ({ ...prev, step: 'success' }));
-            // Redirect to test interface with order ID
-            setTimeout(() => {
-              window.location.href = `/tpa-test?orderId=${orderData.id}`;
-            }, 2000);
+          onSuccess: async (result) => {
+            console.log('✅ Payment successful callback received:', result);
+
+            // Verify payment status with backend before redirecting
+            try {
+              console.log('🔍 Verifying payment status with backend...');
+              const orderResponse = await paymentAPI.getStandaloneOrder(orderData.id);
+              const order = orderResponse.data as { status?: string; payment?: { status?: string } };
+
+              if (order.status === 'paid' || order.payment?.status === 'settlement') {
+                console.log('✅ Payment verified - order is paid');
+                setPaymentState(prev => ({ ...prev, step: 'success' }));
+                setTimeout(() => {
+                  window.location.href = `/tpa-test?orderId=${orderData.id}`;
+                }, 2000);
+              } else {
+                console.warn('⚠️ Payment callback received but order not paid yet, rechecking...');
+                // Wait and check again (Midtrans might take a moment to update)
+                setTimeout(async () => {
+                  const recheckOrder = await paymentAPI.getStandaloneOrder(orderData.id);
+                  const recheckData = recheckOrder.data as { status?: string; payment?: { status?: string } };
+                  if (recheckData.status === 'paid' || recheckData.payment?.status === 'settlement') {
+                    console.log('✅ Payment verified on recheck');
+                    window.location.href = `/tpa-test?orderId=${orderData.id}`;
+                  } else {
+                    console.error('❌ Payment verification failed after recheck');
+                    setPaymentState(prev => ({
+                      ...prev,
+                      step: 'error',
+                      error: 'Payment verification failed. Please contact support.'
+                    }));
+                  }
+                }, 3000);
+              }
+            } catch (error) {
+              console.error('❌ Failed to verify payment:', error);
+              // Still redirect - let test page validate
+              console.log('⚠️ Proceeding to test page despite verification error');
+              setTimeout(() => {
+                window.location.href = `/tpa-test?orderId=${orderData.id}`;
+              }, 2000);
+            }
           },
-          onPending: (result) => {
-            console.log('⏳ Payment pending:', result);
+          onPending: async (result) => {
+            console.log('⏳ Payment pending callback received:', result);
+
+            // For pending payments, show success and redirect (test page will validate)
             setPaymentState(prev => ({ ...prev, step: 'success' }));
-            // Still redirect as pending payments can be completed later
+            console.log('ℹ️ Redirecting to test page - payment is pending');
             setTimeout(() => {
               window.location.href = `/tpa-test?orderId=${orderData.id}`;
             }, 2000);
@@ -218,10 +255,13 @@ const TpaPaymentLanding = () => {
               step: 'error',
               error: 'Payment failed. Please try again.'
             }));
+            setIsProcessingPayment(false);
           },
           onClose: () => {
-            console.log('🔄 Payment popup closed');
+            console.log('🔄 Payment popup closed by user');
+            // User closed popup - return to ready state (don't show success)
             setPaymentState(prev => ({ ...prev, step: 'ready' }));
+            setIsProcessingPayment(false);
           }
         });
       } else {
