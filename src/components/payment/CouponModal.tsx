@@ -190,7 +190,7 @@ export const CouponModal: React.FC<CouponModalProps> = ({
           <div className="flex items-center gap-3">
             <Gift className="w-6 h-6 text-primary" />
             <h2 className="text-xl font-semibold text-gray-900">
-              {appliedCoupon ? 'Coupon Applied!' : 'Save Money!'}
+              {appliedCoupon ? 'Coupon Applied!' : 'Use your coupon'}
             </h2>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose}>
@@ -304,28 +304,16 @@ export const CouponModal: React.FC<CouponModalProps> = ({
                     <span>{validationError}</span>
                   </div>
                 )}
-
-                {/* Demo Helper */}
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  <p className="text-xs text-blue-700 font-medium mb-1">Try these demo codes:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {['SAVE30', 'WELCOME20', 'FIXED5000'].map(code => (
-                      <button
-                        key={code}
-                        onClick={() => setCouponCode(code)}
-                        className="text-xs bg-blue-100 hover:bg-blue-200 text-blue-800 px-2 py-1 rounded transition-colors"
-                      >
-                        {code}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-3">
-                <Button variant="outline" onClick={onProceedWithoutCoupon} className="flex-1">
-                  Skip & Pay {formatCurrency(originalAmount)}
+                <Button
+                  variant="outline"
+                  onClick={onProceedWithoutCoupon}
+                  className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-900 border-gray-300"
+                >
+                  Proceed without coupon
                 </Button>
                 <Button
                   onClick={handleApplyCoupon}
