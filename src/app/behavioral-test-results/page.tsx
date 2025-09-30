@@ -817,8 +817,9 @@ const EnhancedBehavioralResultsDashboard = () => {
     // Handle code mismatch: API uses "A" for Engagement but frontend expects "E"
     const apiCode = code === 'E' ? 'A' : code;
 
-    const scoreData = breakdown.find((item: { code: string }) => item.code === apiCode);
-    const score = scoreData?.average || 0;
+    const scoreData = breakdown.find((item) => item.code === apiCode);
+    // API returns 'average' field, but TypeScript expects 'score'
+    const score = (scoreData as { average?: number })?.average || scoreData?.score || 0;
 
     // Calculate percentage based on 5.0 scale (typical Likert scale max)
     const maxScore = 5.0;

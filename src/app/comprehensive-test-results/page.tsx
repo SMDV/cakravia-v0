@@ -560,8 +560,9 @@ const EnhancedComprehensiveResultsDashboard = () => {
   const organizedScores = resultsState.resultsData ? Object.entries(COMPREHENSIVE_CATEGORIES).map(([code, info]) => {
     // Parse score from scores_breakdown array
     const breakdown = resultsState.resultsData!.scores_breakdown || [];
-    const scoreData = breakdown.find((item: { code: string }) => item.code === code);
-    const score = scoreData?.average || 0;
+    const scoreData = breakdown.find((item) => item.code === code);
+    // API returns 'average' field, but TypeScript expects 'score'
+    const score = (scoreData as { average?: number })?.average || scoreData?.score || 0;
 
     // Calculate percentage based on 5.0 scale (typical Likert scale max)
     const maxScore = 5.0;
