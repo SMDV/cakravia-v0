@@ -225,11 +225,11 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
                 className="text-white text-center font-bold text-lg sm:text-xl leading-tight py-4 sm:py-6"
                 style={{ backgroundColor: '#6B46C1' }}
               >
-                Overall Reasoning Score
+                Total Reasoning Score
               </div>
               <div className="p-6 sm:p-8 text-center bg-gradient-to-br from-purple-50 to-purple-100">
                 <div className="text-5xl sm:text-6xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
-                  {resultsData.average_score?.toFixed(1) || '0.0'}
+                  {resultsData.total_score?.toFixed(1) || '0.0'}
                 </div>
                 <div className="text-sm sm:text-base text-gray-600 mb-3">
                   Total Score
@@ -247,12 +247,48 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
           <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#F4F4F4EE' }}>
             <div className="p-4 sm:p-6">
               <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#5E5E5E' }}>
-                Reasoning Profile Analysis
+                Detailed Analysis
               </h4>
               <div className="w-full h-0.5 bg-gray-300 mb-3 sm:mb-4"></div>
-              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
-                {result_description?.reasoning_profile || 'Your TPA assessment reveals unique patterns in how you approach analytical, quantitative, spatial, and verbal reasoning tasks. This comprehensive analysis provides insights into your cognitive strengths and problem-solving preferences across multiple reasoning dimensions.'}
-              </p>
+              <div className="space-y-4">
+                {resultsData.detailed_analysis ? (
+                  Object.entries(resultsData.detailed_analysis).map(([key, analysis]) => {
+                    const categoryName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    return (
+                      <div key={key} className="border-l-4 pl-4" style={{ borderColor: TPA_CATEGORIES[categoryName as keyof typeof TPA_CATEGORIES]?.color || '#4A47A3' }}>
+                        <h5 className="font-bold text-sm sm:text-base mb-2" style={{ color: '#24348C' }}>
+                          {categoryName} (Score: {analysis.score}/20, {analysis.percentile}th percentile)
+                        </h5>
+                        <p className="text-xs sm:text-sm mb-2 leading-relaxed" style={{ color: '#5E5E5E' }}>
+                          {analysis.interpretation}
+                        </p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <span className="font-semibold text-green-700">Strengths:</span>
+                            <ul className="list-disc list-inside ml-2 text-green-600">
+                              {analysis.strengths.map((strength: string, idx: number) => (
+                                <li key={idx}>{strength}</li>
+                              ))}
+                            </ul>
+                          </div>
+                          <div>
+                            <span className="font-semibold text-orange-700">Areas for Improvement:</span>
+                            <ul className="list-disc list-inside ml-2 text-orange-600">
+                              {analysis.areas_for_improvement.map((area: string, idx: number) => (
+                                <li key={idx}>{area}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
+                    {result_description?.reasoning_profile || 'Your TPA assessment reveals unique patterns in how you approach analytical, quantitative, spatial, and verbal reasoning tasks. This comprehensive analysis provides insights into your cognitive strengths and problem-solving preferences across multiple reasoning dimensions.'}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -516,47 +552,50 @@ const EnhancedTpaResultsDashboard = () => {
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-3 sm:p-6 bg-[#F0F2F5]">
-                    {/* ApexCharts Radar Chart - TPA Style */}
+                    {/* ApexCharts Bar Chart */}
                     {typeof window !== 'undefined' && (
                       <ApexCharts
                         options={{
                           chart: {
                             height: 350,
-                            type: "radar",
+                            type: "bar",
                             toolbar: {
                               show: false,
                             },
                             fontFamily: 'Merriweather Sans, sans-serif'
                           },
                           plotOptions: {
-                            radar: {
-                              size: 140,
-                              polygons: {
-                                strokeColors: '#e9e9e9',
-                                fill: {
-                                  colors: ['#f8f8f8', '#fff']
-                                }
+                            bar: {
+                              borderRadius: 4,
+                              horizontal: false,
+                              columnWidth: '60%',
+                              dataLabels: {
+                                position: 'top'
                               }
                             }
                           },
-                          colors: ['#8979FF'],
-                          markers: {
-                            size: 4,
-                            colors: ['#fff'],
-                            strokeColors: ['#8979FF'],
-                            strokeWidth: 2,
+                          colors: organizedScores.map(item => item.color),
+                          dataLabels: {
+                            enabled: true,
+                            offsetY: -20,
+                            style: {
+                              fontSize: '12px',
+                              colors: ['#333']
+                            },
+                            formatter: function(val: number) {
+                              return val.toFixed(1)
+                            }
                           },
                           tooltip: {
                             y: {
                               formatter: function(val: number) {
-                                return val.toFixed(1)
+                                return val.toFixed(1) + '/20'
                               }
                             }
                           },
                           xaxis: {
                             categories: organizedScores.map(item => item.code),
                             labels: {
-                              show: true,
                               style: {
                                 colors: "#888",
                                 fontSize: "12px"
@@ -564,58 +603,31 @@ const EnhancedTpaResultsDashboard = () => {
                             }
                           },
                           yaxis: {
-                            tickAmount: 4,
+                            min: 0,
+                            max: 20,
                             labels: {
-                              show: true,
                               style: {
                                 colors: "#888",
                                 fontSize: "11px"
                               }
+                            },
+                            title: {
+                              text: 'Score',
+                              style: {
+                                color: '#888'
+                              }
                             }
                           },
-                          fill: {
-                            opacity: 0.1
-                          },
-                          stroke: {
-                            show: true,
-                            width: 2,
-                            colors: ['#8979FF'],
-                            dashArray: 0
-                          },
-                          responsive: [
-                            {
-                              breakpoint: 768,
-                              options: {
-                                chart: {
-                                  height: 300,
-                                },
-                                plotOptions: {
-                                  radar: {
-                                    size: 120
-                                  }
-                                }
-                              },
-                            },
-                            {
-                              breakpoint: 480,
-                              options: {
-                                chart: {
-                                  height: 250,
-                                },
-                                plotOptions: {
-                                  radar: {
-                                    size: 100
-                                  }
-                                }
-                              },
-                            },
-                          ]
+                          grid: {
+                            borderColor: '#e9e9e9',
+                            strokeDashArray: 0
+                          }
                         }}
                         series={[{
                           name: 'Reasoning Scores',
                           data: organizedScores.map(item => item.score)
                         }]}
-                        type="radar"
+                        type="bar"
                         height={350}
                       />
                     )}
@@ -635,7 +647,7 @@ const EnhancedTpaResultsDashboard = () => {
                         <Icon className="w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0" style={{ color: '#8BC34A' }} />
                         <div>
                           <h3 className="font-bold mb-2 text-sm sm:text-base" style={{ color: '#2A3262' }}>
-                            {category.name} ({category.code})
+                            {category.name} ({category.code}): {category.score}/20
                           </h3>
                           <p className="text-xs sm:text-sm text-gray-700">
                             {categoryInfo?.description}
