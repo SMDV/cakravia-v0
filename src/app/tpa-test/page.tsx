@@ -502,10 +502,12 @@ const TpaTestInterface = () => {
     const optionText = currentQuestion ? currentQuestion[`option_${option.toLowerCase()}` as keyof typeof currentQuestion] as string : `Option ${option}`;
 
     return (
-      <div className="w-full bg-gradient-to-r from-blue-500 to-purple-600 p-4 rounded-xl shadow-lg">
-        <div className="text-center text-white space-y-2">
-          <div className="text-lg font-bold">Selected: Option {option}</div>
-          <div className="text-sm opacity-90 italic">&quot;{optionText}&quot;</div>
+      <div className="text-white space-y-1">
+        <div className="text-sm sm:text-base">
+          <span className="font-bold">Answer: {option}</span>
+        </div>
+        <div className="text-xs sm:text-sm italic opacity-90">
+          {optionText}
         </div>
       </div>
     );
