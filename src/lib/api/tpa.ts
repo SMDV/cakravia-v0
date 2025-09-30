@@ -224,5 +224,27 @@ export const tpaAPI = {
       console.error('❌ Failed to fetch TPA order details:', error);
       throw error;
     }
+  },
+
+  // Download TPA certificate (payment was done upfront)
+  downloadCertificate: async (testId: string): Promise<Blob> => {
+    try {
+      console.log('🔄 Downloading TPA certificate for test:', testId);
+      const response = await apiClient.get(`/users/tpa_tests/${testId}/orders/download_certificate`, {
+        responseType: 'blob'
+      });
+      console.log('✅ TPA certificate downloaded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to download TPA certificate:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to download certificate. Please ensure payment is completed.');
+      }
+    }
   }
 };

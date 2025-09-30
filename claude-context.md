@@ -224,6 +224,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - POST `/users/tpa_tests/{id}/submit_answers` - Submit responses
 - GET `/users/tpa_tests/{id}/results` - Get reasoning profile results
 - POST `/users/tpa_tests/{id}/orders/payment_token` - Payment token (for existing orders)
+- GET `/users/tpa_tests/{id}/orders/download_certificate` - Certificate download (payment already completed)
 
 **COMPONENTS:**
 - PRIMARY: TpaPaymentLanding → Payment-first landing page with coupon integration
@@ -249,6 +250,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - tpaAPI.startPaymentFlow() - Create order with optional coupon
 - tpaAPI.startTestFlow() - Create test with paid order validation
 - tpaAPI.validateOrderPayment() - Check payment status
+- tpaAPI.downloadCertificate() - Download TPA certificate as blob
 - paymentAPI.createTpaStandaloneOrder() - Order creation with coupon support
 - TpaTestProgressManager - Session persistence (same pattern as other tests)
 
@@ -422,6 +424,7 @@ const proceedToPayment = (couponCode?: string) => {
 - GET `/users/ai_knowledge_tests` - AI Knowledge history
 - GET `/users/behavioral_learning_tests` - Behavioral history
 - GET `/users/comprehensive_assessment_tests` - Comprehensive history
+- GET `/users/tpa_tests` - TPA test history
 
 **COMPONENTS:**
 - PRIMARY: EnhancedProfilePage → Complete profile management
@@ -445,13 +448,13 @@ const proceedToPayment = (couponCode?: string) => {
 ### FEATURE_10: Homepage & Navigation
 **STATUS:** ACTIVE | **PRIORITY:** MEDIUM | **COMPLEXITY:** 3
 
-**PURPOSE:** Landing page with assessment carousel and navigation to test types
+**PURPOSE:** Landing page with assessment carousel and navigation to all test types including TPA
 **USER_STORY:** As a visitor, I want to understand available assessments so that I can choose the right test for my needs
 
 **MAIN_FLOW:**
 1. Display hero section with value proposition
-2. Interactive carousel showcasing all assessment types
-3. Quick access cards for starting each test type
+2. Interactive carousel showcasing 4 assessment types (VARK, AI Knowledge, Behavioral, Comprehensive)
+3. Quick access cards for 5 test types including TPA payment-first flow
 4. Authentication-aware navigation (login/logout states)
 5. Responsive design for mobile and desktop
 
@@ -464,7 +467,7 @@ const proceedToPayment = (couponCode?: string) => {
 - UI: Responsive carousel, call-to-action buttons
 
 **ROUTES:**
-- `/` - Main homepage
+- `/` - Main homepage (includes TPA card linking to /tpa-payment)
 - `/about` - About page
 
 **DEPENDENCIES:**
@@ -481,7 +484,7 @@ const proceedToPayment = (couponCode?: string) => {
 **REUSABLE_COMPONENTS:**
 - Header → Navigation with auth state, consistent across all pages
 - Footer → Site footer with links and branding
-- CouponModal → Coupon validation modal (used across all 4 test types)
+- CouponModal → Coupon validation modal (used across all 5 test types: VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
 - VarkTestFlow → Original VARK test interface (being replaced by unified)
 - CrossDeviceWarning → Progress continuation warnings across devices
 - ProtectedRoute → Authentication wrapper for protected pages
@@ -492,29 +495,35 @@ const proceedToPayment = (couponCode?: string) => {
 **COMMON_HOOKS:**
 - useAuth() → Primary authentication hook from AuthContext
 - useCallback/useEffect → Performance optimization patterns
-- Custom progress managers for each test type
+- Custom progress managers for each test type (VarkTestProgressManager, AiKnowledgeTestProgressManager, BehavioralTestProgressManager, ComprehensiveTestProgressManager, TpaTestProgressManager)
 
 **SHARED_APIS:**
 - authAPI → Complete authentication management
-- paymentAPI → Payment processing with coupon validation support
+- paymentAPI → Payment processing with coupon validation support for all test types
+- varkAPI → VARK test operations
+- aiKnowledgeAPI → AI Knowledge test operations
+- behavioralAPI → Behavioral test operations
+- comprehensiveAPI → Comprehensive test operations
+- tpaAPI → TPA test operations with payment-first flow
 - apiClient → Axios instance with token injection and error handling
 - Base URL: https://api.cakravia.com/api/v1
 - Automatic token management via HTTP-only cookies
 
 **UTILITY_FUNCTIONS:**
-- Test progress managers (VarkTestProgressManager, AiKnowledgeTestProgressManager, etc.)
+- Test progress managers (VarkTestProgressManager, AiKnowledgeTestProgressManager, BehavioralTestProgressManager, ComprehensiveTestProgressManager, TpaTestProgressManager)
 - formatTime, formatDate, formatDuration → Time formatting utilities
 - Test type conversion utilities for unified profile display
-- Payment initialization methods for all test types (with coupon support)
+- Payment initialization methods for all 5 test types (with coupon support)
 - Coupon validation and modal handling utilities
+- Certificate download utilities (blob download with file creation)
 
 ## DEVELOPMENT_PATTERNS
 
 **NAMING_CONVENTIONS:**
-- Pages: PascalCase with descriptive names (EnhancedProfilePage)
-- Components: PascalCase (CrossDeviceWarning, GoogleSignInButton)
-- APIs: camelCase with API suffix (authAPI, varkAPI)
-- Types: PascalCase interfaces (VarkTest, AiKnowledgeResults)
+- Pages: PascalCase with descriptive names (EnhancedProfilePage, EnhancedTpaResultsDashboard)
+- Components: PascalCase (CrossDeviceWarning, GoogleSignInButton, CouponModal)
+- APIs: camelCase with API suffix (authAPI, varkAPI, tpaAPI)
+- Types: PascalCase interfaces (VarkTest, AiKnowledgeResults, TpaTestResults)
 - Files: kebab-case for pages, PascalCase for components
 
 **CODE_PATTERNS:**
@@ -570,14 +579,20 @@ src/
 - Time limit and expiration handling patterns
 
 ## CRITICAL_ROUTES
-- `/` → Homepage (public)
+- `/` → Homepage (public, includes TPA card)
 - `/login` → Authentication (public)
 - `/test` → VARK Assessment (protected)
 - `/ai-knowledge-test` → AI Assessment (protected)
 - `/behavioral-test` → Behavioral Assessment (protected)
 - `/comprehensive-test` → Comprehensive Assessment (protected)
-- `/profile` → User Profile (protected)
+- `/tpa-payment` → TPA Payment Landing (protected, payment-first entry point)
+- `/tpa-test?orderId={id}` → TPA Assessment (protected, requires paid order)
+- `/profile` → User Profile (protected, includes TPA history)
 - `/results?testId={id}` → VARK Results (protected)
+- `/ai-knowledge-test-results?testId={id}` → AI Knowledge Results (protected)
+- `/behavioral-test-results?testId={id}` → Behavioral Results (protected)
+- `/comprehensive-test-results?testId={id}` → Comprehensive Results (protected)
+- `/tpa-test-results?testId={id}` → TPA Results with direct certificate download (protected)
 
 ## CHANGE-SPECIFIC PROMPTS
 
@@ -612,17 +627,19 @@ When adding a completely new feature:
 
 ### **ASSESSMENT_TYPE_PROMPT**
 ```
-When adding a new assessment type (5th test type):
-1. ✅ Follow existing assessment patterns (chat interface, sliders)
-2. ✅ Create API service following varkAPI/aiKnowledgeAPI pattern
-3. ✅ Implement progress manager for localStorage persistence
+When adding a new assessment type (6th test type and beyond):
+1. ✅ Follow existing assessment patterns (chat interface, sliders, or TPA payment-first flow)
+2. ✅ Create API service following varkAPI/aiKnowledgeAPI/tpaAPI pattern
+3. ✅ Implement progress manager for localStorage persistence (e.g., NewTestProgressManager)
 4. ✅ Add to unified profile display with conversion utility
 5. ✅ Create dedicated results page following existing pattern
-6. ✅ Add payment integration following paymentAPI pattern
-7. ✅ Add to Header navigation and homepage carousel
-8. ✅ Update profile page API calls (Promise.all pattern)
-9. ✅ Add TypeScript interfaces for all data structures
+6. ✅ Add payment integration following paymentAPI pattern (decide payment-first vs payment-after)
+7. ✅ Add to Header navigation and homepage carousel/cards
+8. ✅ Update profile page API calls (Promise.all pattern with individual error handling)
+9. ✅ Add TypeScript interfaces for all data structures in types.ts
 10. ✅ Test cross-device continuation with progress manager
+11. ✅ Update CouponModal to support new test type
+12. ✅ Implement certificate download endpoint and blob handling
 ```
 
 ### **INTEGRATION_CHANGE_PROMPT**
@@ -678,14 +695,28 @@ When modifying shared UI components:
 - **Shared Component Updates** → Use UI_COMPONENT_PROMPT
 
 ## QUICK_LOOKUP
-**MOST_USED_COMPONENTS:** Header, Footer, Button, Card, AuthContext, CrossDeviceWarning
+**MOST_USED_COMPONENTS:** Header, Footer, Button, Card, AuthContext, CrossDeviceWarning, CouponModal
 **MOST_USED_HOOKS:** useAuth(), useCallback, useEffect, useState
-**MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI)
+**MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI, behavioralAPI, comprehensiveAPI, tpaAPI), paymentAPI
 **API_REFERENCE:** `/temporer folder for claude/` - Postman collections & AI Knowledge API docs
-**ACTIVE_FEATURE_COUNT:** 10 major features (5 assessment types + auth + payment + coupon system + profile + homepage)
+**ACTIVE_FEATURE_COUNT:** 10 major features (5 assessment types: VARK, AI Knowledge, Behavioral, Comprehensive, TPA + auth + payment + coupon system + profile + homepage)
+**TOTAL_TEST_TYPES:** 5 (VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
+**PAYMENT_MODELS:** 2 types (Payment-after-results: VARK/AI/Behavioral/Comprehensive | Payment-first: TPA)
 
 ---
 
-**CONTEXT_VERSION:** 1.3 | **LAST_UPDATED:** 2025-09-29
+**CONTEXT_VERSION:** 1.4 | **LAST_UPDATED:** 2025-09-30
+
+**CHANGELOG v1.4:**
+- ✅ Added TPA test integration to profile page (GET /users/tpa_tests)
+- ✅ Added TPA card to homepage linking to /tpa-payment
+- ✅ Extended CouponModal to support 'tpa' test type (5 total test types)
+- ✅ Implemented TPA certificate download API (tpaAPI.downloadCertificate)
+- ✅ Added working certificate download in TPA results page with blob handling
+- ✅ Updated all API listings to include tpaAPI
+- ✅ Updated progress manager references to include TpaTestProgressManager
+- ✅ Documented TPA payment-first flow and certificate endpoint
+- ✅ Updated CRITICAL_ROUTES with all 5 test result pages
+- ✅ Enhanced ASSESSMENT_TYPE_PROMPT with certificate download step
 
 Remember: This context exists to prevent code duplication and maintain consistency. Always start with the appropriate CHANGE-SPECIFIC PROMPT for your task type, then reference the relevant sections before suggesting new implementations.

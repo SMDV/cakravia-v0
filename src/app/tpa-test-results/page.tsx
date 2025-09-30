@@ -303,16 +303,27 @@ const EnhancedTpaResultsDashboard = () => {
         throw new Error('Test ID not found. Cannot download certificate.');
       }
 
-      // For TPA, payment was done upfront, so we can directly download
-      // This would call the actual download API endpoint
       console.log('📥 Downloading TPA certificate for test:', testId);
 
-      // Placeholder for actual certificate download implementation
-      alert('TPA Certificate download would start here (implementation needed with API endpoint)');
+      // Download certificate blob from API
+      const blob = await tpaAPI.downloadCertificate(testId);
 
+      // Create download link and trigger download
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `TPA_Certificate_${testId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      // Cleanup
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log('✅ TPA certificate downloaded successfully');
     } catch (error) {
       console.error('❌ Certificate download failed:', error);
-      alert('Failed to download certificate. Please try again.');
+      alert(error instanceof Error ? error.message : 'Failed to download certificate. Please try again.');
     }
   };
 
