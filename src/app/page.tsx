@@ -45,8 +45,8 @@ const EnhancedHomepage = () => {
     },
     {
       title: "Comprehensive Assessment",
-      subtitle: "Complete Learning Profile: VARK + AI Knowledge + Behavioral Combined.",
-      description: "Get the complete picture with our comprehensive assessment that combines VARK learning styles, AI knowledge evaluation, and behavioral analysis in one comprehensive evaluation. This all-in-one assessment provides the most detailed understanding of your learning preferences, technology readiness, and behavioral patterns. Perfect for students, educators, and professionals who want a complete learning profile for optimal academic and career success.",
+      subtitle: "Build Your Foundation: Discover Your Resilience and Self-Esteem with Cakravia's Comprehensive Assessment.",
+      description: "True learning and growth extend beyond academic knowledge – they are deeply rooted in your inner strength. Cakravia's Comprehensive Assessment offers a profound exploration of two critical pillars of personal development: resilience and self-esteem. This assessment is designed to help you understand your capacity to bounce back from challenges, adapt to change, and maintain a healthy sense of self-worth. Uncover your inherent strengths, identify areas for cultivation, and build an unshakeable foundation for lifelong success and well-being.",
       available: true,
       href: "/comprehensive-test"
     }
