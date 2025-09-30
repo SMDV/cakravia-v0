@@ -83,6 +83,7 @@ const EnhancedResultsDashboard = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [snapUrl, setSnapUrl] = useState<string | null>(null);
+  const [isSnapOpen, setIsSnapOpen] = useState(false);
 
   // Coupon modal state
   const [showCouponModal, setShowCouponModal] = useState(false);
@@ -482,10 +483,12 @@ const openSnapPopup = useCallback((snapToken: string) => {
   const testId = urlParams.get('testId');
   
   if (window.snap) {
+    setIsSnapOpen(true);
     window.snap.pay(snapToken, {
       onSuccess: function(result: MidtransResult) {
         console.log('💳 Payment successful:', result);
-        
+        setIsSnapOpen(false);
+
         // Automatically check payment status after successful payment
         if (testId) {
           setTimeout(() => {
@@ -496,7 +499,8 @@ const openSnapPopup = useCallback((snapToken: string) => {
       },
       onPending: function(result: MidtransResult) {
         console.log('⏳ Payment pending:', result);
-        
+        setIsSnapOpen(false);
+
         // Also check status for pending payments (some payment methods complete quickly)
         if (testId) {
           setTimeout(() => {
@@ -507,11 +511,13 @@ const openSnapPopup = useCallback((snapToken: string) => {
       },
       onError: function(result: MidtransResult) {
         console.error('❌ Payment failed:', result);
+        setIsSnapOpen(false);
         alert('Payment failed. Please try again or contact support if the issue persists.');
       },
       onClose: function() {
         console.log('🔒 Payment popup closed by user');
-        
+        setIsSnapOpen(false);
+
         // Check payment status when popup is closed (user might have completed payment)
         if (testId) {
           setTimeout(() => {
@@ -1322,6 +1328,11 @@ const openSnapPopup = useCallback((snapToken: string) => {
         testType="vark"
         validateCoupon={handleValidateCoupon}
       />
+
+      {/* Backdrop Blur for Snap Payment Popup */}
+      {isSnapOpen && (
+        <div className="fixed inset-0 backdrop-blur-md bg-black/30 z-40" />
+      )}
     </div>
   );
 };
