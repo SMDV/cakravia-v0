@@ -124,6 +124,30 @@ const TpaPaymentLanding = () => {
     };
   }, []);
 
+  // Check payment status function (like VARK)
+  const checkPaymentStatus = useCallback(async (orderId: string) => {
+    try {
+      console.log('🔍 Checking payment status for order:', orderId);
+
+      const orderResponse = await paymentAPI.getStandaloneOrder(orderId);
+      const order = orderResponse.data as { status?: string };
+
+      const isPaid = order.status === 'paid';
+
+      if (isPaid) {
+        console.log('✅ Payment verified - order is paid');
+        setPaymentState(prev => ({ ...prev, step: 'success' }));
+      } else {
+        console.log('⚠️ Payment not confirmed yet. Status:', order.status);
+      }
+
+      return isPaid;
+    } catch (error) {
+      console.error('❌ Payment status check failed:', error);
+      return false;
+    }
+  }, []);
+
   // Coupon validation handler
   const handleValidateCoupon = useCallback(async (request: CouponValidationRequest): Promise<CouponValidationResponse> => {
     try {
@@ -195,58 +219,25 @@ const TpaPaymentLanding = () => {
       // Open Midtrans snap popup
       if (window.snap) {
         window.snap.pay(snapToken, {
-          onSuccess: async (result) => {
+          onSuccess: (result) => {
             console.log('✅ Payment successful callback received:', result);
+            setIsProcessingPayment(false);
 
-            // Verify payment status with backend before redirecting
-            try {
-              console.log('🔍 Verifying payment status with backend...');
-              const orderResponse = await paymentAPI.getStandaloneOrder(orderData.id);
-              const order = orderResponse.data as { status?: string; payment?: { status?: string } };
-
-              if (order.status === 'paid' || order.payment?.status === 'settlement') {
-                console.log('✅ Payment verified - order is paid');
-                setPaymentState(prev => ({ ...prev, step: 'success' }));
-                setTimeout(() => {
-                  window.location.href = `/tpa-test?orderId=${orderData.id}`;
-                }, 2000);
-              } else {
-                console.warn('⚠️ Payment callback received but order not paid yet, rechecking...');
-                // Wait and check again (Midtrans might take a moment to update)
-                setTimeout(async () => {
-                  const recheckOrder = await paymentAPI.getStandaloneOrder(orderData.id);
-                  const recheckData = recheckOrder.data as { status?: string; payment?: { status?: string } };
-                  if (recheckData.status === 'paid' || recheckData.payment?.status === 'settlement') {
-                    console.log('✅ Payment verified on recheck');
-                    window.location.href = `/tpa-test?orderId=${orderData.id}`;
-                  } else {
-                    console.error('❌ Payment verification failed after recheck');
-                    setPaymentState(prev => ({
-                      ...prev,
-                      step: 'error',
-                      error: 'Payment verification failed. Please contact support.'
-                    }));
-                  }
-                }, 3000);
-              }
-            } catch (error) {
-              console.error('❌ Failed to verify payment:', error);
-              // Still redirect - let test page validate
-              console.log('⚠️ Proceeding to test page despite verification error');
-              setTimeout(() => {
-                window.location.href = `/tpa-test?orderId=${orderData.id}`;
-              }, 2000);
-            }
-          },
-          onPending: async (result) => {
-            console.log('⏳ Payment pending callback received:', result);
-
-            // For pending payments, show success and redirect (test page will validate)
-            setPaymentState(prev => ({ ...prev, step: 'success' }));
-            console.log('ℹ️ Redirecting to test page - payment is pending');
+            // Check payment status after successful payment (like VARK)
             setTimeout(() => {
-              window.location.href = `/tpa-test?orderId=${orderData.id}`;
-            }, 2000);
+              console.log('🔄 Auto-checking payment status after success...');
+              checkPaymentStatus(orderData.id);
+            }, 3000); // Wait 3 seconds for payment to be processed on server
+          },
+          onPending: (result) => {
+            console.log('⏳ Payment pending callback received:', result);
+            setIsProcessingPayment(false);
+
+            // Check status for pending payments (like VARK)
+            setTimeout(() => {
+              console.log('🔄 Auto-checking payment status after pending...');
+              checkPaymentStatus(orderData.id);
+            }, 5000); // Wait 5 seconds for pending payments
           },
           onError: (result) => {
             console.error('❌ Payment error:', result);
@@ -259,9 +250,13 @@ const TpaPaymentLanding = () => {
           },
           onClose: () => {
             console.log('🔄 Payment popup closed by user');
-            // User closed popup - return to ready state (don't show success)
-            setPaymentState(prev => ({ ...prev, step: 'ready' }));
             setIsProcessingPayment(false);
+
+            // Check payment status when popup is closed (user might have completed payment)
+            setTimeout(() => {
+              console.log('🔄 Auto-checking payment status after popup close...');
+              checkPaymentStatus(orderData.id);
+            }, 2000); // Wait 2 seconds then check
           }
         });
       } else {
@@ -496,11 +491,18 @@ const TpaPaymentLanding = () => {
                 <Check className="w-16 h-16 text-green-500 mx-auto mb-4" />
                 <h2 className="text-2xl font-bold mb-4 text-green-700">Payment Successful!</h2>
                 <p className="text-gray-600 mb-6">
-                  Your TPA Assessment access has been activated. Redirecting to the test...
+                  Your TPA Assessment access has been activated. Click below to start your test.
                 </p>
-                <div className="animate-pulse text-blue-600">
-                  Redirecting to assessment...
-                </div>
+                <button
+                  onClick={() => window.location.href = `/tpa-test?orderId=${paymentState.orderId}`}
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-lg hover:opacity-90 transition-opacity text-lg"
+                >
+                  Start TPA Assessment
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                <p className="text-sm text-gray-500 mt-4">
+                  You have {formatDuration(paymentState.questionSet?.time_limit || 3600)} to complete the test
+                </p>
               </div>
             </div>
           )}
