@@ -618,22 +618,33 @@ export interface TpaScoreBreakdown {
 }
 
 export interface TpaTestResults {
-  analytical_reasoning_score: number;
-  quantitative_reasoning_score: number;
-  spatial_reasoning_score: number;
-  verbal_reasoning_score: number;
+  id: string;
   total_score: number;
-  average_score: number;
-  min_score: number;
-  max_score: number;
-  scores_breakdown: TpaScoreBreakdown[];
-  dominant_reasoning_categories: string[];
-  category_interpretations: Record<string, string>;
-  result_description: {
-    title: string;
-    description: string;
-    recommendations: string;
-    reasoning_profile: string;
+  total_questions: number;
+  average_score: string; // API returns as string
+  level_label: string; // Category indicator (e.g., "Kategori Tinggi", "Kategori Rendah")
+  level_message: string;
+  category_scores: {
+    verbal: number;
+    quantitative: number;
+    analytic: number; // Note: API uses "analytic" not "analytical"
+    spatial: number;
+  };
+  category_breakdown: Record<string, number>; // Empty object in current API response
+  strongest_categories: string[];
+  weakest_categories: string[];
+  detailed_analysis: {
+    strengths: string[];
+    areas_for_improvement: string[];
+    overall_assessment: string;
+    recommendations: string[];
+  };
+  scores_breakdown?: TpaScoreBreakdown[]; // Optional for backward compatibility
+  test_info: {
+    test_name: string;
+    test_version: string;
+    completion_date: string;
+    time_taken: number;
   };
 }
 

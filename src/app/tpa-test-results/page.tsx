@@ -88,7 +88,10 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
   }>;
   resultsData: TpaTestResults;
 }) => {
-  const { result_description } = resultsData;
+  const { detailed_analysis, level_label, level_message } = resultsData;
+
+  // Suppress unused variable warning - level_message available for future use
+  void level_message;
 
   // SmallScoreBox Component for TPA Test
   const SmallScoreBox = ({ score, name, color, code, icon: Icon }: {
@@ -187,7 +190,7 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
                 margin: 0
               }}
             >
-              {result_description?.title || 'Dynamic Reasoning Assessment'}
+              {level_label || 'Dynamic Reasoning Assessment'}
             </h3>
             <div
               className="w-16 h-0.5 mx-auto"
@@ -235,7 +238,7 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
                   Total Score
                 </div>
                 <div className="text-lg sm:text-xl font-bold px-4 py-2 rounded-lg" style={{ backgroundColor: '#6B46C1', color: 'white' }}>
-                  {resultsData.dominant_reasoning_categories?.[0] || 'Balanced Reasoning'}
+                  {resultsData.strongest_categories?.[0] || 'Balanced Reasoning'}
                 </div>
               </div>
             </div>
@@ -251,41 +254,55 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
               </h4>
               <div className="w-full h-0.5 bg-gray-300 mb-3 sm:mb-4"></div>
               <div className="space-y-4">
-                {resultsData.detailed_analysis ? (
-                  Object.entries(resultsData.detailed_analysis).map(([key, analysis]) => {
-                    const categoryName = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                    return (
-                      <div key={key} className="border-l-4 pl-4" style={{ borderColor: TPA_CATEGORIES[categoryName as keyof typeof TPA_CATEGORIES]?.color || '#4A47A3' }}>
-                        <h5 className="font-bold text-sm sm:text-base mb-2" style={{ color: '#24348C' }}>
-                          {categoryName} (Score: {analysis.score}/20, {analysis.percentile}th percentile)
+                {/* Overall Assessment */}
+                {resultsData.detailed_analysis?.overall_assessment && (
+                  <div className="border-l-4 pl-4" style={{ borderColor: '#4A47A3' }}>
+                    <h5 className="font-bold text-sm sm:text-base mb-2" style={{ color: '#24348C' }}>
+                      Overall Assessment
+                    </h5>
+                    <p className="text-xs sm:text-sm leading-relaxed" style={{ color: '#5E5E5E' }}>
+                      {resultsData.detailed_analysis.overall_assessment}
+                    </p>
+                  </div>
+                )}
+
+                {/* Strengths and Areas for Improvement */}
+                {(resultsData.detailed_analysis?.strengths || resultsData.detailed_analysis?.areas_for_improvement) && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {/* Strengths */}
+                    {resultsData.detailed_analysis.strengths && resultsData.detailed_analysis.strengths.length > 0 && (
+                      <div className="border-l-4 pl-4" style={{ borderColor: '#8BC34A' }}>
+                        <h5 className="font-bold text-sm sm:text-base mb-2 text-green-700">
+                          Strengths
                         </h5>
-                        <p className="text-xs sm:text-sm mb-2 leading-relaxed" style={{ color: '#5E5E5E' }}>
-                          {analysis.interpretation}
-                        </p>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                          <div>
-                            <span className="font-semibold text-green-700">Strengths:</span>
-                            <ul className="list-disc list-inside ml-2 text-green-600">
-                              {analysis.strengths.map((strength: string, idx: number) => (
-                                <li key={idx}>{strength}</li>
-                              ))}
-                            </ul>
-                          </div>
-                          <div>
-                            <span className="font-semibold text-orange-700">Areas for Improvement:</span>
-                            <ul className="list-disc list-inside ml-2 text-orange-600">
-                              {analysis.areas_for_improvement.map((area: string, idx: number) => (
-                                <li key={idx}>{area}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
+                        <ul className="list-disc list-inside text-xs sm:text-sm space-y-1 text-green-600">
+                          {resultsData.detailed_analysis.strengths.map((strength: string, idx: number) => (
+                            <li key={idx}>{strength}</li>
+                          ))}
+                        </ul>
                       </div>
-                    );
-                  })
-                ) : (
+                    )}
+
+                    {/* Areas for Improvement */}
+                    {resultsData.detailed_analysis.areas_for_improvement && resultsData.detailed_analysis.areas_for_improvement.length > 0 && (
+                      <div className="border-l-4 pl-4" style={{ borderColor: '#FF928A' }}>
+                        <h5 className="font-bold text-sm sm:text-base mb-2 text-orange-700">
+                          Areas for Improvement
+                        </h5>
+                        <ul className="list-disc list-inside text-xs sm:text-sm space-y-1 text-orange-600">
+                          {resultsData.detailed_analysis.areas_for_improvement.map((area: string, idx: number) => (
+                            <li key={idx}>{area}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Fallback if no detailed analysis */}
+                {!resultsData.detailed_analysis && (
                   <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
-                    {result_description?.reasoning_profile || 'Your TPA assessment reveals unique patterns in how you approach analytical, quantitative, spatial, and verbal reasoning tasks. This comprehensive analysis provides insights into your cognitive strengths and problem-solving preferences across multiple reasoning dimensions.'}
+                    Your TPA assessment reveals unique patterns in how you approach analytical, quantitative, spatial, and verbal reasoning tasks. This comprehensive analysis provides insights into your cognitive strengths and problem-solving preferences across multiple reasoning dimensions.
                   </p>
                 )}
               </div>
@@ -301,9 +318,17 @@ const NewTpaReasoningStyleSection = ({ organizedScores, resultsData }: {
                 Reasoning Development Recommendations
               </h4>
               <div className="w-full h-0.5 mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
-              <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
-                {result_description?.recommendations || 'Based on your reasoning profile, consider focusing on developing areas that complement your natural cognitive strengths. Leverage your dominant reasoning dimensions while working on improving areas where you scored lower to achieve a more balanced cognitive approach across analytical, quantitative, spatial, and verbal domains.'}
-              </p>
+              {detailed_analysis?.recommendations && detailed_analysis.recommendations.length > 0 ? (
+                <ul className="list-disc list-inside text-sm sm:text-base leading-relaxed space-y-2" style={{ color: '#24348CCC' }}>
+                  {detailed_analysis.recommendations.map((recommendation: string, idx: number) => (
+                    <li key={idx}>{recommendation}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
+                  Based on your reasoning profile, consider focusing on developing areas that complement your natural cognitive strengths. Leverage your dominant reasoning dimensions while working on improving areas where you scored lower to achieve a more balanced cognitive approach across analytical, quantitative, spatial, and verbal domains.
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -438,17 +463,19 @@ const EnhancedTpaResultsDashboard = () => {
 
   // Create organized data for TPA reasoning categories - 4 dimensions
   const organizedScores = resultsState.resultsData ? Object.entries(TPA_CATEGORIES).map(([categoryName, info]) => {
+    // Map category names to API's category_scores keys
     const score = (() => {
       switch (categoryName) {
-        case 'Analytical Reasoning': return resultsState.resultsData!.analytical_reasoning_score || 0;
-        case 'Quantitative Reasoning': return resultsState.resultsData!.quantitative_reasoning_score || 0;
-        case 'Spatial Reasoning': return resultsState.resultsData!.spatial_reasoning_score || 0;
-        case 'Verbal Reasoning': return resultsState.resultsData!.verbal_reasoning_score || 0;
+        case 'Analytical Reasoning': return resultsState.resultsData!.category_scores.analytic || 0;
+        case 'Quantitative Reasoning': return resultsState.resultsData!.category_scores.quantitative || 0;
+        case 'Spatial Reasoning': return resultsState.resultsData!.category_scores.spatial || 0;
+        case 'Verbal Reasoning': return resultsState.resultsData!.category_scores.verbal || 0;
         default: return 0;
       }
     })();
 
-    const maxScore = resultsState.resultsData!.max_score || 1;
+    // Calculate percentage based on typical max score per category (assuming 20 is max)
+    const maxScore = 20;
     const percentage = (score / maxScore) * 100;
 
     return {
@@ -536,8 +563,8 @@ const EnhancedTpaResultsDashboard = () => {
                 Here is your TPA reasoning profile report
               </h1>
               <div className="text-left sm:text-right">
-                <p className="text-xs sm:text-sm" style={{ color: '#4A47A3' }}>Certificate ID: TPA-{Date.now()}</p>
-                <p className="text-xs text-gray-500">Test completed: {new Date().toLocaleDateString()}</p>
+                <p className="text-xs sm:text-sm" style={{ color: '#4A47A3' }}>Test ID: {resultsState.resultsData?.id.slice(0, 8).toUpperCase()}</p>
+                <p className="text-xs text-gray-500">Test completed: {resultsState.resultsData?.test_info?.completion_date ? new Date(resultsState.resultsData.test_info.completion_date).toLocaleDateString() : new Date().toLocaleDateString()}</p>
               </div>
             </div>
 
