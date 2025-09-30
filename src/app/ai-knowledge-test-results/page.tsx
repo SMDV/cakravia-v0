@@ -396,9 +396,13 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
         const data = await response.json();
         console.log('💳 AI Knowledge payment status response:', data);
 
-        if (data.data?.is_paid === true) {
+        const order = data.data;
+        const hasValidPayment = order?.status === 'paid' && order?.can_download_certificate === true;
+
+        if (hasValidPayment) {
           console.log('✅ AI Knowledge test is paid!');
           setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
 
           if (isAutoCheck) {
             setShowPaymentSuccessDialog(true);
@@ -406,7 +410,9 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
 
           return true;
         } else {
-          console.log('💰 AI Knowledge test not paid yet');
+          console.log('❌ AI Knowledge payment not completed yet. Status:', order?.status);
+          setIsPaid(false);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
           return false;
         }
       } else {
@@ -765,7 +771,63 @@ const EnhancedAIKnowledgeResultsDashboard = () => {
   */
 
   const handleDownloadCertificate = async () => {
-    alert('Certificate download would start here (real implementation)');
+    try {
+      // Get the test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        throw new Error('Test ID not found. Cannot download certificate.');
+      }
+
+      // Get auth token from cookie
+      const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+      if (!authToken) {
+        throw new Error('Authentication token not found. Please login again.');
+      }
+
+      // Make API call to download AI Knowledge certificate
+      const response = await fetch(`https://api.cakravia.com/api/v1/users/ai_knowledge_tests/${testId}/orders/download_certificate`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Download failed with status: ${response.status}`);
+      }
+
+      // Check if response is a PDF file
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/pdf')) {
+        // Handle PDF download
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `AI_Knowledge_Certificate_${testId.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+      } else {
+        // Handle other response types (e.g., JSON with download URL)
+        const data = await response.json();
+        if (data.download_url) {
+          window.open(data.download_url, '_blank');
+        } else {
+          throw new Error('Invalid response format for certificate download');
+        }
+      }
+
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to download certificate';
+      console.error('AI Knowledge certificate download error:', error);
+      alert(`Download failed: ${errorMessage}`);
+    }
   };
 
   // Load test results

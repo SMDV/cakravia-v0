@@ -411,9 +411,14 @@ const EnhancedBehavioralResultsDashboard = () => {
         const data = await response.json();
         console.log('💳 Behavioral payment status response:', data);
 
-        if (data.data?.is_paid === true) {
+        // Check correct properties from API response
+        const order = data.data;
+        const hasValidPayment = order?.status === 'paid' && order?.can_download_certificate === true;
+
+        if (hasValidPayment) {
           console.log('✅ Behavioral test is paid!');
           setIsPaid(true);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: true }));
 
           if (isAutoCheck) {
             setShowPaymentSuccessDialog(true);
@@ -422,6 +427,8 @@ const EnhancedBehavioralResultsDashboard = () => {
           return true;
         } else {
           console.log('💰 Behavioral test not paid yet');
+          setIsPaid(false);
+          setResultsState(prev => ({ ...prev, canDownloadCertificate: false }));
           return false;
         }
       } else {
@@ -696,7 +703,60 @@ const EnhancedBehavioralResultsDashboard = () => {
   };
 
   const handleDownloadCertificate = async () => {
-    alert('Certificate download would start here (real implementation)');
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        alert('Test ID not found. Cannot download certificate.');
+        return;
+      }
+
+      // Get auth token from cookie
+      const authToken = document.cookie.split('auth_token=')[1]?.split(';')[0];
+      if (!authToken) {
+        alert('Authentication required. Please log in again.');
+        return;
+      }
+
+      console.log('📥 Downloading Behavioral certificate...');
+
+      const response = await fetch(
+        `https://api.cakravia.com/api/v1/users/behavioral_learning_tests/${testId}/orders/download_certificate`,
+        {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+      }
+
+      // Check if response is PDF
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/pdf')) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Behavioral_Certificate_${testId.slice(0, 8)}.pdf`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+        console.log('✅ Behavioral certificate downloaded successfully');
+      } else {
+        throw new Error('Response is not a PDF file');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      console.error('❌ Behavioral certificate download failed:', error);
+      alert(`Download failed: ${errorMessage}`);
+    }
   };
 
   // Load test results
