@@ -616,7 +616,7 @@ const EnhancedTpaResultsDashboard = () => {
                           tooltip: {
                             y: {
                               formatter: function(val: number) {
-                                return val.toFixed(1) + '/20'
+                                return val.toFixed(1)
                               }
                             }
                           },
@@ -674,7 +674,7 @@ const EnhancedTpaResultsDashboard = () => {
                         <Icon className="w-4 h-4 sm:w-5 sm:h-5 mt-1 flex-shrink-0" style={{ color: '#8BC34A' }} />
                         <div>
                           <h3 className="font-bold mb-2 text-sm sm:text-base" style={{ color: '#2A3262' }}>
-                            {category.name} ({category.code}): {category.score}/20
+                            {category.name} ({category.code}): {category.score}
                           </h3>
                           <p className="text-xs sm:text-sm text-gray-700">
                             {categoryInfo?.description}
