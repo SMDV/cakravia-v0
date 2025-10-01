@@ -311,19 +311,21 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 ### FEATURE_7: Payment Integration
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 3
 
-**PURPOSE:** Midtrans payment gateway integration for premium features and certificates
+**PURPOSE:** Midtrans payment gateway integration for premium features and certificates with dynamic pricing
 **USER_STORY:** As a user, I want to purchase certificates for my assessments so that I can validate my learning achievements
 
 **MAIN_FLOW:**
 1. Complete assessment (any type)
 2. Initiate payment for certificate generation
-3. **NEW: Coupon/voucher modal appears for discount application**
-4. Create payment order through Midtrans (with optional coupon)
-5. Process payment via Midtrans snap interface
-6. Verify payment status and update order
-7. Generate and download certificate upon successful payment
+3. **Dynamic pricing loaded from config API** (fetched globally on app load)
+4. Coupon/voucher modal appears for discount application
+5. Create payment order through Midtrans (with optional coupon)
+6. Process payment via Midtrans snap interface
+7. Verify payment status and update order
+8. Generate and download certificate upon successful payment
 
 **API_ENDPOINTS:**
+- GET `/config` - Get application config including dynamic pricing for all test types
 - POST `/users/coupons/validate` - Validate coupon code and get pricing
 - POST `/users/{test_type}_tests/{id}/orders` - Create payment order (supports coupon_code)
 - POST `/users/{test_type}_tests/{id}/orders/payment_token` - Get payment token
@@ -339,14 +341,27 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - Payment processing integrated into results pages
 
 **DEPENDENCIES:**
-- REQUIRES: Midtrans SDK, payment order management
+- REQUIRES: Midtrans SDK, payment order management, config API
 - USED_BY: All test types for certificate generation
 - EXTERNAL: Midtrans payment gateway, certificate generation
 
 **HOOKS/UTILITIES:**
+- configAPI - Fetch dynamic pricing from backend (GET /config)
 - paymentAPI - Unified payment methods for all test types (with coupon support)
 - CouponModal - Reusable coupon validation component
 - Payment status tracking and order management
+
+**DYNAMIC_PRICING:**
+- Pricing fetched via `/config` endpoint on app initialization (AuthContext)
+- Available globally via `useAuth()` hook: `const { config } = useAuth()`
+- Pricing structure:
+  - `config.pricing.vark_price` - VARK test price (default: 30,000 IDR)
+  - `config.pricing.ai_knowledge_price` - AI Knowledge price (default: 35,000 IDR)
+  - `config.pricing.behavioral_learning_price` - Behavioral price (default: 40,000 IDR)
+  - `config.pricing.comprehensive_assessment_price` - Comprehensive price (default: 45,000 IDR)
+  - `config.pricing.tpa_price` - TPA price (default: 50,000 IDR)
+- Fallback pricing used if config API fails
+- Single API call per app session (cached in AuthContext)
 
 ---
 
@@ -493,12 +508,15 @@ const proceedToPayment = (couponCode?: string) => {
 - UI Components → Button, Card, Progress, ScrollArea, Slider (Radix-based)
 
 **COMMON_HOOKS:**
-- useAuth() → Primary authentication hook from AuthContext
+- useAuth() → Primary authentication hook from AuthContext (includes config state)
+  - Returns: `{ user, isAuthenticated, config, configLoading, login, logout, ... }`
+  - config includes dynamic pricing for all test types
 - useCallback/useEffect → Performance optimization patterns
 - Custom progress managers for each test type (VarkTestProgressManager, AiKnowledgeTestProgressManager, BehavioralTestProgressManager, ComprehensiveTestProgressManager, TpaTestProgressManager)
 
 **SHARED_APIS:**
 - authAPI → Complete authentication management
+- configAPI → Dynamic configuration management (GET /config)
 - paymentAPI → Payment processing with coupon validation support for all test types
 - varkAPI → VARK test operations
 - aiKnowledgeAPI → AI Knowledge test operations
@@ -696,16 +714,31 @@ When modifying shared UI components:
 
 ## QUICK_LOOKUP
 **MOST_USED_COMPONENTS:** Header, Footer, Button, Card, AuthContext, CrossDeviceWarning, CouponModal
-**MOST_USED_HOOKS:** useAuth(), useCallback, useEffect, useState
-**MOST_USED_APIS:** authAPI, apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI, behavioralAPI, comprehensiveAPI, tpaAPI), paymentAPI
+**MOST_USED_HOOKS:** useAuth() [includes config for dynamic pricing], useCallback, useEffect, useState
+**MOST_USED_APIS:** authAPI, configAPI [dynamic pricing], apiClient interceptors, test-specific APIs (varkAPI, aiKnowledgeAPI, behavioralAPI, comprehensiveAPI, tpaAPI), paymentAPI
 **API_REFERENCE:** `/temporer folder for claude/` - Postman collections & AI Knowledge API docs
 **ACTIVE_FEATURE_COUNT:** 10 major features (5 assessment types: VARK, AI Knowledge, Behavioral, Comprehensive, TPA + auth + payment + coupon system + profile + homepage)
 **TOTAL_TEST_TYPES:** 5 (VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
 **PAYMENT_MODELS:** 2 types (Payment-after-results: VARK/AI/Behavioral/Comprehensive | Payment-first: TPA)
+**DYNAMIC_PRICING:** All pricing loaded from GET /config endpoint via AuthContext on app initialization
 
 ---
 
-**CONTEXT_VERSION:** 1.4 | **LAST_UPDATED:** 2025-09-30
+**CONTEXT_VERSION:** 1.5 | **LAST_UPDATED:** 2025-10-02
+
+**CHANGELOG v1.5:**
+- ✅ Implemented dynamic pricing system via GET /config API endpoint
+- ✅ Created configAPI in src/lib/api/config.ts
+- ✅ Added TypeScript types for ConfigResponse, ConfigPricing, TpaConfig, ConfigData
+- ✅ Updated AuthContext to fetch and cache config on app initialization
+- ✅ Updated all 5 test result pages to use dynamic pricing from config
+- ✅ Updated VARK results page: config.pricing.vark_price (fallback: 30,000)
+- ✅ Updated AI Knowledge results: config.pricing.ai_knowledge_price (fallback: 35,000)
+- ✅ Updated Behavioral results: config.pricing.behavioral_learning_price (fallback: 40,000)
+- ✅ Updated Comprehensive results: config.pricing.comprehensive_assessment_price (fallback: 45,000)
+- ✅ Updated TPA payment landing: config.pricing.tpa_price (fallback: 50,000)
+- ✅ Single API call per app session with graceful fallback if config API fails
+- ✅ All pricing now centrally managed and updatable without frontend deployment
 
 **CHANGELOG v1.4:**
 - ✅ Added TPA test integration to profile page (GET /users/tpa_tests)

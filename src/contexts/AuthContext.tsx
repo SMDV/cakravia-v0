@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
-import { User, AuthResponse, LoginData, RegisterData, GoogleAuthResponse, CrossAuthResponse } from '@/lib/types';
+import { User, AuthResponse, LoginData, RegisterData, GoogleAuthResponse, CrossAuthResponse, ConfigData } from '@/lib/types';
 import { authAPI } from '@/lib/api';
+import { configAPI } from '@/lib/api/config';
 
 interface AuthContextType {
   user: User | null;
@@ -18,6 +19,9 @@ interface AuthContextType {
   requiresGoogleAuth: boolean; // NEW
   googleAuthMessage: string; // NEW
   clearGoogleAuthState: () => void; // NEW
+  // Config state
+  config: ConfigData | null;
+  configLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +32,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // NEW: Cross-authentication state
   const [requiresGoogleAuth, setRequiresGoogleAuth] = useState(false);
   const [googleAuthMessage, setGoogleAuthMessage] = useState('');
+  // Config state
+  const [config, setConfig] = useState<ConfigData | null>(null);
+  const [configLoading, setConfigLoading] = useState(true);
+
+  // Fetch config on mount (doesn't require authentication)
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        const response = await configAPI.getConfig();
+        setConfig(response.data);
+      } catch (error) {
+        console.error('Failed to fetch config:', error);
+        // Set default fallback pricing if API fails
+        setConfig({
+          pricing: {
+            vark_price: 30000,
+            ai_knowledge_price: 35000,
+            behavioral_learning_price: 40000,
+            comprehensive_assessment_price: 45000,
+            tpa_price: 50000,
+          },
+          tpa: {
+            score_levels: {
+              low: { name: 'Kategori Rendah', min_score: 200, max_score: 449, label: 'Kategori Rendah', message: 'Performa rendah' },
+              average: { name: 'Kategori Rata-Rata', min_score: 450, max_score: 549, label: 'Kategori Rata-Rata', message: 'Performa rata-rata' },
+              high: { name: 'Kategori Tinggi', min_score: 550, max_score: 800, label: 'Kategori Tinggi', message: 'Performa tinggi' },
+            },
+          },
+        });
+      } finally {
+        setConfigLoading(false);
+      }
+    };
+
+    fetchConfig();
+  }, []);
 
   // Check if user is authenticated on mount
   useEffect(() => {
@@ -159,6 +199,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     requiresGoogleAuth,
     googleAuthMessage,
     clearGoogleAuthState,
+    // Config state
+    config,
+    configLoading,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

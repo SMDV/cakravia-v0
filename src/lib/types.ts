@@ -667,3 +667,39 @@ export interface TpaTestHistory {
   time_remaining: number;
   is_expired: boolean;
 }
+
+// Config Types
+export interface ConfigPricing {
+  vark_price: number;
+  ai_knowledge_price: number;
+  behavioral_learning_price: number;
+  comprehensive_assessment_price: number;
+  tpa_price: number;
+}
+
+export interface TpaScoreLevel {
+  name: string;
+  min_score: number;
+  max_score: number;
+  label: string;
+  message: string;
+}
+
+export interface TpaConfig {
+  score_levels: {
+    low: TpaScoreLevel;
+    average: TpaScoreLevel;
+    high: TpaScoreLevel;
+  };
+}
+
+export interface ConfigData {
+  pricing: ConfigPricing;
+  tpa: TpaConfig;
+}
+
+export interface ConfigResponse {
+  data: ConfigData;
+  status: string;
+  error: boolean;
+}

@@ -147,7 +147,7 @@ const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({ isOpen, onC
  * Displays comprehensive assessment results combining VARK, AI Knowledge, and Behavioral
  */
 const EnhancedComprehensiveResultsDashboard = () => {
-  const { user } = useAuth();
+  const { user, config } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
@@ -895,7 +895,7 @@ const EnhancedComprehensiveResultsDashboard = () => {
           setShowCouponModal(false);
           proceedToPayment(couponData.coupon.code);
         }}
-        originalAmount={50000}
+        originalAmount={config?.pricing.comprehensive_assessment_price || 45000}
         testType="comprehensive"
         validateCoupon={handleValidateCoupon}
       />

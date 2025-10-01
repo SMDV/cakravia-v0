@@ -350,7 +350,7 @@ const PaymentSuccessDialog: React.FC<PaymentSuccessDialogProps> = ({ isOpen, onC
  * Displays behavioral assessment results with payment integration and certificate download
  */
 const EnhancedBehavioralResultsDashboard = () => {
-  const { user } = useAuth();
+  const { user, config } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
@@ -892,7 +892,9 @@ const EnhancedBehavioralResultsDashboard = () => {
                 <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
                   Get your behavioral profile with expert-backed insights
                 </p>
-                <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>
+                  Rp. {config?.pricing.behavioral_learning_price.toLocaleString('id-ID') || '40.000'}
+                </p>
                 <button
                   onClick={handlePurchaseCertificate}
                   disabled={isProcessingPayment}
@@ -1066,7 +1068,9 @@ const EnhancedBehavioralResultsDashboard = () => {
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
                         Get your behavioral profile with expert-backed insights
                       </p>
-                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>
+                  Rp. {config?.pricing.behavioral_learning_price.toLocaleString('id-ID') || '40.000'}
+                </p>
                       <button
                         onClick={handlePurchaseCertificate}
                         disabled={isProcessingPayment}
@@ -1131,7 +1135,7 @@ const EnhancedBehavioralResultsDashboard = () => {
         onClose={handleCloseCouponModal}
         onProceedWithoutCoupon={handleProceedWithoutCoupon}
         onProceedWithCoupon={handleProceedWithCoupon}
-        originalAmount={30000}
+        originalAmount={config?.pricing.behavioral_learning_price || 40000}
         testType="behavioral"
         validateCoupon={handleValidateCoupon}
       />

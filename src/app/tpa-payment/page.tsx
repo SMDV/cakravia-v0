@@ -55,7 +55,7 @@ interface PaymentState {
  * Handles the payment-first flow for TPA Assessment
  */
 const TpaPaymentLanding = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, config } = useAuth();
 
   const [paymentState, setPaymentState] = useState<PaymentState>({
     step: 'loading',
@@ -73,7 +73,7 @@ const TpaPaymentLanding = () => {
   const [verificationError, setVerificationError] = useState<string | null>(null);
   const [isRetryingVerification, setIsRetryingVerification] = useState(false);
 
-  const TPA_PRICE = 50000; // 50,000 IDR
+  const TPA_PRICE = config?.pricing.tpa_price || 50000; // Dynamic pricing from config
 
   // Initialize payment landing - get question set info
   const initializePaymentLanding = useCallback(async () => {

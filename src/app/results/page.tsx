@@ -70,7 +70,7 @@ declare global {
 }
 
 const EnhancedResultsDashboard = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, config } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
@@ -191,7 +191,9 @@ const NewLearningStyleSection = () => {
               <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
                 Get your learning profile with expert-backed strategies tailored just for you!
               </p>
-              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+              <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>
+                Rp. {config?.pricing.vark_price.toLocaleString('id-ID') || '30.000'}
+              </p>
               <button 
                 onClick={handlePurchaseCertificate}
                 disabled={isProcessingPayment}
@@ -1262,7 +1264,9 @@ const openSnapPopup = useCallback((snapToken: string) => {
                       <p className="text-xs sm:text-sm text-gray-600 mb-3 leading-relaxed">
                         Get your learning profile with expert-backed strategies tailored just for you
                       </p>
-                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                      <p className="text-2xl sm:text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>
+                        Rp. {config?.pricing.vark_price.toLocaleString('id-ID') || '30.000'}
+                      </p>
                       <button 
                         onClick={handlePurchaseCertificate}
                         disabled={isProcessingPayment}
@@ -1324,7 +1328,7 @@ const openSnapPopup = useCallback((snapToken: string) => {
         onClose={handleCloseCouponModal}
         onProceedWithoutCoupon={handleProceedWithoutCoupon}
         onProceedWithCoupon={handleProceedWithCoupon}
-        originalAmount={30000}
+        originalAmount={config?.pricing.vark_price || 30000}
         testType="vark"
         validateCoupon={handleValidateCoupon}
       />
