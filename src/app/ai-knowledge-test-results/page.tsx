@@ -118,6 +118,15 @@ const NewAIKnowledgeStyleSection = ({ organizedScores, resultsData }: {
 }) => {
   const { result_description } = resultsData;
 
+  // Calculate highest scoring dimensions (handles ties)
+  const maxScore = Math.max(...organizedScores.map(s => s.score));
+  const highestScores = organizedScores.filter(s => s.score === maxScore);
+
+  // Use category names directly (they're already in English)
+  const dynamicTitle = highestScores
+    .map(s => AI_KNOWLEDGE_CATEGORIES[s.code as keyof typeof AI_KNOWLEDGE_CATEGORIES]?.name || s.code)
+    .join(' - ');
+
   // Modified SmallScoreBox Component for AI Knowledge
   const SmallScoreBox = ({ score, name, color, code }: { score: number; name: string; color: string; code: string }) => {
     return (
@@ -195,7 +204,7 @@ const NewAIKnowledgeStyleSection = ({ organizedScores, resultsData }: {
                 marginTop: 0
               }}
             >
-              Your AI Readiness Profile
+              Your AI Knowledge Learning Style
             </h2>
             <h3
               className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4"
@@ -205,7 +214,7 @@ const NewAIKnowledgeStyleSection = ({ organizedScores, resultsData }: {
                 margin: 0
               }}
             >
-              {result_description?.title || 'AI-Enthusiastic Learner'}
+              {dynamicTitle}
             </h3>
             <div
               className="w-16 h-0.5 mx-auto"
