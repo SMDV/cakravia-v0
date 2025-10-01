@@ -97,6 +97,20 @@ const NewBehavioralStyleSection = ({ organizedScores, resultsData }: {
 }) => {
   const { result_description } = resultsData;
 
+  // Calculate highest scoring dimensions (handles ties)
+  const maxScore = Math.max(...organizedScores.map(s => s.score));
+  const highestScores = organizedScores.filter(s => s.score === maxScore);
+
+  // Extract English names from parentheses and join with " - "
+  const dynamicTitle = highestScores
+    .map(s => {
+      const fullName = BEHAVIORAL_CATEGORIES[s.code as keyof typeof BEHAVIORAL_CATEGORIES]?.name || '';
+      // Extract English name from "Motivasi (Motivation)" -> "Motivation"
+      const match = fullName.match(/\(([^)]+)\)/);
+      return match ? match[1] : s.code;
+    })
+    .join(' - ');
+
   // Modified SmallScoreBox Component for Behavioral Test
   const SmallScoreBox = ({ score, name, color, code }: { score: number; name: string; color: string; code: string }) => {
     return (
@@ -174,7 +188,7 @@ const NewBehavioralStyleSection = ({ organizedScores, resultsData }: {
                 marginTop: 0
               }}
             >
-              Your Behavioral Profile
+              Your Behavioral Learning Style
             </h2>
             <h3
               className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4"
@@ -184,7 +198,7 @@ const NewBehavioralStyleSection = ({ organizedScores, resultsData }: {
                 margin: 0
               }}
             >
-              {result_description?.title || 'Dynamic Behavioral Profile'}
+              {dynamicTitle}
             </h3>
             <div
               className="w-16 h-0.5 mx-auto"
