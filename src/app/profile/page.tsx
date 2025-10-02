@@ -52,15 +52,15 @@ interface VarkTestHistory {
   order: {
     id: string;
     order_number: string;
-    status: 'pending' | 'paid';
+    status: 'pending' | 'paid' | 'expired';
     amount: string;
-    certificate_status: 'not_generated' | 'generated' | 'generation_failed';
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
     can_download_certificate: boolean;
     created_at: string;
   } | null;
   payment: {
     id: string;
-    status: 'pending' | 'settlement';
+    status: 'pending' | 'settlement' | 'expire';
     payment_method: string;
     paid_at: string | null;
     created_at: string;
@@ -113,6 +113,22 @@ interface AiKnowledgeTestHistory {
     total_score: number;
     dominant_categories: string[];
   } | null;
+  order: {
+    id: string;
+    order_number: string;
+    status: 'pending' | 'paid' | 'expired';
+    amount: string;
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
+    can_download_certificate: boolean;
+    created_at: string;
+  } | null;
+  payment: {
+    id: string;
+    status: 'pending' | 'settlement' | 'expire';
+    payment_method: string;
+    paid_at: string | null;
+    created_at: string;
+  } | null;
   time_remaining: number;
   is_expired: boolean;
 }
@@ -131,6 +147,22 @@ interface BehavioralTestHistory {
   results?: {
     total_score: number;
     dominant_dimensions: string[];
+  } | null;
+  order: {
+    id: string;
+    order_number: string;
+    status: 'pending' | 'paid' | 'expired';
+    amount: string;
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
+    can_download_certificate: boolean;
+    created_at: string;
+  } | null;
+  payment: {
+    id: string;
+    status: 'pending' | 'settlement' | 'expire';
+    payment_method: string;
+    paid_at: string | null;
+    created_at: string;
   } | null;
   time_remaining: number;
   is_expired: boolean;
@@ -151,6 +183,22 @@ interface ComprehensiveTestHistory {
     total_score: number;
     dominant_dimensions: string[];
   } | null;
+  order: {
+    id: string;
+    order_number: string;
+    status: 'pending' | 'paid' | 'expired';
+    amount: string;
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
+    can_download_certificate: boolean;
+    created_at: string;
+  } | null;
+  payment: {
+    id: string;
+    status: 'pending' | 'settlement' | 'expire';
+    payment_method: string;
+    paid_at: string | null;
+    created_at: string;
+  } | null;
   time_remaining: number;
   is_expired: boolean;
 }
@@ -169,6 +217,22 @@ interface TpaTestHistory {
   results?: {
     total_score: number;
     dominant_reasoning_categories: string[];
+  } | null;
+  order: {
+    id: string;
+    order_number: string;
+    status: 'pending' | 'paid' | 'expired';
+    amount: string;
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
+    can_download_certificate: boolean;
+    created_at: string;
+  } | null;
+  payment: {
+    id: string;
+    status: 'pending' | 'settlement' | 'expire';
+    payment_method: string;
+    paid_at: string | null;
+    created_at: string;
   } | null;
   time_remaining: number;
   is_expired: boolean;
@@ -243,7 +307,9 @@ const EnhancedProfilePage = () => {
     hasResults: !!test.results,
     resultsUrl: test.results ? `/ai-knowledge-test-results?testId=${test.id}` : undefined,
     totalScore: test.results?.total_score,
-    dominantStyles: test.results?.dominant_categories
+    dominantStyles: test.results?.dominant_categories,
+    order: test.order,
+    payment: test.payment
   });
 
   const convertBehavioralToUnified = (test: BehavioralTestHistory): UnifiedTestHistory => ({
@@ -259,7 +325,9 @@ const EnhancedProfilePage = () => {
     hasResults: !!test.results,
     resultsUrl: test.results ? `/behavioral-test-results?testId=${test.id}` : undefined,
     totalScore: test.results?.total_score,
-    dominantStyles: test.results?.dominant_dimensions
+    dominantStyles: test.results?.dominant_dimensions,
+    order: test.order,
+    payment: test.payment
   });
 
   const convertComprehensiveToUnified = (test: ComprehensiveTestHistory): UnifiedTestHistory => ({
@@ -275,7 +343,9 @@ const EnhancedProfilePage = () => {
     hasResults: !!test.results,
     resultsUrl: test.results ? `/comprehensive-test-results?testId=${test.id}` : undefined,
     totalScore: test.results?.total_score,
-    dominantStyles: test.results?.dominant_dimensions
+    dominantStyles: test.results?.dominant_dimensions,
+    order: test.order,
+    payment: test.payment
   });
 
   const convertTpaToUnified = (test: TpaTestHistory): UnifiedTestHistory => ({
@@ -291,7 +361,9 @@ const EnhancedProfilePage = () => {
     hasResults: !!test.results,
     resultsUrl: test.results ? `/tpa-test-results?testId=${test.id}` : undefined,
     totalScore: test.results?.total_score,
-    dominantStyles: test.results?.dominant_reasoning_categories
+    dominantStyles: test.results?.dominant_reasoning_categories,
+    order: test.order,
+    payment: test.payment
   });
 
   // Load profile data and test history
