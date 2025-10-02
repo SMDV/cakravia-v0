@@ -724,7 +724,19 @@ When modifying shared UI components:
 
 ---
 
-**CONTEXT_VERSION:** 1.5 | **LAST_UPDATED:** 2025-10-02
+**CONTEXT_VERSION:** 1.6 | **LAST_UPDATED:** 2025-10-02
+
+**CHANGELOG v1.6:**
+- ✅ Fixed profile page test history interfaces to include order and payment data
+- ✅ Updated AiKnowledgeTestHistory, BehavioralTestHistory, ComprehensiveTestHistory, TpaTestHistory interfaces
+- ✅ Added missing `order` and `payment` fields to all test history types (not just VARK)
+- ✅ Updated order status types to include 'expired' status
+- ✅ Updated payment status types to include 'expire' status
+- ✅ Updated certificate_status types to include 'pending_generation' status
+- ✅ Updated all converter functions to pass order/payment data to unified interface
+- ✅ Removed "Results" column from profile page test history table (cleaner UI)
+- ✅ Adjusted profile page layout: 3/4 width for test history, 1/4 width for profile info
+- ✅ Payment & Certificate column now displays correctly for ALL test types
 
 **CHANGELOG v1.5:**
 - ✅ Implemented dynamic pricing system via GET /config API endpoint

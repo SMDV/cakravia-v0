@@ -86,14 +86,19 @@ interface UnifiedTestHistory {
   dominantStyles?: string[];
   order?: {
     id: string;
-    status: 'pending' | 'paid';
+    order_number: string;
+    status: 'pending' | 'paid' | 'expired';
     amount: string;
-    certificate_status: string;
+    certificate_status: 'not_generated' | 'generated' | 'generation_failed' | 'pending_generation';
     can_download_certificate: boolean;
+    created_at: string;
   } | null;
   payment?: {
-    status: 'pending' | 'settlement';
+    id: string;
+    status: 'pending' | 'settlement' | 'expire';
+    payment_method: string;
     paid_at: string | null;
+    created_at: string;
   } | null;
 }
 
