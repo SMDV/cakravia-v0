@@ -1148,7 +1148,7 @@ const EnhancedProfilePage = () => {
                                 </div>
                               )}
 
-                              {/* Payment & Certificate Info */}
+                              {/* Payment Info */}
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {test.payment ? (
                                   <span className={`inline-flex items-center px-2 py-1 rounded-full font-medium border ${getStatusBadge(test.payment.status)}`}>
@@ -1159,14 +1159,6 @@ const EnhancedProfilePage = () => {
                                     💰 Payment Required
                                   </span>
                                 ) : null}
-
-                                {test.order && (
-                                  <span className={`inline-flex items-center px-2 py-1 rounded-full font-medium border ${getStatusBadge(test.order.certificate_status)}`}>
-                                    {test.order.certificate_status === 'generated' ? '📜' :
-                                     test.order.certificate_status === 'generation_failed' ? '❌' : '⏳'}
-                                    Certificate
-                                  </span>
-                                )}
                               </div>
 
                               {/* Action Buttons */}
@@ -1245,7 +1237,7 @@ const EnhancedProfilePage = () => {
                               Status & Timer
                             </th>
                             <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                              Payment & Certificate
+                              Payment Status
                             </th>
                             <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                               Actions
@@ -1331,48 +1323,37 @@ const EnhancedProfilePage = () => {
                                   </div>
                                 </td>
 
-                                {/* Payment & Certificate */}
+                                {/* Payment Status */}
                                 <td className="px-3 lg:px-4 py-4">
                                   <div className="space-y-2">
                                     {/* Payment Status */}
                                     {test.payment ? (
                                       <div>
                                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.payment.status)}`}>
-                                          {test.payment.status === 'settlement' ? '💳 Paid' : '⏳ Pending Payment'}
+                                          {test.payment.status === 'settlement' ? '💳 Paid' : test.payment.status === 'expire' ? '⏰ Expired' : '⏳ Pending Payment'}
                                         </span>
                                         {test.payment.paid_at && (
                                           <div className="text-xs text-gray-500 mt-1">
                                             Paid: {formatDate(test.payment.paid_at)}
                                           </div>
                                         )}
+                                        {test.order && (
+                                          <div className="text-xs text-gray-500 mt-1">
+                                            Rp {parseFloat(test.order.amount).toLocaleString('id-ID')}
+                                          </div>
+                                        )}
                                       </div>
                                     ) : test.order ? (
-                                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-100 text-orange-800 border-orange-200">
-                                        💰 Payment Required
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs text-gray-400">No payment info</span>
-                                    )}
-
-                                    {/* Certificate Status */}
-                                    {test.order && (
                                       <div>
-                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusBadge(test.order.certificate_status)}`}>
-                                          {test.order.certificate_status === 'generated' ? '📜 Available' : 
-                                           test.order.certificate_status === 'generation_failed' ? '❌ Failed' : 
-                                           test.order.certificate_status === 'not_generated' ? '⏳ Not Generated' : '🔄 Processing'}
+                                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border bg-orange-100 text-orange-800 border-orange-200">
+                                          💰 Payment Required
                                         </span>
                                         <div className="text-xs text-gray-500 mt-1">
                                           Rp {parseFloat(test.order.amount).toLocaleString('id-ID')}
                                         </div>
                                       </div>
-                                    )}
-
-                                    {/* No Order/Payment Info */}
-                                    {!test.order && !test.payment && test.status === 'completed' && (
-                                      <div className="text-xs text-gray-500">
-                                        🆓 Free assessment
-                                      </div>
+                                    ) : (
+                                      <span className="text-xs text-gray-400">No payment</span>
                                     )}
                                   </div>
                                 </td>
