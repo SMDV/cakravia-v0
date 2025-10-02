@@ -1,22 +1,21 @@
 "use client"
 
 import React, { useState, useEffect } from 'react';
-import { 
-  User, 
-  Calendar, 
-  Phone, 
-  Mail, 
-  Edit, 
-  Save, 
-  X, 
-  Clock, 
-  CheckCircle, 
+import {
+  User,
+  Calendar,
+  Phone,
+  Mail,
+  Edit,
+  Save,
+  X,
+  Clock,
+  CheckCircle,
   AlertCircle,
   Eye,
   Download,
   Play,
   FileText,
-  Trophy,
   Activity,
   Shield,
 } from 'lucide-react';
@@ -737,7 +736,7 @@ const EnhancedProfilePage = () => {
           <p className="text-sm sm:text-base text-gray-600">Manage your account settings and view your test history</p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
           {/* Profile Information Section */}
           <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6">
@@ -953,7 +952,7 @@ const EnhancedProfilePage = () => {
           </div>
 
           {/* Test History Section - Rest of the component remains the same */}
-          <div className="lg:col-span-2 order-2 lg:order-1">
+          <div className="lg:col-span-3 order-2 lg:order-1">
             <div className="bg-white rounded-lg shadow-lg">
               {/* Header */}
               <div className="p-4 sm:p-6 border-b border-gray-200">
@@ -1072,38 +1071,6 @@ const EnhancedProfilePage = () => {
                                 </div>
                               )}
 
-                              {/* Results Info */}
-                              <div>
-                                {test.hasResults && test.totalScore !== undefined ? (
-                                  <div className="space-y-1">
-                                    <div className="flex items-center gap-2">
-                                      <Trophy className="w-4 h-4 text-yellow-500" />
-                                      <span className="text-sm font-medium">Score: {test.totalScore}</span>
-                                    </div>
-                                    {test.dominantStyles && (
-                                      <p className="text-xs text-gray-600">
-                                        Dominant: {test.dominantStyles.join(', ')}
-                                      </p>
-                                    )}
-                                    {test.type === 'vark' && (
-                                      <p className="text-xs text-gray-500">
-                                        View detailed breakdown in results
-                                      </p>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <div className="text-sm text-gray-400">
-                                    {test.status === 'in_progress' && !test.is_expired ? (
-                                      <span>📝 Test in progress</span>
-                                    ) : test.is_expired ? (
-                                      <span className="text-red-600">❌ Test expired before completion</span>
-                                    ) : (
-                                      <span>No results yet</span>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-
                               {/* Payment & Certificate Info */}
                               <div className="flex flex-wrap gap-2 text-xs">
                                 {test.payment ? (
@@ -1194,19 +1161,16 @@ const EnhancedProfilePage = () => {
                         <table className="w-full min-w-[800px]">
                         <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
                           <tr>
-                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/3">
                               Test Info & Type
                             </th>
-                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                               Status & Timer
                             </th>
-                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
-                              Results
-                            </th>
-                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                               Payment & Certificate
                             </th>
-                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
+                            <th className="px-3 lg:px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/5">
                               Actions
                             </th>
                           </tr>
@@ -1288,44 +1252,6 @@ const EnhancedProfilePage = () => {
                                       </span>
                                     )}
                                   </div>
-                                </td>
-
-                                {/* Results */}
-                                <td className="px-3 lg:px-4 py-4">
-                                  {test.hasResults && test.totalScore !== undefined ? (
-                                    <div className="space-y-1">
-                                      <div className="text-sm font-medium text-gray-900">
-                                        <Trophy className="w-4 h-4 inline mr-1 text-yellow-500" />
-                                        Score: {test.totalScore}
-                                      </div>
-                                      {test.dominantStyles && (
-                                        <div className="text-xs text-gray-600">
-                                          Dominant: {test.dominantStyles.join(', ')}
-                                        </div>
-                                      )}
-                                      <div className="text-xs text-gray-500">
-                                        {test.type === 'vark' ? 'Learning styles breakdown' :
-                                         test.type === 'ai_knowledge' ? 'AI readiness assessment' :
-                                         test.type === 'behavioral' ? 'Behavioral dimensions' :
-                                         test.type === 'comprehensive' ? 'Complete profile analysis' :
-                                         'Assessment complete'}
-                                      </div>
-                                    </div>
-                                  ) : (
-                                    <div className="space-y-1">
-                                      <span className="text-sm text-gray-400">No results yet</span>
-                                      {test.status === 'in_progress' && !test.is_expired && (
-                                        <div className="text-xs text-blue-600">
-                                          📝 Test in progress
-                                        </div>
-                                      )}
-                                      {test.is_expired && (
-                                        <div className="text-xs text-red-600">
-                                          ❌ Test expired before completion
-                                        </div>
-                                      )}
-                                    </div>
-                                  )}
                                 </td>
 
                                 {/* Payment & Certificate */}
