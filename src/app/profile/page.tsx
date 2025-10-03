@@ -1179,6 +1179,7 @@ const EnhancedProfilePage = () => {
                                           test.type === 'ai_knowledge' ? `/ai-knowledge-test?resumeTestId=${test.id}` :
                                           test.type === 'behavioral' ? `/behavioral-test?resumeTestId=${test.id}` :
                                           test.type === 'comprehensive' ? `/comprehensive-test?resumeTestId=${test.id}` :
+                                          test.type === 'tpa' ? `/tpa-test?resumeTestId=${test.id}` :
                                           '/test'}
                                     className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors"
                                   >
@@ -1193,6 +1194,7 @@ const EnhancedProfilePage = () => {
                                           test.type === 'ai_knowledge' ? '/ai-knowledge-test' :
                                           test.type === 'behavioral' ? '/behavioral-test' :
                                           test.type === 'comprehensive' ? '/comprehensive-test' :
+                                          test.type === 'tpa' ? '/tpa-payment' :
                                           '/test'}
                                     className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors"
                                   >
@@ -1208,6 +1210,7 @@ const EnhancedProfilePage = () => {
                                                       test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
                                                       test.type === 'behavioral' ? 'behavioral_learning_tests' :
                                                       test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
+                                                      test.type === 'tpa' ? 'tpa_tests' :
                                                       'vark_tests';
                                       window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
                                     }}
@@ -1379,6 +1382,7 @@ const EnhancedProfilePage = () => {
                                               test.type === 'ai_knowledge' ? `/ai-knowledge-test?resumeTestId=${test.id}` :
                                               test.type === 'behavioral' ? `/behavioral-test?resumeTestId=${test.id}` :
                                               test.type === 'comprehensive' ? `/comprehensive-test?resumeTestId=${test.id}` :
+                                              test.type === 'tpa' ? `/tpa-test?resumeTestId=${test.id}` :
                                               '/test'}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-yellow-500 text-white text-xs rounded-lg hover:bg-yellow-600 transition-colors"
                                       >
@@ -1394,6 +1398,7 @@ const EnhancedProfilePage = () => {
                                               test.type === 'ai_knowledge' ? '/ai-knowledge-test' :
                                               test.type === 'behavioral' ? '/behavioral-test' :
                                               test.type === 'comprehensive' ? '/comprehensive-test' :
+                                              test.type === 'tpa' ? '/tpa-payment' :
                                               '/test'}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-purple-500 text-white text-xs rounded-lg hover:bg-purple-600 transition-colors"
                                       >
@@ -1410,6 +1415,7 @@ const EnhancedProfilePage = () => {
                                                           test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
                                                           test.type === 'behavioral' ? 'behavioral_learning_tests' :
                                                           test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
+                                                          test.type === 'tpa' ? 'tpa_tests' :
                                                           'vark_tests';
                                           window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
                                         }}

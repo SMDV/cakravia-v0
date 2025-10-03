@@ -554,7 +554,7 @@ export interface TpaCategory {
 export interface TpaQuestion {
   id: string;
   question_text: string;
-  question_image_url?: string; // Visual element - key difference from other tests
+  image_url?: string; // Visual element - key difference from other tests
   option_a: string;
   option_b: string;
   option_c: string;

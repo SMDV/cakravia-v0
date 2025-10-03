@@ -29,7 +29,7 @@ interface ChatMessage {
   text?: string;
   selectedOption?: 'A' | 'B' | 'C' | 'D' | 'E';
   questionId?: string;
-  questionImageUrl?: string;
+  imageUrl?: string;
 }
 
 interface TestState {
@@ -153,7 +153,7 @@ const TpaTestInterface = () => {
         type: "text",
         text: test.questions[0].question_text,
         questionId: test.questions[0].id,
-        questionImageUrl: test.questions[0].question_image_url
+        imageUrl: test.questions[0].image_url ? `https://api.cakravia.com${test.questions[0].image_url}` : undefined
       }]);
 
       addLog('🔄 Started TPA test without saved progress');
@@ -367,7 +367,7 @@ const TpaTestInterface = () => {
       type: "text",
       text: firstQuestion.question_text,
       questionId: firstQuestion.id,
-      questionImageUrl: firstQuestion.question_image_url
+      imageUrl: firstQuestion.image_url ? `https://api.cakravia.com${firstQuestion.image_url}` : undefined
     }]);
 
     // Reset current selection
@@ -440,7 +440,7 @@ const TpaTestInterface = () => {
         type: "text",
         text: nextQuestion.question_text,
         questionId: nextQuestion.id,
-        questionImageUrl: nextQuestion.question_image_url
+        imageUrl: nextQuestion.image_url ? `https://api.cakravia.com${nextQuestion.image_url}` : undefined
       }]);
 
       setTestState(prev => ({
@@ -602,14 +602,14 @@ const TpaTestInterface = () => {
             </div>
 
             {/* Image display if available */}
-            {message.questionImageUrl && (
+            {message.imageUrl && (
               <div className="mt-2">
                 <div
                   className="relative border rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
-                  onClick={() => handleImageClick(message.questionImageUrl!)}
+                  onClick={() => handleImageClick(message.imageUrl!)}
                 >
                   <Image
-                    src={message.questionImageUrl}
+                    src={message.imageUrl}
                     alt="Question visual"
                     width={400}
                     height={300}
