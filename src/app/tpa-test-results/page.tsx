@@ -474,8 +474,8 @@ const EnhancedTpaResultsDashboard = () => {
       }
     })();
 
-    // Calculate percentage based on typical max score per category (assuming 20 is max)
-    const maxScore = 20;
+    // Calculate percentage based on total_questions from API
+    const maxScore = resultsState.resultsData!.total_questions || 20;
     const percentage = (score / maxScore) * 100;
 
     return {
@@ -631,7 +631,7 @@ const EnhancedTpaResultsDashboard = () => {
                           },
                           yaxis: {
                             min: 0,
-                            max: 20,
+                            max: resultsState.resultsData?.total_questions || 20,
                             labels: {
                               style: {
                                 colors: "#888",
