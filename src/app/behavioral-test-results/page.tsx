@@ -62,22 +62,22 @@ declare global {
 // Behavioral Categories mapping - 4 specific dimensions with detailed descriptions
 const BEHAVIORAL_CATEGORIES = {
   H: {
-    name: 'Kebiasaan (Habits)',
+    name: 'Habits',
     description: 'Habits adalah kebiasaan, yaitu tindakan atau perilaku yang dilakukan secara berulang dan otomatis sehingga menjadi otomatis dan sering dilakukan tanpa banyak berpikir',
     color: '#8979FF'
   },
   M: {
-    name: 'Motivasi (Motivation)',
+    name: 'Motivation',
     description: 'Motivasi adalah dorongan internal atau eksternal yang menyebabkan seseorang bertindak atau melakukan suatu kegiatan dengan tujuan tertentu, baik yang muncul secara sadar maupun tidak',
     color: '#FF928A'
   },
   R: {
-    name: 'Regulasi Diri (Self-Regulation)',
+    name: 'Self-Regulation',
     description: 'Self-regulation adalah kemampuan seseorang untuk mengatur pikiran, emosi, dan perilaku diri sendiri secara konsisten untuk mencapai tujuan jangka panjang',
     color: '#3CC3DF'
   },
   E: {
-    name: 'Keterlibatan (Engagement)',
+    name: 'Engagement',
     description: 'Engagement adalah tingkat perhatian, rasa ingin tahu, dan komitmen aktif yang dibawa oleh peserta didik ke dalam proses pembelajaran, yang mencakup dimensi perilaku, kognitif, dan emosional',
     color: '#FFAE4C'
   }
@@ -101,14 +101,9 @@ const NewBehavioralStyleSection = ({ organizedScores, resultsData }: {
   const maxScore = Math.max(...organizedScores.map(s => s.score));
   const highestScores = organizedScores.filter(s => s.score === maxScore);
 
-  // Extract English names from parentheses and join with " - "
+  // Use category names directly (already in English)
   const dynamicTitle = highestScores
-    .map(s => {
-      const fullName = BEHAVIORAL_CATEGORIES[s.code as keyof typeof BEHAVIORAL_CATEGORIES]?.name || '';
-      // Extract English name from "Motivasi (Motivation)" -> "Motivation"
-      const match = fullName.match(/\(([^)]+)\)/);
-      return match ? match[1] : s.code;
-    })
+    .map(s => BEHAVIORAL_CATEGORIES[s.code as keyof typeof BEHAVIORAL_CATEGORIES]?.name || s.code)
     .join(' - ');
 
   // Modified SmallScoreBox Component for Behavioral Test
