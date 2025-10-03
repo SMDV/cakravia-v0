@@ -61,30 +61,213 @@ declare global {
 // Comprehensive categories - 5 specific dimensions with detailed descriptions
 const COMPREHENSIVE_CATEGORIES = {
   CF: {
-    name: 'Fleksibilitas Kognitif (CF)',
+    name: 'Cognitive Flexibility',
     description: 'Cognitive Flexibility adalah kemampuan mental untuk mengubah cara berpikir dan beradaptasi dengan situasi baru',
     color: '#8979FF'
   },
   R: {
-    name: 'Resiliensi (R)',
+    name: 'Resilience',
     description: 'Resilience adalah kemampuan individu untuk beradaptasi, pulih, dan bangkit dari kesulitan, tantangan, atau trauma, serta tumbuh setelah mengalami masa sulit',
     color: '#FF928A'
   },
   MA: {
-    name: 'Kesadaran Metakognitif (MA)',
+    name: 'Metacognitive Awareness',
     description: 'Metacognitive awareness adalah kesadaran seseorang akan cara berpikir dan proses belajarnya sendiri, termasuk pemahaman tentang bagaimana ia belajar, memantau prosesnya, dan mengendalikan proses tersebut agar menjadi lebih efektif',
     color: '#3CC3DF'
   },
   AG: {
-    name: 'Keteguhan Akademik (AG)',
+    name: 'Academic Grit',
     description: 'Academic grit adalah sifat yang mencakup tekad, ketahanan, dan fokus yang tinggi dalam upaya mencapai tujuan jangka panjang dan menantang',
     color: '#FFAE4C'
   },
   E: {
-    name: 'Harga Diri (E)',
+    name: 'Self-Esteem',
     description: 'Self-esteem adalah penilaian subjektif tentang nilai dan kualitas dirinya sendiri, baik dalam keadaan positif maupun negatif',
     color: '#6366F1'
   }
+};
+
+
+// New Comprehensive Profile Section Component
+const NewComprehensiveProfileSection = ({ organizedScores, resultsData }: {
+  organizedScores: Array<{
+    name: string;
+    score: number;
+    percentage: number;
+    color: string;
+    code: string;
+  }>;
+  resultsData: ComprehensiveTestResultsType;
+}) => {
+  const { detailed_analysis, level_label } = resultsData;
+
+  // SmallScoreBox Component for Comprehensive Test
+  const SmallScoreBox = ({ score, name, color, code }: {
+    score: number;
+    name: string;
+    color: string;
+    code: string;
+  }) => {
+    return (
+      <div className="bg-white rounded-xl overflow-hidden shadow-lg border border-gray-100 w-full aspect-[3/4]">
+        <div
+          className="text-white text-center font-bold text-sm sm:text-base leading-tight h-1/3 flex items-center justify-center px-2"
+          style={{ backgroundColor: color }}
+        >
+          <span className="text-xs">{name} ({code})</span>
+        </div>
+        <div className="p-4 sm:p-6 text-center bg-gray-50 h-2/3 flex flex-col justify-center">
+          <div className="text-3xl sm:text-4xl font-bold mb-1 sm:mb-2" style={{ color: '#24348C' }}>
+            {score?.toFixed(1) || '0.0'}
+          </div>
+          <div className="text-xs sm:text-sm text-gray-600">
+            Score
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="rounded-xl shadow-lg mb-6 sm:mb-12 relative overflow-hidden" style={{ fontFamily: 'Merriweather Sans, sans-serif' }}>
+      {/* Magazine-style Background - White background with decorative elements */}
+      <div
+        className="absolute inset-0 z-0"
+        style={{
+          background: 'white',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Magazine decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-100px',
+          right: '-100px',
+          width: '200px',
+          height: '200px',
+          background: 'linear-gradient(45deg, #fef3c7, #fed7aa)',
+          borderRadius: '50%',
+          opacity: 0.3
+        }}></div>
+        <div style={{
+          position: 'absolute',
+          bottom: '-50px',
+          left: '-50px',
+          width: '100px',
+          height: '100px',
+          background: 'linear-gradient(45deg, #dbeafe, #c7d2fe)',
+          borderRadius: '50%',
+          opacity: 0.4
+        }}></div>
+      </div>
+
+      {/* Content Container */}
+      <div className="relative z-10 bg-white p-4 sm:p-8 md:p-12">
+
+        {/* Magazine-style Header - Adapted for "Your Comprehensive Profile" */}
+        <div className="text-center mb-8 sm:mb-12 relative z-10">
+          <div
+            className="max-w-2xl mx-auto py-6 sm:py-8"
+            style={{
+              borderTop: '3px solid #24348C',
+              borderBottom: '3px solid #24348C',
+              padding: '2rem 0'
+            }}
+          >
+            <h2
+              className="text-sm sm:text-base font-medium mb-3 sm:mb-4"
+              style={{
+                color: '#6b7280',
+                textTransform: 'uppercase',
+                letterSpacing: '0.2em',
+                marginTop: 0
+              }}
+            >
+              Your Comprehensive Profile
+            </h2>
+            <h3
+              className="text-3xl sm:text-4xl md:text-5xl font-bold italic leading-tight mb-3 sm:mb-4"
+              style={{
+                color: '#24348C',
+                lineHeight: '1.2',
+                margin: 0
+              }}
+            >
+              {level_label || 'Comprehensive Assessment'}
+            </h3>
+            <div
+              className="w-16 h-0.5 mx-auto"
+              style={{
+                background: '#fbbf24',
+                marginTop: '1rem'
+              }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Score Cards - 5 Comprehensive Dimensions */}
+        <div className="mb-6 sm:mb-8 grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+          {organizedScores.map((scoreData) => (
+            <div key={scoreData.code} className="w-full h-full">
+              <SmallScoreBox
+                score={scoreData.score}
+                name={scoreData.name.split(' ')[0]} // First word only for compact display
+                color={scoreData.color || '#4A47A3'}
+                code={scoreData.code}
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Detailed Analysis Card */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#F4F4F4EE' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#5E5E5E' }}>
+                Detailed Analysis
+              </h4>
+              <div className="w-full h-0.5 bg-gray-300 mb-3 sm:mb-4"></div>
+              {detailed_analysis?.description ? (
+                <div
+                  className="text-xs sm:text-sm leading-relaxed prose prose-sm max-w-none"
+                  style={{ color: '#5E5E5E' }}
+                  dangerouslySetInnerHTML={{ __html: detailed_analysis.description }}
+                />
+              ) : (
+                <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#5E5E5E' }}>
+                  Your comprehensive assessment evaluates your cognitive flexibility, resilience, self-esteem, academic grit, and metacognitive awareness. These dimensions provide insight into your learning capabilities and psychological strengths.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Development Recommendations Card */}
+        <div className="mb-6 sm:mb-8">
+          <div className="rounded-xl overflow-hidden shadow-lg" style={{ backgroundColor: '#DFE4FF' }}>
+            <div className="p-4 sm:p-6">
+              <h4 className="text-lg sm:text-xl font-bold mb-3 sm:mb-4" style={{ color: '#24348C' }}>
+                Development Recommendations
+              </h4>
+              <div className="w-full h-0.5 mb-3 sm:mb-4" style={{ backgroundColor: '#24348C40' }}></div>
+              {detailed_analysis?.study_recommendations ? (
+                <div
+                  className="text-sm sm:text-base leading-relaxed prose prose-sm max-w-none"
+                  style={{ color: '#24348CCC' }}
+                  dangerouslySetInnerHTML={{ __html: detailed_analysis.study_recommendations }}
+                />
+              ) : (
+                <p className="text-sm sm:text-base leading-relaxed" style={{ color: '#24348CCC' }}>
+                  Based on your comprehensive profile, focus on developing areas that complement your natural strengths. Work on improving dimensions where you scored lower to achieve a more balanced profile across cognitive flexibility, resilience, metacognitive awareness, academic grit, and self-esteem.
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 
@@ -817,38 +1000,11 @@ const EnhancedComprehensiveResultsDashboard = () => {
             </div>
           </div>
 
-          {/* Comprehensive Profile Section */}
-          <div className="rounded-xl shadow-lg mb-6 sm:mb-12 bg-white p-4 sm:p-8 md:p-12">
-            <div className="text-center mb-8 sm:mb-12">
-              <h2 className="text-2xl sm:text-3xl font-bold mb-4" style={{ color: '#24348C' }}>
-                Your Comprehensive Profile
-              </h2>
-              <div
-                className="text-gray-600"
-                dangerouslySetInnerHTML={{
-                  __html: resultsState.resultsData?.detailed_analysis?.description ||
-                  '<p>Your comprehensive assessment evaluates your cognitive flexibility, resilience, metacognitive awareness, academic grit, and self-esteem to create a complete psychological profile.</p>'
-                }}
-              />
-            </div>
-
-            {/* Summary Cards - Score Highlights */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-              {organizedScores.map((category) => (
-                <div key={category.code} className="bg-white p-4 rounded-xl shadow-lg border-l-4" style={{ borderLeftColor: category.color }}>
-                  <h3 className="font-bold text-sm mb-1" style={{ color: category.color }}>
-                    {category.code}
-                  </h3>
-                  <p className="text-2xl font-bold mb-1" style={{ color: '#24348C' }}>
-                    {category.score?.toFixed(1) || '0.0'}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {category.name.split(' ')[0]} {/* First word only */}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* NEW SECTION: Comprehensive Profile Section */}
+          <NewComprehensiveProfileSection
+            organizedScores={organizedScores}
+            resultsData={resultsState.resultsData}
+          />
 
           {/* Test Again Section */}
           <div className="bg-white rounded-xl shadow-lg p-6 sm:p-8 md:p-12">
