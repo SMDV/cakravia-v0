@@ -594,16 +594,9 @@ const TpaTestInterface = () => {
         {/* Message Content */}
         {message.type === "text" && (
           <div className="max-w-[85%] sm:max-w-[70%]">
-            <div
-              className="p-3 sm:p-4 rounded-lg text-sm sm:text-base"
-              style={{ backgroundColor: '#DFE4FF', color: '#2A3262' }}
-            >
-              {message.text}
-            </div>
-
             {/* Image display if available */}
             {message.imageUrl && (
-              <div className="mt-2">
+              <div className="mb-2">
                 <div
                   className="relative border rounded-lg overflow-hidden cursor-pointer hover:opacity-90 transition-opacity"
                   onClick={() => handleImageClick(message.imageUrl!)}
@@ -621,6 +614,13 @@ const TpaTestInterface = () => {
                 </div>
               </div>
             )}
+
+            <div
+              className="p-3 sm:p-4 rounded-lg text-sm sm:text-base"
+              style={{ backgroundColor: '#DFE4FF', color: '#2A3262' }}
+            >
+              {message.text}
+            </div>
           </div>
         )}
 
