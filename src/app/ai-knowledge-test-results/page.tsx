@@ -63,42 +63,42 @@ declare global {
 const AI_KNOWLEDGE_CATEGORIES = {
   PE: {
     name: 'Performance Expectancy',
-    description: 'How much you believe AI will enhance your academic performance',
+    description: 'Percaya bahwa AI adalah alat untuk meningkatkan prestasi akademik, efektivitas belajar, menyelesaikan tugas dan memahami materi lebih cepat.',
     color: '#3B82F6'
   },
   EE: {
     name: 'Effort Expectancy',
-    description: 'How easy you find it to use AI tools for learning',
+    description: 'Kemampuan dan kenyamanan untuk mengoperasikan teknologi AI.',
     color: '#10B981'
   },
   SI: {
     name: 'Social Influence',
-    description: 'How much social factors encourage your AI usage',
+    description: 'Lingkungan dan support system yang mendukung penggunaan AI dalam pembelajaran.',
     color: '#F59E0B'
   },
   FC: {
     name: 'Facilitating Conditions',
-    description: 'How well your environment supports AI usage',
+    description: 'Resource dan akses yang dimiliki untuk menggunakan AI secara optimal.',
     color: '#EF4444'
   },
   HM: {
     name: 'Hedonic Motivation',
-    description: 'How much you enjoy using AI for learning',
+    description: 'Motivasi dan kenyamanan dalam menggunakan AI.',
     color: '#8B5CF6'
   },
   PV: {
     name: 'Price Value',
-    description: 'How cost-effective you perceive AI tools to be',
+    description: 'Persepsi terhadap cost-benefit ratio penggunaan AI dalam pembelajaran.',
     color: '#06B6D4'
   },
   HT: {
     name: 'Habit',
-    description: 'How much AI usage has become a habit for you',
+    description: 'Natural routine dan kebiasaan menggunakan AI untuk belajar sehari-hari',
     color: '#84CC16'
   },
   BI: {
     name: 'Behavioral Intention',
-    description: 'Your intention to continue using AI for learning',
+    description: 'Intensi perilaku dan kebiasaan menggunakan AI yang lebih tinggi',
     color: '#F97316'
   }
 };
