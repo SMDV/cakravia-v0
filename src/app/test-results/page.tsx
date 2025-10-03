@@ -1108,7 +1108,9 @@ const EnhancedResultsDashboard = () => {
                   <h3 className="text-xl font-bold mb-2 text-gray-900">
                     VARK Results + Report Certificate
                   </h3>
-                  <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>Rp. 30.000</p>
+                  <p className="text-3xl font-extrabold mb-4" style={{ color: '#4A47A3' }}>
+                    Rp. {(config?.pricing.vark_price || 30000).toLocaleString('id-ID')}
+                  </p>
                   <button 
                     onClick={handlePurchaseCertificate}
                     disabled={isProcessingPayment}
