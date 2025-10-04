@@ -66,7 +66,7 @@ declare global {
 }
 
 const EnhancedResultsDashboard = () => {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, config } = useAuth();
   const [resultsState, setResultsState] = useState<ResultsState>({
     isLoading: true,
     testData: null,
