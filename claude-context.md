@@ -109,7 +109,7 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 ### FEATURE_3: Behavioral Assessment
 **STATUS:** ACTIVE | **PRIORITY:** HIGH | **COMPLEXITY:** 4
 
-**PURPOSE:** Analyze behavioral patterns across 4 dimensions (H-Habits, M-Motivation, R-Regulation, E-Engagement)
+**PURPOSE:** Analyze behavioral patterns across 4 dimensions (O-Observation, S-Self-Regulation, G-Goal Setting, L-Learning Outcomes)
 **USER_STORY:** As a user, I want to understand my behavioral learning patterns so that I can improve my study habits
 
 **MAIN_FLOW:**

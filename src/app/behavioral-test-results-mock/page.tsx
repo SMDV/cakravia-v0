@@ -14,24 +14,24 @@ const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 
 // Mock Behavioral Categories - 4 specific dimensions with detailed descriptions
 const BEHAVIORAL_CATEGORIES = {
-  H: {
-    name: 'Kebiasaan (Habits)',
-    description: 'Habits adalah kebiasaan, yaitu tindakan atau perilaku yang dilakukan secara berulang dan otomatis sehingga menjadi otomatis dan sering dilakukan tanpa banyak berpikir',
+  O: {
+    name: 'Observation',
+    description: 'Berdasarkan teori Observational Learning dari Albert Bandura, proses pengamatan belajar melibatkan empat sub-proses utama yang harus dilalui agar pembelajaran melalui observasi berhasil: Attention (Perhatian), Retention (Retensi), Reproduction (Reproduksi), dan Motivation (Motivasi) (Bandura & Jeffrey, 1973; Bandura, 1977).',
     color: '#8979FF'
   },
-  M: {
-    name: 'Motivasi (Motivation)',
-    description: 'Motivasi adalah dorongan internal atau eksternal yang menyebabkan seseorang bertindak atau melakukan suatu kegiatan dengan tujuan tertentu, baik yang muncul secara sadar maupun tidak',
-    color: '#FF928A'
-  },
-  R: {
-    name: 'Regulasi Diri (Self-Regulation)',
-    description: 'Self-regulation adalah kemampuan seseorang untuk mengatur pikiran, emosi, dan perilaku diri sendiri secara konsisten untuk mencapai tujuan jangka panjang',
+  S: {
+    name: 'Self-Regulation',
+    description: 'Berdasarkan model Self-Regulated Learning dari Zimmerman (2000) dan Pintrich (2000, 2004), SRL mencakup tiga fase siklikal: Forethought (Perencanaan), Performance (Pelaksanaan), dan Self-Reflection (Refleksi Diri). Pintrich lebih lanjut mengidentifikasi empat area regulasi: Cognition, Motivation/Affect, Behavior, dan Context.',
     color: '#3CC3DF'
   },
-  E: {
-    name: 'Keterlibatan (Engagement)',
-    description: 'Engagement adalah tingkat perhatian, rasa ingin tahu, dan komitmen aktif yang dibawa oleh peserta didik ke dalam proses pembelajaran, yang mencakup dimensi perilaku, kognitif, dan emosional',
+  G: {
+    name: 'Goal Setting',
+    description: 'Berdasarkan Goal-Setting Theory dari Locke & Latham (1990, 2002, 2006), tujuan yang efektif memiliki karakteristik: Specific (Spesifik), Measurable (Terukur), Achievable (Dapat Dicapai), Relevant (Relevan), dan Time-bound (Berbatas Waktu) - dikenal sebagai SMART goals.',
+    color: '#FF928A'
+  },
+  L: {
+    name: 'Learning Outcomes',
+    description: 'Learning outcomes mencakup berbagai dimensi hasil belajar berdasarkan Taksonomi Bloom yang Direvisi (Anderson & Krathwohl, 2001) dan teori Self-Efficacy (Bandura, 1997). Hasil belajar tidak hanya kognitif tetapi juga mencakup keterampilan metakognitif, aplikatif, dan kepercayaan diri akademik.',
     color: '#FFAE4C'
   }
 };
@@ -48,17 +48,17 @@ const mockResultsData = {
   max_score: 5.0,
   total_score: 16.2,
   scores_breakdown: [
-    { category: 'Kebiasaan', code: 'H', score: 4.2, percentage: 84 },
-    { category: 'Motivasi', code: 'M', score: 3.8, percentage: 76 },
-    { category: 'Regulasi Diri', code: 'R', score: 4.5, percentage: 90 },
-    { category: 'Keterlibatan', code: 'E', score: 3.7, percentage: 74 }
+    { category: 'Observation', code: 'O', score: 4.2, percentage: 84 },
+    { category: 'Self-Regulation', code: 'S', score: 4.5, percentage: 90 },
+    { category: 'Goal Setting', code: 'G', score: 3.8, percentage: 76 },
+    { category: 'Learning Outcomes', code: 'L', score: 3.7, percentage: 74 }
   ],
-  dominant_dimensions: ['R', 'H'],
+  dominant_dimensions: ['S', 'O'],
   dimension_interpretations: {
-    H: 'Skor tinggi menunjukkan kebiasaan belajar yang sangat baik dan konsisten',
-    M: 'Motivasi yang baik dengan ruang untuk peningkatan lebih lanjut',
-    R: 'Kemampuan regulasi diri yang sangat baik dalam mengelola pembelajaran',
-    E: 'Keterlibatan yang solid dengan potensi untuk ditingkatkan'
+    O: 'Skor tinggi menunjukkan kemampuan observasi dan pembelajaran melalui pengamatan yang sangat baik',
+    S: 'Kemampuan regulasi diri yang sangat baik dalam mengelola pembelajaran',
+    G: 'Penetapan tujuan yang baik dengan ruang untuk peningkatan lebih lanjut',
+    L: 'Hasil belajar yang solid dengan potensi untuk ditingkatkan'
   },
   result_description: {
     title: 'Profil Pembelajar Mandiri',
@@ -93,10 +93,10 @@ const BehavioralTestResultsMock = () => {
   const organizedScores = Object.entries(BEHAVIORAL_CATEGORIES).map(([code, info]) => {
     const score = (() => {
       switch (code) {
-        case 'H': return mockResultsData.h_score;
-        case 'M': return mockResultsData.m_score;
-        case 'R': return mockResultsData.r_score;
-        case 'E': return mockResultsData.e_score;
+        case 'O': return mockResultsData.h_score; // Observation maps to h_score (API)
+        case 'S': return mockResultsData.r_score; // Self-Regulation maps to r_score (API)
+        case 'G': return mockResultsData.m_score; // Goal Setting maps to m_score (API)
+        case 'L': return mockResultsData.e_score; // Learning Outcomes maps to e_score (API)
         default: return 0;
       }
     })();

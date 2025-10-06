@@ -61,24 +61,24 @@ declare global {
 
 // Behavioral Categories mapping - 4 specific dimensions with detailed descriptions
 const BEHAVIORAL_CATEGORIES = {
-  H: {
-    name: 'Habits',
-    description: 'Habits adalah kebiasaan, yaitu tindakan atau perilaku yang dilakukan secara berulang dan otomatis sehingga menjadi otomatis dan sering dilakukan tanpa banyak berpikir',
+  O: {
+    name: 'Observation',
+    description: 'Berdasarkan teori Observational Learning dari Albert Bandura, proses pengamatan belajar melibatkan empat sub-proses utama yang harus dilalui agar pembelajaran melalui observasi berhasil: Attention (Perhatian), Retention (Retensi), Reproduction (Reproduksi), dan Motivation (Motivasi) (Bandura & Jeffrey, 1973; Bandura, 1977).',
     color: '#8979FF'
   },
-  M: {
-    name: 'Motivation',
-    description: 'Motivasi adalah dorongan internal atau eksternal yang menyebabkan seseorang bertindak atau melakukan suatu kegiatan dengan tujuan tertentu, baik yang muncul secara sadar maupun tidak',
-    color: '#FF928A'
-  },
-  R: {
+  S: {
     name: 'Self-Regulation',
-    description: 'Self-regulation adalah kemampuan seseorang untuk mengatur pikiran, emosi, dan perilaku diri sendiri secara konsisten untuk mencapai tujuan jangka panjang',
+    description: 'Berdasarkan model Self-Regulated Learning dari Zimmerman (2000) dan Pintrich (2000, 2004), SRL mencakup tiga fase siklikal: Forethought (Perencanaan), Performance (Pelaksanaan), dan Self-Reflection (Refleksi Diri). Pintrich lebih lanjut mengidentifikasi empat area regulasi: Cognition, Motivation/Affect, Behavior, dan Context.',
     color: '#3CC3DF'
   },
-  E: {
-    name: 'Engagement',
-    description: 'Engagement adalah tingkat perhatian, rasa ingin tahu, dan komitmen aktif yang dibawa oleh peserta didik ke dalam proses pembelajaran, yang mencakup dimensi perilaku, kognitif, dan emosional',
+  G: {
+    name: 'Goal Setting',
+    description: 'Berdasarkan Goal-Setting Theory dari Locke & Latham (1990, 2002, 2006), tujuan yang efektif memiliki karakteristik: Specific (Spesifik), Measurable (Terukur), Achievable (Dapat Dicapai), Relevant (Relevan), dan Time-bound (Berbatas Waktu) - dikenal sebagai SMART goals.',
+    color: '#FF928A'
+  },
+  L: {
+    name: 'Learning Outcomes',
+    description: 'Learning outcomes mencakup berbagai dimensi hasil belajar berdasarkan Taksonomi Bloom yang Direvisi (Anderson & Krathwohl, 2001) dan teori Self-Efficacy (Bandura, 1997). Hasil belajar tidak hanya kognitif tetapi juga mencakup keterampilan metakognitif, aplikatif, dan kepercayaan diri akademik.',
     color: '#FFAE4C'
   }
 };
@@ -799,8 +799,14 @@ const EnhancedBehavioralResultsDashboard = () => {
     // Parse score from scores_breakdown array
     const breakdown = resultsState.resultsData!.scores_breakdown || [];
 
-    // Handle code mismatch: API uses "A" for Engagement but frontend expects "E"
-    const apiCode = code === 'E' ? 'A' : code;
+    // Map new display codes to API codes (API still uses H, M, R, E/A)
+    const apiCodeMap: Record<string, string> = {
+      'O': 'H',  // Observation -> Habits (API code)
+      'S': 'R',  // Self-Regulation -> Self-Regulation (API code)
+      'G': 'M',  // Goal Setting -> Motivation (API code)
+      'L': 'A'   // Learning Outcomes -> Engagement (API uses 'A')
+    };
+    const apiCode = apiCodeMap[code] || code;
 
     const scoreData = breakdown.find((item) => item.code === apiCode);
     // API returns 'average' field, but TypeScript expects 'score'

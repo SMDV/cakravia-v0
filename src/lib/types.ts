@@ -328,10 +328,10 @@ export interface BehavioralScoreBreakdown {
 }
 
 export interface BehavioralTestResults {
-  h_score: number; // Habits (kebiasaan)
-  m_score: number; // Motivation (motivasi)
-  r_score: number; // Self-Regulation (regulasi diri)
-  e_score: number; // Engagement (keterlibatan)
+  h_score: number; // Observation (API field for observation learning)
+  m_score: number; // Goal Setting (API field for goal setting)
+  r_score: number; // Self-Regulation (API field for self-regulated learning)
+  e_score: number; // Learning Outcomes (API field for learning outcomes)
   average_score: number; // Computed average from the 4 dimensions
   level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
   min_score: number;
