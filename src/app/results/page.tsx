@@ -852,60 +852,60 @@ const openSnapPopup = useCallback((snapToken: string) => {
   // const otherScores = sortedScores.slice(1);
 
   // Load results data
-  useEffect(() => {
-    const loadResults = async () => {
-      if (!isAuthenticated) {
-        setResultsState(prev => ({ 
-          ...prev, 
-          isLoading: false, 
-          error: 'Please login to view results' 
+  const loadResults = useCallback(async () => {
+    if (!isAuthenticated) {
+      setResultsState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: 'Please login to view results'
+      }));
+      return;
+    }
+
+    try {
+      // Get test ID from URL params
+      const urlParams = new URLSearchParams(window.location.search);
+      const testId = urlParams.get('testId');
+
+      if (!testId) {
+        setResultsState(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'No test ID provided. Please complete a test first.'
         }));
         return;
       }
 
-      try {
-        // Get test ID from URL params
-        const urlParams = new URLSearchParams(window.location.search);
-        const testId = urlParams.get('testId');
-        
-        if (!testId) {
-          setResultsState(prev => ({ 
-            ...prev, 
-            isLoading: false, 
-            error: 'No test ID provided. Please complete a test first.' 
-          }));
-          return;
-        }
+      console.log('Loading test results for test ID:', testId);
 
-        console.log('Loading test results for test ID:', testId);
-        
-        // Fetch test results from the new API endpoint
-        const resultsResponse = await varkAPI.getTestResults(testId);
-        const resultsData = resultsResponse.data;
-        
-        console.log('Loaded results data:', resultsData);
-        
-        // Check payment status for this test
-        await checkPaymentStatus(testId);
-        
-        setResultsState(prev => ({
-          ...prev,
-          isLoading: false,
-          resultsData,
-        }));
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
-        console.error('Error loading results:', error);
-        setResultsState(prev => ({
-          ...prev,
-          isLoading: false,
-          error: errorMessage
-        }));
-      }
-    };
+      // Fetch test results from the new API endpoint
+      const resultsResponse = await varkAPI.getTestResults(testId);
+      const resultsData = resultsResponse.data;
 
+      console.log('Loaded results data:', resultsData);
+
+      // Check payment status for this test
+      await checkPaymentStatus(testId);
+
+      setResultsState(prev => ({
+        ...prev,
+        isLoading: false,
+        resultsData,
+      }));
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to load results';
+      console.error('Error loading results:', error);
+      setResultsState(prev => ({
+        ...prev,
+        isLoading: false,
+        error: errorMessage
+      }));
+    }
+  }, [isAuthenticated, checkPaymentStatus]);
+
+  useEffect(() => {
     loadResults();
-  }, [isAuthenticated, user, checkPaymentStatus]);
+  }, [loadResults]);
 
   // Data for ApexCharts Radial Bar Chart (Learning Preferences) - Using percentages
   const learningChartSeries = [
