@@ -14,7 +14,7 @@ import Header from '@/components/Header';
 import CrossDeviceWarning from '@/components/CrossDeviceWarning';
 import { useAuth } from '@/contexts/AuthContext';
 import { behavioralAPI } from '@/lib/api/behavioral';
-import { BehavioralQuestionSet, BehavioralTest, BehavioralAnswer } from '@/lib/types';
+import { BehavioralQuestionSet, BehavioralTest, BehavioralAnswer, BehavioralQuestion } from '@/lib/types';
 import { BehavioralTestProgressManager, BehavioralTestProgress } from '@/lib/behavioralTestProgress';
 
 // Import the background image
