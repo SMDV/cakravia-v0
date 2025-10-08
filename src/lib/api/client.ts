@@ -35,14 +35,20 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       Cookies.remove('auth_token');
       Cookies.remove('user_data');
-      // Only redirect if we're not already on login/register pages
-      if (typeof window !== 'undefined' && 
-          !window.location.pathname.includes('/login') && 
-          !window.location.pathname.includes('/register')) {
+
+      // Check if this is a public endpoint that shouldn't trigger redirect
+      const isPublicEndpoint =
+        error.config?.url?.includes('/config');
+
+      // Only redirect if we're not already on login/register pages and it's not a public endpoint
+      if (typeof window !== 'undefined' &&
+          !window.location.pathname.includes('/login') &&
+          !window.location.pathname.includes('/register') &&
+          !isPublicEndpoint) {
         window.location.href = '/login';
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
