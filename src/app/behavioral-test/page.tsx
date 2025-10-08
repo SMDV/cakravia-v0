@@ -465,7 +465,7 @@ const BehavioralTestInterface = () => {
   }, []);
 
   // SliderInput Component for user input
-  const SliderInput = useCallback(({ value, onChange }: { value: number; onChange: (value: number) => void }) => {
+  const SliderInput = useCallback(({ value, onChange, currentQuestion }: { value: number; onChange: (value: number) => void; currentQuestion?: BehavioralQuestion }) => {
     const maxWeight = 5; // Hardcoded for behavioral tests since backend doesn't provide max_weight
 
     return (
@@ -509,7 +509,7 @@ const BehavioralTestInterface = () => {
 
         <div className="text-center">
           <div className="text-xs text-gray-500">
-            Value: {value.toFixed(1)} | Category: Behavioral
+            Value: {value.toFixed(1)} | Category: {currentQuestion?.category.name || 'Behavioral'}
           </div>
         </div>
 
@@ -859,6 +859,7 @@ const BehavioralTestInterface = () => {
                   <SliderInput
                     value={currentSliderValue}
                     onChange={setCurrentSliderValue}
+                    currentQuestion={testState.test?.questions[testState.currentQuestionIndex]}
                   />
                 </div>
               </div>
