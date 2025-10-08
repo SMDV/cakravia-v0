@@ -322,24 +322,38 @@ export interface BehavioralSubmission {
 // Behavioral Test Results Types
 export interface BehavioralScoreBreakdown {
   category: string;
-  code: string;
+  code: string; // 3-letter codes: OBS, GOL, SRL, OUT
   score: number;
-  percentage: number;
+  average: number; // Average score per question in this category
+  percentage?: number; // Optional percentage (calculated on frontend)
+  description?: string; // Category description from API
 }
 
 export interface BehavioralTestResults {
-  h_score: number; // Observation (API field for observation learning)
-  m_score: number; // Goal Setting (API field for goal setting)
-  r_score: number; // Self-Regulation (API field for self-regulated learning)
-  e_score: number; // Learning Outcomes (API field for learning outcomes)
+  h_score: number; // Observation (API field for observation learning) - deprecated, use scores_breakdown
+  m_score: number; // Goal Setting (API field for goal setting) - deprecated, use scores_breakdown
+  r_score: number; // Self-Regulation (API field for self-regulated learning) - deprecated, use scores_breakdown
+  e_score: number; // Learning Outcomes (API field for learning outcomes) - deprecated, use scores_breakdown
   average_score: number; // Computed average from the 4 dimensions
   level_label: string; // Category indicator (e.g., "High", "Medium", "Low")
+  level_message: string; // Descriptive message about the level
+  threshold_min?: string; // Minimum threshold for current level
+  threshold_max?: string; // Maximum threshold for current level
   min_score: number;
   max_score: number;
   total_score: number;
+  total_questions: number;
   scores_breakdown: BehavioralScoreBreakdown[];
+  performance_level?: string; // Overall performance level (e.g., "Proficient")
+  recommendations?: string[]; // Array of recommendations
   dominant_dimensions: string[];
   dimension_interpretations: Record<string, string>;
+  detailed_analysis?: {
+    strengths: string[];
+    areas_for_improvement: string[];
+    overall_assessment: string;
+    next_steps: string;
+  };
   result_description: {
     title: string;
     description: string;

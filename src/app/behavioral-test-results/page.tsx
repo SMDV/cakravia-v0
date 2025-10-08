@@ -799,12 +799,12 @@ const EnhancedBehavioralResultsDashboard = () => {
     // Parse score from scores_breakdown array
     const breakdown = resultsState.resultsData!.scores_breakdown || [];
 
-    // Map new display codes to API codes (API still uses H, M, R, E/A)
+    // Map new display codes to API codes (API now uses 3-letter codes)
     const apiCodeMap: Record<string, string> = {
-      'O': 'H',  // Observation -> Habits (API code)
-      'S': 'R',  // Self-Regulation -> Self-Regulation (API code)
-      'G': 'M',  // Goal Setting -> Motivation (API code)
-      'L': 'A'   // Learning Outcomes -> Engagement (API uses 'A')
+      'O': 'OBS',  // Observation -> OBS (API code)
+      'S': 'SRL',  // Self-Regulation -> SRL (API code)
+      'G': 'GOL',  // Goal Setting -> GOL (API code)
+      'L': 'OUT'   // Learning Outcomes -> OUT (API code)
     };
     const apiCode = apiCodeMap[code] || code;
 

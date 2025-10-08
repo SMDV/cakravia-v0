@@ -43,22 +43,39 @@ const mockResultsData = {
   r_score: 4.5,
   e_score: 3.7,
   average_score: 4.05,
-  level_label: 'Tinggi',
+  level_label: 'High',
+  level_message: 'Excellent behavior and self-regulation. Keep it up!',
+  threshold_min: '3.5',
+  threshold_max: '5.0',
   min_score: 1.0,
   max_score: 5.0,
-  total_score: 16.2,
+  total_score: 44,
+  total_questions: 12,
   scores_breakdown: [
-    { category: 'Observation', code: 'O', score: 4.2, percentage: 84 },
-    { category: 'Self-Regulation', code: 'S', score: 4.5, percentage: 90 },
-    { category: 'Goal Setting', code: 'G', score: 3.8, percentage: 76 },
-    { category: 'Learning Outcomes', code: 'L', score: 3.7, percentage: 74 }
+    { category: 'Observation', code: 'OBS', score: 11, average: 3.67, percentage: 73, description: 'Measures level of involvement and participation' },
+    { category: 'Self-Regulation', code: 'SRL', score: 11, average: 3.67, percentage: 73, description: 'Measures ability to control and manage behavior' },
+    { category: 'Goal Setting', code: 'GOL', score: 12, average: 4.0, percentage: 80, description: 'Measures internal drive and goal-setting behavior' },
+    { category: 'Learning Outcomes', code: 'OUT', score: 10, average: 3.33, percentage: 67, description: 'Measures consistency and routine formation' }
   ],
-  dominant_dimensions: ['S', 'O'],
+  performance_level: 'Proficient',
+  recommendations: [
+    'Maintain your strong Goal Setting skills and help others in this area.',
+    'Maintain your strong Self-Regulation skills and help others in this area.',
+    'Continue developing Learning Outcomes abilities with consistent effort.',
+    'Maintain your strong Observation skills and help others in this area.'
+  ],
+  dominant_dimensions: ['SRL', 'OBS'],
   dimension_interpretations: {
-    O: 'Skor tinggi menunjukkan kemampuan observasi dan pembelajaran melalui pengamatan yang sangat baik',
-    S: 'Kemampuan regulasi diri yang sangat baik dalam mengelola pembelajaran',
-    G: 'Penetapan tujuan yang baik dengan ruang untuk peningkatan lebih lanjut',
-    L: 'Hasil belajar yang solid dengan potensi untuk ditingkatkan'
+    OBS: 'Skor tinggi menunjukkan kemampuan observasi dan pembelajaran melalui pengamatan yang sangat baik',
+    SRL: 'Kemampuan regulasi diri yang sangat baik dalam mengelola pembelajaran',
+    GOL: 'Penetapan tujuan yang baik dengan ruang untuk peningkatan lebih lanjut',
+    OUT: 'Hasil belajar yang solid dengan potensi untuk ditingkatkan'
+  },
+  detailed_analysis: {
+    strengths: ['Goal Setting'],
+    areas_for_improvement: ['Learning Outcomes'],
+    overall_assessment: 'Your overall behavioral learning score is 3.67 out of 5.0, indicating High performance.',
+    next_steps: 'Excellent behavior and self-regulation. Keep it up!'
   },
   result_description: {
     title: 'Profil Pembelajar Mandiri',
@@ -91,17 +108,19 @@ const BehavioralTestResultsMock = () => {
 
   // Create organized scores from mock data - 4 dimensions
   const organizedScores = Object.entries(BEHAVIORAL_CATEGORIES).map(([code, info]) => {
-    const score = (() => {
-      switch (code) {
-        case 'O': return mockResultsData.h_score; // Observation maps to h_score (API)
-        case 'S': return mockResultsData.r_score; // Self-Regulation maps to r_score (API)
-        case 'G': return mockResultsData.m_score; // Goal Setting maps to m_score (API)
-        case 'L': return mockResultsData.e_score; // Learning Outcomes maps to e_score (API)
-        default: return 0;
-      }
-    })();
+    // Map display codes to API 3-letter codes
+    const apiCodeMap: Record<string, string> = {
+      'O': 'OBS',
+      'S': 'SRL',
+      'G': 'GOL',
+      'L': 'OUT'
+    };
+    const apiCode = apiCodeMap[code];
 
-    const percentage = (score / mockResultsData.max_score) * 100;
+    // Find matching score from breakdown
+    const scoreData = mockResultsData.scores_breakdown.find(item => item.code === apiCode);
+    const score = scoreData?.average || 0;
+    const percentage = scoreData?.percentage || (score / mockResultsData.max_score) * 100;
 
     return {
       name: info.name,
