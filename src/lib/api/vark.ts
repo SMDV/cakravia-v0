@@ -148,20 +148,42 @@ export const varkAPI = {
   startTestFlow: async (): Promise<{ questionSet: VarkQuestionSet; test: VarkTest }> => {
     try {
       console.log('🚀 Starting complete test flow...');
-      
+
       // 1. Get active question set
       const questionSetResponse = await varkAPI.getActiveQuestionSet();
       const questionSet = questionSetResponse.data;
-      
+
       // 2. Create test with the question set
       const testResponse = await varkAPI.createTest(questionSet.id);
       const test = testResponse.data;
-      
+
       console.log('✅ Test flow started successfully');
       return { questionSet, test };
     } catch (error) {
       console.error('❌ Failed to start test flow:', error);
       throw error;
+    }
+  },
+
+  // Download VARK certificate
+  downloadCertificate: async (testId: string): Promise<Blob> => {
+    try {
+      console.log('🔄 Downloading VARK certificate for test:', testId);
+      const response = await apiClient.get(`/users/vark_tests/${testId}/orders/download_certificate`, {
+        responseType: 'blob'
+      });
+      console.log('✅ VARK certificate downloaded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to download VARK certificate:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to download certificate. Please ensure payment is completed.');
+      }
     }
   }
 };

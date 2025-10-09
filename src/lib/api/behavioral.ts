@@ -210,5 +210,31 @@ export const behavioralAPI = {
       console.error('❌ Failed to start Behavioral Test flow:', error);
       throw error;
     }
+  },
+
+  /**
+   * Download Behavioral test certificate
+   * @param testId - The ID of the test to download certificate for
+   * @returns Promise<Blob> The certificate file as a blob
+   */
+  downloadCertificate: async (testId: string): Promise<Blob> => {
+    try {
+      console.log('🔄 Downloading Behavioral certificate for test:', testId);
+      const response = await apiClient.get(`/users/behavioral_learning_tests/${testId}/orders/download_certificate`, {
+        responseType: 'blob'
+      });
+      console.log('✅ Behavioral certificate downloaded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to download Behavioral certificate:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to download certificate. Please ensure payment is completed.');
+      }
+    }
   }
 };

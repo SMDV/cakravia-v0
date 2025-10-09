@@ -217,5 +217,31 @@ export const comprehensiveAPI = {
       console.error('❌ Failed to start Comprehensive Test flow:', error);
       throw error;
     }
+  },
+
+  /**
+   * Download Comprehensive test certificate
+   * @param testId - The ID of the test to download certificate for
+   * @returns Promise<Blob> The certificate file as a blob
+   */
+  downloadCertificate: async (testId: string): Promise<Blob> => {
+    try {
+      console.log('🔄 Downloading Comprehensive certificate for test:', testId);
+      const response = await apiClient.get(`/users/comprehensive_assessment_tests/${testId}/orders/download_certificate`, {
+        responseType: 'blob'
+      });
+      console.log('✅ Comprehensive certificate downloaded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to download Comprehensive certificate:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to download certificate. Please ensure payment is completed.');
+      }
+    }
   }
 };

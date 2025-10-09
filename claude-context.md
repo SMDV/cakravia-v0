@@ -148,6 +148,17 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - BehavioralTestProgressManager - Session persistence
 - behavioralAPI - Dedicated API layer
 
+**CATEGORY_DETAILS:**
+- **OBS (Observation)**: Based on Bandura's Observational Learning theory - Attention, Retention, Reproduction, Motivation
+- **SRL (Self-Regulation)**: Based on Zimmerman & Pintrich's SRL model - Forethought, Performance, Self-Reflection
+- **GOL (Goal Setting)**: Based on Locke & Latham's Goal-Setting Theory - SMART goals framework
+- **OUT (Learning Outcomes)**: Based on Bloom's Taxonomy (Revised) and Bandura's Self-Efficacy theory
+
+**API_CODES:**
+- Frontend Display: O, S, G, L (single letter codes for UI)
+- Backend API: OBS, GOL, SRL, OUT (3-letter codes in API responses)
+- Category mapping handled in results pages for backward compatibility
+
 ---
 
 ### FEATURE_4: Comprehensive Assessment
@@ -362,6 +373,13 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
   - `config.pricing.tpa_price` - TPA price (default: 50,000 IDR)
 - Fallback pricing used if config API fails
 - Single API call per app session (cached in AuthContext)
+
+**TECHNICAL_NOTES:**
+- Config API `/config` endpoint marked as public (no 401 redirect) in API client interceptor for unauthenticated homepage access
+- Payment callbacks use `useCallback` with proper dependency management (`[isAuthenticated, checkPaymentStatus]`) for state updates
+- All test result pages implement automatic payment status refresh after Midtrans callbacks (3s delay for success, 5s for pending)
+- Dynamic category display in test interfaces shows real-time category names from API responses via `currentQuestion.category.name`
+- VARK results page uses `loadResults` wrapped in `useCallback` to prevent stale closures and enable proper payment callback updates
 
 ---
 

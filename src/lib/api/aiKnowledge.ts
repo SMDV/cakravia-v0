@@ -155,5 +155,27 @@ export const aiKnowledgeAPI = {
       console.error('❌ Failed to start AI Knowledge test flow:', error);
       throw error;
     }
+  },
+
+  // Download AI Knowledge certificate
+  downloadCertificate: async (testId: string): Promise<Blob> => {
+    try {
+      console.log('🔄 Downloading AI Knowledge certificate for test:', testId);
+      const response = await apiClient.get(`/users/ai_knowledge_tests/${testId}/orders/download_certificate`, {
+        responseType: 'blob'
+      });
+      console.log('✅ AI Knowledge certificate downloaded successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to download AI Knowledge certificate:', error);
+
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+
+      if (axiosError.response?.data?.message) {
+        throw new Error(axiosError.response.data.message);
+      } else {
+        throw new Error('Failed to download certificate. Please ensure payment is completed.');
+      }
+    }
   }
 };

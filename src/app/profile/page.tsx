@@ -24,7 +24,7 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
-import { authAPI } from '@/lib/api';
+import { authAPI, varkAPI, aiKnowledgeAPI, behavioralAPI, comprehensiveAPI, tpaAPI } from '@/lib/api';
 import ChangePasswordComponent from '@/components/ChangePasswordComponent'; 
 
 interface VarkTestHistory {
@@ -780,6 +780,51 @@ const EnhancedProfilePage = () => {
     return test.status;
   };
 
+  // Handle certificate download with proper authentication
+  const handleCertificateDownload = async (test: UnifiedTestHistory) => {
+    try {
+      console.log(`🔄 Downloading certificate for ${test.type} test:`, test.id);
+
+      let blob: Blob;
+
+      // Use the appropriate API based on test type
+      switch (test.type) {
+        case 'vark':
+          blob = await varkAPI.downloadCertificate(test.id);
+          break;
+        case 'ai_knowledge':
+          blob = await aiKnowledgeAPI.downloadCertificate(test.id);
+          break;
+        case 'behavioral':
+          blob = await behavioralAPI.downloadCertificate(test.id);
+          break;
+        case 'comprehensive':
+          blob = await comprehensiveAPI.downloadCertificate(test.id);
+          break;
+        case 'tpa':
+          blob = await tpaAPI.downloadCertificate(test.id);
+          break;
+        default:
+          throw new Error(`Unknown test type: ${test.type}`);
+      }
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${test.type}_certificate_${test.id.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      console.log('✅ Certificate downloaded successfully');
+    } catch (error) {
+      console.error('❌ Failed to download certificate:', error);
+      alert(error instanceof Error ? error.message : 'Failed to download certificate. Please try again.');
+    }
+  };
+
   // Filter tests based on selected filter
   const filteredTestHistory = selectedFilter === 'all'
     ? unifiedTestHistory
@@ -1205,15 +1250,7 @@ const EnhancedProfilePage = () => {
 
                                 {test.order?.can_download_certificate && (
                                   <button
-                                    onClick={() => {
-                                      const endpoint = test.type === 'vark' ? 'vark_tests' :
-                                                      test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
-                                                      test.type === 'behavioral' ? 'behavioral_learning_tests' :
-                                                      test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
-                                                      test.type === 'tpa' ? 'tpa_tests' :
-                                                      'vark_tests';
-                                      window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
-                                    }}
+                                    onClick={() => handleCertificateDownload(test)}
                                     className="flex-1 min-w-0 inline-flex items-center justify-center gap-1 px-3 py-2 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
                                   >
                                     <Download className="w-3 h-3" />
@@ -1410,15 +1447,7 @@ const EnhancedProfilePage = () => {
                                     {/* Download Certificate */}
                                     {test.order?.can_download_certificate && (
                                       <button
-                                        onClick={() => {
-                                          const endpoint = test.type === 'vark' ? 'vark_tests' :
-                                                          test.type === 'ai_knowledge' ? 'ai_knowledge_tests' :
-                                                          test.type === 'behavioral' ? 'behavioral_learning_tests' :
-                                                          test.type === 'comprehensive' ? 'comprehensive_assessment_tests' :
-                                                          test.type === 'tpa' ? 'tpa_tests' :
-                                                          'vark_tests';
-                                          window.open(`https://api.cakravia.com/api/v1/users/${endpoint}/${test.id}/orders/download_certificate`, '_blank');
-                                        }}
+                                        onClick={() => handleCertificateDownload(test)}
                                         className="inline-flex items-center gap-1 px-3 py-1 bg-green-500 text-white text-xs rounded-lg hover:bg-green-600 transition-colors"
                                       >
                                         <Download className="w-3 h-3" />
