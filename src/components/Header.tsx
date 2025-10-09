@@ -62,8 +62,13 @@ const Header: React.FC<HeaderProps> = ({ currentPage = 'home', transparent = fal
       <div className="flex justify-between items-center px-4 sm:px-6 py-4 max-w-7xl mx-auto">
         {/* Logo */}
         <Link href="/" className="flex items-center" onClick={closeMobileMenu}>
-          <div className="w-8 h-8 bg-gray-800 rounded mr-2"></div>
-          <span className="font-bold text-lg">logoipsum</span>
+          <Image
+            src="/logo_cakravia.jpg"
+            alt="Cakravia Logo"
+            width={120}
+            height={68}
+            className="rounded"
+          />
         </Link>
         
         {/* Desktop Navigation */}
