@@ -6,29 +6,32 @@
  */
 
 /**
- * Midtrans Environment
- * Set to 'production' for live transactions or 'sandbox' for testing
- */
-export const MIDTRANS_ENVIRONMENT = process.env.NEXT_PUBLIC_MIDTRANS_ENVIRONMENT || 'sandbox';
-
-/**
  * Midtrans Snap Script URL
- * The URL for loading the Midtrans Snap payment popup script
+ * Production URL for Midtrans Snap payment popup script
  */
-export const MIDTRANS_SNAP_SCRIPT_URL = MIDTRANS_ENVIRONMENT === 'production'
-  ? 'https://app.midtrans.com/snap/snap.js'
-  : 'https://app.sandbox.midtrans.com/snap/snap.js';
+export const MIDTRANS_SNAP_SCRIPT_URL = 'https://app.midtrans.com/snap/snap.js';
 
 /**
  * Midtrans Client Key
- * Your Midtrans client key for authentication
- *
- * Production: Mid-client-8GWOB2qNMTVXD6YC
- * Sandbox: SB-Mid-client-nKMAqVgSgOIsOQyk (or SB-Mid-client-BnZAW_h-FqRtI-kz for older tests)
+ * Production client key for authentication
  */
-export const MIDTRANS_CLIENT_KEY = MIDTRANS_ENVIRONMENT === 'production'
-  ? 'Mid-client-8GWOB2qNMTVXD6YC'  // Production client key
-  : 'SB-Mid-client-nKMAqVgSgOIsOQyk';  // Sandbox client key
+export const MIDTRANS_CLIENT_KEY = 'Mid-client-8GWOB2qNMTVXD6YC';
+
+// ============================================================================
+// SAVED FOR FUTURE USE: Environment-based configuration
+// ============================================================================
+// Uncomment below if you need to switch between sandbox and production
+//
+// export const MIDTRANS_ENVIRONMENT = process.env.NEXT_PUBLIC_MIDTRANS_ENVIRONMENT || 'sandbox';
+//
+// export const MIDTRANS_SNAP_SCRIPT_URL = MIDTRANS_ENVIRONMENT === 'production'
+//   ? 'https://app.midtrans.com/snap/snap.js'
+//   : 'https://app.sandbox.midtrans.com/snap/snap.js';
+//
+// export const MIDTRANS_CLIENT_KEY = MIDTRANS_ENVIRONMENT === 'production'
+//   ? 'Mid-client-8GWOB2qNMTVXD6YC'  // Production client key
+//   : 'SB-Mid-client-nKMAqVgSgOIsOQyk';  // Sandbox client key
+// ============================================================================
 
 /**
  * Helper function to load Midtrans Snap script
