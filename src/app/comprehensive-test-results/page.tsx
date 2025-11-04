@@ -11,6 +11,7 @@ import { ComprehensiveTest, ComprehensiveTestResults as ComprehensiveTestResults
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CouponModal from '@/components/payment/CouponModal';
+import { loadMidtransScript } from '@/config/midtrans';
 
 const ApexCharts = dynamic(() => import("react-apexcharts"), { ssr: false })
 
@@ -408,26 +409,9 @@ const EnhancedComprehensiveResultsDashboard = () => {
 
   // Load Midtrans script
   useEffect(() => {
-    const loadMidtransScript = () => {
-      if (document.getElementById('midtrans-script')) return;
-
-      const script = document.createElement('script');
-      script.id = 'midtrans-script';
-      // script.src = 'https://app.midtrans.com/snap/snap.js'; // Production URL - TODO: use this for production
-      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js'; // Sandbox URL - temporary
-      script.setAttribute('data-client-key', 'SB-Mid-client-nKMAqVgSgOIsOQyk');
-      document.head.appendChild(script);
-
-      script.onload = () => {
-        console.log('✅ Midtrans script loaded');
-      };
-
-      script.onerror = () => {
-        console.error('❌ Failed to load Midtrans script');
-      };
-    };
-
-    loadMidtransScript();
+    loadMidtransScript().catch((error) => {
+      console.error('Failed to load Midtrans script:', error);
+    });
   }, []);
 
   // Enhanced openSnapPopup function with automatic status check

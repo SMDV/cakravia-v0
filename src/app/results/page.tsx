@@ -11,6 +11,7 @@ import { VarkTest, VarkTestResults, CouponValidationResponse, CouponValidationRe
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { CouponModal } from '@/components/payment';
+import { loadMidtransScript } from '@/config/midtrans';
 // import Image from 'next/image';
 // import TestChatBg from '@/assets/background/TestChatbg.png';
 
@@ -466,17 +467,9 @@ const checkPaymentStatus = useCallback(async (testId: string, isAutoCheck = fals
 
   // Load Midtrans Snap script
   useEffect(() => {
-    const loadMidtransScript = () => {
-      if (document.getElementById('midtrans-script')) return;
-      
-      const script = document.createElement('script');
-      script.id = 'midtrans-script';
-      script.src = 'https://app.sandbox.midtrans.com/snap/snap.js';
-      script.setAttribute('data-client-key', 'SB-Mid-client-BnZAW_h-FqRtI-kz'); // Sandbox client key - replace with your production key
-      document.body.appendChild(script);
-    };
-    
-    loadMidtransScript();
+    loadMidtransScript().catch((error) => {
+      console.error('Failed to load Midtrans script:', error);
+    });
   }, []);
 
 // Enhanced openSnapPopup function with automatic status check

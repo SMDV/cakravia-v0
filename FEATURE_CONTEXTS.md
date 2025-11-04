@@ -8,11 +8,16 @@ This document provides comprehensive context for each major feature in the Cakra
 2. [Authentication System Context](#authentication-system-context)
 3. [VARK Test System Context](#vark-test-system-context)
 4. [AI Knowledge Test System Context](#ai-knowledge-test-system-context)
-5. [Payment Integration Context](#payment-integration-context)
-6. [UI/Component System Context](#uicomponent-system-context)
-7. [API Architecture Context](#api-architecture-context)
-8. [Development Guidelines](#development-guidelines)
-9. [Documentation Maintenance Process](#documentation-maintenance-process)
+5. [Behavioral Test System Context](#behavioral-test-system-context)
+6. [Comprehensive Test System Context](#comprehensive-test-system-context)
+7. [TPA Assessment System Context](#tpa-assessment-system-context)
+8. [Payment Integration Context](#payment-integration-context)
+9. [Coupon/Voucher System Context](#couponvoucher-system-context)
+10. [Profile Management Context](#profile-management-context)
+11. [UI/Component System Context](#uicomponent-system-context)
+12. [API Architecture Context](#api-architecture-context)
+13. [Development Guidelines](#development-guidelines)
+14. [Documentation Maintenance Process](#documentation-maintenance-process)
 
 ---
 
@@ -545,10 +550,291 @@ catch (error) {
 
 ---
 
+## Behavioral Test System Context
+
+### Overview
+The Behavioral Learning Test assesses behavioral patterns across 4 dimensions based on established learning theories: Observation (Bandura), Self-Regulation (Zimmerman & Pintrich), Goal Setting (Locke & Latham), and Learning Outcomes (Bloom & Bandura).
+
+### Key Components
+
+#### 1. Test Interface (`src/app/behavioral-test/page.tsx`)
+**Purpose**: Behavioral assessment with chat-based interaction
+**Key Features**:
+- Chat-style question/answer interface
+- 4-dimension behavioral assessment
+- Real-time progress saving to localStorage
+- Cross-device continuation support
+- Timer with auto-submission
+
+#### 2. Behavioral API (`src/lib/api/behavioral.ts`)
+**Purpose**: All Behavioral test-related API communication
+**Key Methods**:
+- `getActiveQuestionSet()` - Fetch current question set
+- `createTest()` - Initialize new test instance
+- `submitAnswers()` - Submit completed answers
+- `getTestResults()` - Fetch 4-dimension results
+
+**API Endpoints**:
+- `GET /users/behavioral_learning_tests/active_question_set`
+- `POST /users/behavioral_learning_tests`
+- `POST /users/behavioral_learning_tests/:id/submit_answers`
+- `GET /users/behavioral_learning_tests/:id/results`
+
+### The 4 Behavioral Dimensions
+
+1. **OBS (Observation)** - Based on Bandura's Observational Learning theory
+   - Attention, Retention, Reproduction, Motivation
+2. **SRL (Self-Regulation)** - Based on Zimmerman & Pintrich's SRL model
+   - Forethought, Performance, Self-Reflection
+3. **GOL (Goal Setting)** - Based on Locke & Latham's Goal-Setting Theory
+   - SMART goals framework
+4. **OUT (Learning Outcomes)** - Based on Bloom's Taxonomy and Bandura's Self-Efficacy
+
+### Results Display
+- Results page: `/behavioral-test-results?testId={id}`
+- 4-dimension breakdown with radar charts
+- Behavioral insights and recommendations
+- Payment integration for certificate generation
+
+---
+
+## Comprehensive Test System Context
+
+### Overview
+The Comprehensive Assessment combines elements from VARK, AI Knowledge, and Behavioral tests into a complete learning profile assessment across 5 key dimensions.
+
+### Key Components
+
+#### 1. Test Interface (`src/app/comprehensive-test/page.tsx`)
+**Purpose**: Comprehensive assessment combining multiple test types
+**Key Features**:
+- Extended test session (longer time limits)
+- Questions spanning multiple assessment categories
+- Chat-based interface with category type indicators
+- Progress tracking across all dimensions
+
+#### 2. Comprehensive API (`src/lib/api/comprehensive.ts`)
+**Purpose**: Comprehensive test-related API communication
+**Key Methods**:
+- `getActiveQuestionSet()` - Fetch comprehensive question set
+- `createTest()` - Initialize comprehensive test
+- `submitAnswers()` - Submit all answers
+- `getTestResults()` - Fetch 5-dimension results
+
+**API Endpoints**:
+- `GET /users/comprehensive_assessment_tests/active_question_set`
+- `POST /users/comprehensive_assessment_tests`
+- `POST /users/comprehensive_assessment_tests/:id/submit_answers`
+- `GET /users/comprehensive_assessment_tests/:id/results`
+
+### The 5 Comprehensive Dimensions
+
+1. **CF (Cognitive Flexibility)** - Mental ability to adapt and change thinking
+2. **R (Resilience)** - Capacity to recover from difficulties
+3. **MA (Metacognitive Awareness)** - Understanding of own thinking processes
+4. **AG (Academic Grit)** - Perseverance toward long-term goals
+5. **E (Self-Esteem)** - Subjective evaluation of self-worth
+
+### Pricing & Results
+- **Pricing**: Rp. 45,000 (higher than individual tests)
+- **Results page**: `/comprehensive-test-results?testId={id}`
+- Complete profile with expert-backed insights
+- Payment integration with certificate
+
+---
+
+## TPA Assessment System Context
+
+### Overview
+Test of Potential Ability (TPA) is a professional cognitive reasoning assessment using a **payment-first architecture**. Unlike other tests where users take the test first and pay for results, TPA requires payment before test access.
+
+### Payment-First Architecture
+
+#### Key Difference from Other Tests
+**Other Tests (VARK, AI Knowledge, Behavioral, Comprehensive)**:
+```
+Test → Results → Payment → Certificate
+```
+
+**TPA Test**:
+```
+Payment → Test → Results + Certificate (already included)
+```
+
+### Key Components
+
+#### 1. TPA Payment Landing Page (`src/app/tpa-payment/page.tsx`)
+**Purpose**: Payment-first entry point for TPA assessment
+**Key Features**:
+- Payment information and pricing display (Rp. 50,000)
+- Coupon/voucher integration
+- Order creation before test access
+- Professional assessment positioning
+
+#### 2. TPA Test Interface (`src/app/tpa-test?orderId={id}`)
+**Purpose**: Reasoning assessment across 4 cognitive dimensions
+**Key Features**:
+- Requires paid order validation before access
+- 4 reasoning categories with 5 questions each
+- Chat-based interface
+- Timer and progress tracking
+
+#### 3. TPA API (`src/lib/api/tpa.ts`)
+**Purpose**: TPA test and payment operations
+**Key Methods**:
+- `startPaymentFlow()` - Create order with optional coupon
+- `startTestFlow(orderId)` - Create test with paid order validation
+- `validateOrderPayment(orderId)` - Check payment status
+- `downloadCertificate(testId)` - Download certificate as blob
+
+**API Endpoints**:
+- `POST /users/tpa_tests/order` - Create standalone order (payment-first)
+- `POST /users/tpa_tests` - Create test (requires order_id)
+- `GET /users/tpa_tests/{id}` - Get test
+- `POST /users/tpa_tests/{id}/submit_answers` - Submit answers
+- `GET /users/tpa_tests/{id}/results` - Get results
+- `GET /users/tpa_tests/{id}/orders/download_certificate` - Certificate download
+
+### The 4 Reasoning Dimensions
+
+1. **AR (Analytical Reasoning)** - Breaking down complex problems systematically
+2. **QR (Quantitative Reasoning)** - Mathematical and numerical analysis
+3. **SR (Spatial Reasoning)** - Visualizing spatial relationships
+4. **VR (Verbal Reasoning)** - Language comprehension and logical thinking
+
+### Payment Flow
+
+#### Order Creation Flow
+```
+User visits /tpa-payment → Clicks payment → CouponModal appears
+  ↓
+Optional coupon entry → Create order with coupon
+  ↓
+Midtrans payment processing → Payment success
+  ↓
+Redirect to /tpa-test?orderId={id} → Test access granted
+```
+
+#### Test Access Validation
+- System validates `orderId` parameter exists
+- Checks order payment status (must be 'paid')
+- Only allows test creation with validated paid order
+- Prevents unauthorized test access
+
+### Results & Certificate
+- **Results page**: `/tpa-test-results?testId={id}`
+- Direct certificate download (no additional payment)
+- 4-dimension reasoning profile breakdown
+- Total reasoning score with strongest categories
+
+### Pricing
+- **TPA Price**: Rp. 50,000 (highest among all tests)
+- **Coupon support**: Full voucher/discount integration
+- **Pre-paid**: Certificate included in initial payment
+
+---
+
 ## Payment Integration Context
 
 ### Overview
-The payment system integrates with Midtrans payment gateway for VARK test purchases, handling order creation, payment processing, and test unlocking.
+The payment system integrates with Midtrans payment gateway for all assessment types, featuring centralized configuration, dynamic pricing, and consistent payment flows across VARK, AI Knowledge, Behavioral, Comprehensive, and TPA tests.
+
+### Centralized Midtrans Configuration
+
+#### Configuration File (`src/config/midtrans.ts`)
+**Purpose**: Single source of truth for all Midtrans settings
+**Key Features**:
+- Environment-aware configuration (production/sandbox)
+- Centralized client keys
+- Automatic script URL switching
+- Reusable `loadMidtransScript()` helper function
+
+**Configuration Structure**:
+```typescript
+// Environment: 'production' or 'sandbox'
+export const MIDTRANS_ENVIRONMENT = process.env.NEXT_PUBLIC_MIDTRANS_ENVIRONMENT || 'sandbox';
+
+// Snap Script URLs (auto-switching)
+export const MIDTRANS_SNAP_SCRIPT_URL = MIDTRANS_ENVIRONMENT === 'production'
+  ? 'https://app.midtrans.com/snap/snap.js'
+  : 'https://app.sandbox.midtrans.com/snap/snap.js';
+
+// Client Keys (centralized)
+export const MIDTRANS_CLIENT_KEY = MIDTRANS_ENVIRONMENT === 'production'
+  ? 'Mid-client-8GWOB2qNMTVXD6YC'  // Production
+  : 'SB-Mid-client-nKMAqVgSgOIsOQyk';  // Sandbox
+
+// Helper function for consistent loading
+export const loadMidtransScript = () => Promise<void>
+```
+
+**Environment Configuration**:
+```bash
+# .env.local file
+NEXT_PUBLIC_MIDTRANS_ENVIRONMENT=production  # or 'sandbox'
+```
+
+**Usage Across Pages**:
+All payment pages import and use the centralized configuration:
+```typescript
+import { loadMidtransScript } from '@/config/midtrans';
+
+useEffect(() => {
+  loadMidtransScript().catch((error) => {
+    console.error('Failed to load Midtrans script:', error);
+  });
+}, []);
+```
+
+**Pages Using Centralized Config**:
+- `/results` - VARK results
+- `/ai-knowledge-test-results` - AI Knowledge results
+- `/behavioral-test-results` - Behavioral results
+- `/comprehensive-test-results` - Comprehensive results
+- `/tpa-payment` - TPA payment landing
+- `/tpa-test-results` - TPA results
+
+### Dynamic Pricing System
+
+#### Config API Integration
+**Purpose**: Centralized pricing management from backend
+**Key Features**:
+- Single API call on app initialization
+- Pricing cached in AuthContext
+- Fallback pricing for offline scenarios
+- Backend-controlled pricing updates
+
+**Config API Endpoint**:
+```
+GET /config
+```
+
+**Response Structure**:
+```typescript
+interface ConfigResponse {
+  pricing: {
+    vark_price: number;              // Default: 30,000
+    ai_knowledge_price: number;      // Default: 35,000
+    behavioral_learning_price: number; // Default: 40,000
+    comprehensive_assessment_price: number; // Default: 45,000
+    tpa_price: number;               // Default: 50,000
+  }
+}
+```
+
+**Usage in Components**:
+```typescript
+import { useAuth } from '@/contexts/AuthContext';
+
+const { config } = useAuth();
+const price = config?.pricing.vark_price || 30000;
+```
+
+**Benefits**:
+- Update pricing without frontend deployment
+- Consistent pricing across all pages
+- Single point of truth for pricing data
+- Graceful degradation with fallback values
 
 ### Key Components
 
@@ -618,6 +904,280 @@ interface PaymentToken {
 1. **Modify order creation** in `paymentAPI.createVarkOrder()`
 2. **Update payment verification** logic
 3. **Customize success/failure handlers**
+
+---
+
+## Coupon/Voucher System Context
+
+### Overview
+The Coupon/Voucher System provides discount functionality across all 5 test types (VARK, AI Knowledge, Behavioral, Comprehensive, TPA), allowing users to apply promotional codes before payment processing.
+
+### Key Components
+
+#### 1. CouponModal Component (`src/components/payment/CouponModal.tsx`)
+**Purpose**: Reusable coupon validation interface
+**Key Features**:
+- Modal-first approach (appears before Midtrans payment)
+- Real-time coupon validation with API
+- Pricing breakdown display with discount
+- Support for all 5 test types
+- Error handling for invalid/expired coupons
+
+**Props Interface**:
+```typescript
+interface CouponModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  onProceedWithoutCoupon: () => void;
+  onProceedWithCoupon: (couponData: CouponValidationResponse) => void;
+  originalAmount: number;
+  testType: 'vark' | 'ai_knowledge' | 'behavioral' | 'comprehensive' | 'tpa';
+  validateCoupon: (request: CouponValidationRequest) => Promise<CouponValidationResponse>;
+}
+```
+
+#### 2. Coupon Validation API
+**Purpose**: Validate coupon codes and calculate discounts
+**API Endpoint**:
+```
+POST /users/coupons/validate
+```
+
+**Request Structure**:
+```typescript
+interface CouponValidationRequest {
+  code: string;
+  test_type: string;
+  original_amount: number;
+}
+```
+
+**Response Structure**:
+```typescript
+interface CouponValidationResponse {
+  valid: boolean;
+  coupon: {
+    code: string;
+    discount_type: 'percentage' | 'fixed';
+    discount_value: number;
+  };
+  final_amount: number;
+  discount_amount: number;
+  message?: string;
+}
+```
+
+### Implementation Pattern
+
+#### Standard Payment Flow with Coupon
+```typescript
+// 1. Show coupon modal on payment button click
+const handlePurchaseCertificate = () => setShowCouponModal(true);
+
+// 2. Validate coupon if user enters code
+const handleValidateCoupon = async (request: CouponValidationRequest) => {
+  const response = await paymentAPI.validateCoupon(request);
+  return response.data;
+};
+
+// 3. Proceed to payment with optional coupon code
+const proceedToPayment = async (couponCode?: string) => {
+  // Create order with optional coupon_code parameter
+  const paymentResult = await paymentAPI.initialize[TestType]Payment(
+    testId,
+    couponCode
+  );
+  // Continue with Midtrans integration...
+};
+```
+
+### Integration Across Test Types
+
+#### Payment Endpoints with Coupon Support
+All test types accept `coupon_code` parameter:
+```
+POST /users/vark_tests/{id}/orders?coupon_code={code}
+POST /users/ai_knowledge_tests/{id}/orders?coupon_code={code}
+POST /users/behavioral_learning_tests/{id}/orders?coupon_code={code}
+POST /users/comprehensive_assessment_tests/{id}/orders?coupon_code={code}
+POST /users/tpa_tests/order?coupon_code={code}
+```
+
+#### Usage in Result Pages
+- `/results` - VARK results
+- `/ai-knowledge-test-results` - AI Knowledge results
+- `/behavioral-test-results` - Behavioral results
+- `/comprehensive-test-results` - Comprehensive results
+- `/tpa-payment` - TPA payment landing
+
+### User Experience Flow
+
+```
+User clicks "Get Results" / "Pay Now"
+  ↓
+CouponModal appears
+  ↓
+[Option 1] User enters coupon → Validates → Shows discount → Proceeds with coupon
+[Option 2] User skips → Proceeds without coupon
+  ↓
+Order creation with optional coupon_code
+  ↓
+Midtrans payment with discounted/original amount
+  ↓
+Payment success → Results unlocked
+```
+
+### Features
+- ✅ **Test Type Validation**: Coupons can be restricted to specific test types
+- ✅ **Discount Types**: Supports percentage and fixed amount discounts
+- ✅ **Real-time Validation**: Immediate feedback on coupon validity
+- ✅ **Pricing Display**: Clear breakdown of original price, discount, and final price
+- ✅ **Error Handling**: User-friendly error messages for invalid codes
+- ✅ **Optional Usage**: Users can skip coupon entry and pay full price
+
+---
+
+## Profile Management Context
+
+### Overview
+The Profile Management system provides a unified interface for user information, test history across all 5 assessment types, and certificate management.
+
+### Key Components
+
+#### 1. Enhanced Profile Page (`src/app/profile/page.tsx`)
+**Purpose**: Comprehensive user profile and test history management
+**Key Features**:
+- Editable profile information (name, phone, birthday)
+- Profile picture upload and management
+- Password change functionality
+- Unified test history from all assessment types
+- Certificate download access
+- Payment status tracking
+- Responsive design (mobile cards, desktop table)
+
+#### 2. Profile API Integration
+**Purpose**: Fetch and update user data
+**Key Methods**:
+```typescript
+// User profile
+GET /users/profile - Get user data
+PUT /users - Update profile (multipart/form-data for images)
+
+// Test histories (Promise.all with individual error handling)
+GET /users/vark_tests - VARK test history
+GET /users/ai_knowledge_tests - AI Knowledge history
+GET /users/behavioral_learning_tests - Behavioral history
+GET /users/comprehensive_assessment_tests - Comprehensive history
+GET /users/tpa_tests - TPA test history
+```
+
+### Unified Test History Display
+
+#### Test History Structure
+The profile page consolidates all test types using:
+- **Promise.all()** with individual error handling (one failure doesn't break others)
+- **Type conversion utilities** to normalize different test structures
+- **Unified interfaces** for consistent display
+- **Type badges** for clear test type identification
+
+#### Test History Columns
+- **Test Type** - Badge showing VARK/AI Knowledge/Behavioral/Comprehensive/TPA
+- **Test Date** - Completion timestamp
+- **Status** - Completed/In Progress/Expired
+- **Payment & Certificate** - Payment status and download button
+- **Actions** - Continue/View Results/Retake buttons
+
+#### Responsive Display
+- **Mobile**: Card-based layout with full information
+- **Desktop**: Table layout with sortable columns
+- **Layout**: 3/4 width for test history, 1/4 width for profile info
+
+### Test History Features
+
+#### Action Buttons
+Each test shows context-appropriate actions:
+- **Continue Test** - For incomplete tests
+- **View Results** - For completed paid tests
+- **Pay for Certificate** - For completed unpaid tests
+- **Retake Test** - Always available
+
+#### Payment Status Display
+Shows payment and certificate status:
+- **Paid**: Green badge with download button
+- **Pending**: Yellow badge with payment option
+- **Not Paid**: Red badge with "Get Certificate" button
+- **Certificate Ready**: Direct download link
+
+### Profile Information Management
+
+#### Editable Fields
+- **Name**: Text input with validation
+- **Phone**: Phone number input
+- **Birthday**: Date picker
+- **Profile Picture**: Image upload with preview
+- **Email**: Display-only (non-editable)
+- **Password**: Separate change password component
+
+#### Profile Update Flow
+```
+User edits field → Form validation → API request → Success feedback
+```
+
+### Password Management
+
+#### Change Password Component
+**Features**:
+- Current password verification
+- New password strength validation
+- Confirmation password matching
+- Secure password update endpoint
+
+**API Endpoint**:
+```
+PATCH /users/password_change
+```
+
+### Integration Points
+
+#### Homepage Navigation
+- Profile link in header (authenticated users only)
+- User avatar display with automatic fallbacks
+- Quick access to user information
+
+#### Test Results Pages
+- Links back to profile for test history
+- Certificate download integration
+- Payment status synchronization
+
+### Data Conversion Pattern
+
+#### Unified Test Interface
+```typescript
+interface UnifiedTestHistory {
+  id: string;
+  test_type: 'VARK' | 'AI Knowledge' | 'Behavioral' | 'Comprehensive' | 'TPA';
+  created_at: string;
+  status: string;
+  order?: PaymentOrder;
+  payment?: Payment;
+}
+```
+
+#### Conversion Functions
+Each test type has a converter to unified format:
+- `convertVarkToUnified(varkTest)` → UnifiedTestHistory
+- `convertAiKnowledgeToUnified(aiTest)` → UnifiedTestHistory
+- `convertBehavioralToUnified(behavioralTest)` → UnifiedTestHistory
+- `convertComprehensiveToUnified(comprehensiveTest)` → UnifiedTestHistory
+- `convertTpaToUnified(tpaTest)` → UnifiedTestHistory
+
+### Error Handling
+
+#### Graceful Degradation
+- Individual test type API failures don't break entire page
+- Displays available test histories even if some APIs fail
+- Clear error messaging per test type
+- Partial data display when some APIs unavailable
 
 ---
 
@@ -1400,3 +1960,84 @@ This feature context documentation provides a comprehensive guide for understand
 When adding new features or modifying existing ones, refer to the specific feature contexts and follow the established patterns for maintainable, scalable code. Always update this documentation as part of your development process to ensure it remains a valuable resource for the entire team.
 
 For questions or clarifications about any feature context, refer to the specific component files and their inline documentation.
+
+---
+
+## Documentation Version History
+
+### Version 3.0 - November 4, 2025
+**Major Updates:**
+- ✅ Added **Behavioral Test System Context** - 4-dimension behavioral assessment
+- ✅ Added **Comprehensive Test System Context** - 5-dimension comprehensive assessment
+- ✅ Added **TPA Assessment System Context** - Payment-first cognitive reasoning assessment
+- ✅ Added **Coupon/Voucher System Context** - Discount system across all 5 test types
+- ✅ Added **Profile Management Context** - Unified test history and user management
+- ✅ Updated **Payment Integration Context** with:
+  - Centralized Midtrans configuration (`src/config/midtrans.ts`)
+  - Dynamic pricing system via Config API
+  - Environment-aware setup (production/sandbox)
+  - Comprehensive payment flow documentation for all test types
+- ✅ Updated Table of Contents with all new sections
+- ✅ Complete alignment with claude-context.md v1.7
+
+**Codebase Improvements Documented:**
+- Centralized Midtrans configuration file
+- Dynamic pricing loaded from backend
+- 5 complete assessment types (VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
+- Unified profile page with all test histories
+- Comprehensive coupon system integration
+- Payment-first vs payment-after architectures
+
+### Version 2.0 - September 27, 2025
+**Updates:**
+- Added AI Knowledge Test System Context with 8-dimension assessment
+- Updated API Architecture Context with test results endpoint consistency fixes
+- Added API response structure fix documentation
+- Documented data conversion patterns and null safety improvements
+- Added Midtrans Payment Integration Implementation section
+
+### Version 1.0 - Initial Release
+**Initial Sections:**
+- Project Overview
+- Authentication System Context
+- VARK Test System Context
+- Payment Integration Context (basic)
+- UI/Component System Context
+- API Architecture Context
+- Development Guidelines
+- Documentation Maintenance Process
+
+---
+
+**Current Version**: 3.0
+**Last Updated**: November 4, 2025
+**Total Test Types**: 5 (VARK, AI Knowledge, Behavioral, Comprehensive, TPA)
+**Total Features Documented**: 10+ major features
+
+---
+
+## Quick Reference Card
+
+### All Assessment Types
+1. **VARK** - Learning styles (Visual, Aural, Read/Write, Kinesthetic) - Rp. 30,000
+2. **AI Knowledge** - AI attitudes (8 dimensions) - Rp. 35,000
+3. **Behavioral** - Behavioral learning (4 dimensions) - Rp. 40,000
+4. **Comprehensive** - Complete profile (5 dimensions) - Rp. 45,000
+5. **TPA** - Cognitive reasoning (4 dimensions) - Rp. 50,000 (payment-first)
+
+### Key Configuration Files
+- **Midtrans Config**: `src/config/midtrans.ts` - Payment gateway settings
+- **API Client**: `src/lib/api/client.ts` - HTTP client configuration
+- **Types**: `src/lib/types.ts` - All TypeScript interfaces
+- **Auth Context**: `src/contexts/AuthContext.tsx` - Global auth + config state
+
+### Payment Models
+- **Payment-After**: VARK, AI Knowledge, Behavioral, Comprehensive (Test → Results → Pay → Certificate)
+- **Payment-First**: TPA (Pay → Test → Results + Certificate)
+
+### Common Tasks Quick Links
+- **Add new test type**: See AI Knowledge Test System Context
+- **Modify payment**: See Payment Integration Context + Centralized Midtrans Config
+- **Update pricing**: Config API endpoint (`GET /config`)
+- **Add coupon**: See Coupon/Voucher System Context
+- **Profile integration**: See Profile Management Context

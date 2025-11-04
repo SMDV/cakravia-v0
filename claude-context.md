@@ -381,6 +381,25 @@ API_DOCUMENTATION: /temporer folder for claude (Postman collections, API docs, U
 - Dynamic category display in test interfaces shows real-time category names from API responses via `currentQuestion.category.name`
 - VARK results page uses `loadResults` wrapped in `useCallback` to prevent stale closures and enable proper payment callback updates
 
+**MIDTRANS_CONFIGURATION:**
+- **Centralized Config File**: `src/config/midtrans.ts` - Single source of truth for all Midtrans settings
+- **Environment-Aware**: Automatically switches between production and sandbox based on `NEXT_PUBLIC_MIDTRANS_ENVIRONMENT`
+- **Production Client Key**: `Mid-client-8GWOB2qNMTVXD6YC`
+- **Sandbox Client Key**: `SB-Mid-client-nKMAqVgSgOIsOQyk`
+- **Snap Script URLs**:
+  - Production: `https://app.midtrans.com/snap/snap.js`
+  - Sandbox: `https://app.sandbox.midtrans.com/snap/snap.js`
+- **Helper Function**: `loadMidtransScript()` - Consistent script loading across all pages
+- **Pages Using Midtrans**:
+  - `/results` (VARK)
+  - `/ai-knowledge-test-results` (AI Knowledge)
+  - `/behavioral-test-results` (Behavioral)
+  - `/comprehensive-test-results` (Comprehensive)
+  - `/tpa-payment` (TPA payment-first landing)
+  - `/tpa-test-results` (TPA results)
+- **Environment Variable**: `NEXT_PUBLIC_MIDTRANS_ENVIRONMENT=production` or `sandbox`
+- **Benefits**: Single point of maintenance, environment switching, consistent implementation
+
 ---
 
 ### FEATURE_8: Coupon/Voucher System
@@ -552,6 +571,7 @@ const proceedToPayment = (couponCode?: string) => {
 - Payment initialization methods for all 5 test types (with coupon support)
 - Coupon validation and modal handling utilities
 - Certificate download utilities (blob download with file creation)
+- **loadMidtransScript()** → Centralized Midtrans script loader from `src/config/midtrans.ts`
 
 ## DEVELOPMENT_PATTERNS
 
@@ -742,7 +762,20 @@ When modifying shared UI components:
 
 ---
 
-**CONTEXT_VERSION:** 1.6 | **LAST_UPDATED:** 2025-10-02
+**CONTEXT_VERSION:** 1.7 | **LAST_UPDATED:** 2025-11-04
+
+**CHANGELOG v1.7:**
+- ✅ Centralized Midtrans configuration to `src/config/midtrans.ts`
+- ✅ Created environment-aware Midtrans setup (production/sandbox auto-switching)
+- ✅ Replaced hardcoded Midtrans URLs and client keys across all 6 pages
+- ✅ Updated pages: results, ai-knowledge-test-results, behavioral-test-results, comprehensive-test-results, tpa-payment, tpa-test-results
+- ✅ Implemented `loadMidtransScript()` helper function for consistent script loading
+- ✅ Added environment variable: `NEXT_PUBLIC_MIDTRANS_ENVIRONMENT` for environment control
+- ✅ Production client key: `Mid-client-8GWOB2qNMTVXD6YC` (centralized)
+- ✅ Sandbox client key: `SB-Mid-client-nKMAqVgSgOIsOQyk` (centralized)
+- ✅ Created `.env.example` with Midtrans configuration template
+- ✅ Single point of maintenance for all Midtrans settings
+- ✅ Future changes only require editing one file: `src/config/midtrans.ts`
 
 **CHANGELOG v1.6:**
 - ✅ Fixed profile page test history interfaces to include order and payment data

@@ -21,6 +21,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { tpaAPI, paymentAPI } from '@/lib/api';
 import { TpaQuestionSet, CouponValidationResponse, CouponValidationRequest } from '@/lib/types';
 import { CouponModal } from '@/components/payment';
+import { loadMidtransScript } from '@/config/midtrans';
 
 // Midtrans result types
 interface MidtransResult {
@@ -112,20 +113,9 @@ const TpaPaymentLanding = () => {
 
   // Load Midtrans snap script
   useEffect(() => {
-    const snapScript = 'https://app.sandbox.midtrans.com/snap/snap.js';
-    // Use hardcoded sandbox client key (matching other test pages)
-    const clientKey = 'SB-Mid-client-BnZAW_h-FqRtI-kz';
-
-    const script = document.createElement('script');
-    script.src = snapScript;
-    script.setAttribute('data-client-key', clientKey);
-    script.async = true;
-
-    document.body.appendChild(script);
-
-    return () => {
-      document.body.removeChild(script);
-    };
+    loadMidtransScript().catch((error) => {
+      console.error('Failed to load Midtrans script:', error);
+    });
   }, []);
 
   // Check payment status function (with error handling)
