@@ -80,8 +80,6 @@ services:
     depends_on:
       app-blue:
         condition: service_healthy
-      app-green:
-        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
       interval: 30s
