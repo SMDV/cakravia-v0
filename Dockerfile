@@ -15,9 +15,8 @@ COPY . .
 # Create missing asset directories
 RUN mkdir -p src/assets/images/hero
 
-# Use Docker-specific config and build the application  
-RUN cp next.config.docker.ts next.config.ts && \
-    npm run build || (echo "Build failed, checking errors..." && \
+# Build the application (next.config.ts already has standalone output enabled)
+RUN npm run build || (echo "Build failed, checking errors..." && \
     ls -la src/assets/images/hero/ && \
     ls -la src/components/ && \
     ls -la src/contexts/ && \
@@ -47,8 +46,8 @@ USER nextjs
 EXPOSE 3000
 
 # Set environment variables
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV HOSTNAME="0.0.0.0"
 
 # Health check

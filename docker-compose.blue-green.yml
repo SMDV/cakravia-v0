@@ -10,9 +10,10 @@ services:
     restart: unless-stopped
     ports:
       - "3000:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       - NEXT_TELEMETRY_DISABLED=1
       - DEPLOYMENT_SLOT=blue
     networks:
@@ -24,7 +25,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 90s
     labels:
       - "cakravia.slot=blue"
       - "cakravia.service=app"
@@ -39,9 +40,10 @@ services:
     restart: unless-stopped
     ports:
       - "3001:3000"
+    env_file:
+      - .env
     environment:
       - NODE_ENV=production
-      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
       - NEXT_TELEMETRY_DISABLED=1
       - DEPLOYMENT_SLOT=green
     networks:
@@ -53,7 +55,7 @@ services:
       interval: 15s
       timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 90s
     labels:
       - "cakravia.slot=green"
       - "cakravia.service=app"
@@ -76,7 +78,10 @@ services:
       - cakravia-network
     mem_limit: 128m
     depends_on:
-      - app-blue
+      app-blue:
+        condition: service_healthy
+      app-green:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:80/api/health || exit 1"]
       interval: 30s
