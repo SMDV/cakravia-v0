@@ -364,63 +364,66 @@ EOF
 update_nginx_configuration() {
     local target_deployment=$1
     local version=$2
-    
+
     log "Updating nginx configuration to point to ${target_deployment}..."
-    
+
     # Create backup of current configuration
     cp nginx/nginx.conf nginx/nginx.conf.backup
-    
+
     # Create dynamic configuration based on running containers
     if ! create_dynamic_nginx_config "$target_deployment" "$version"; then
         log_error "Failed to create dynamic nginx configuration"
         return 1
     fi
-    
-    # Test nginx configuration by copying to container and testing
-    if docker cp nginx/nginx.conf cakravia-nginx:/tmp/nginx.conf.test; then
-        if docker exec cakravia-nginx nginx -t -c /tmp/nginx.conf.test > /dev/null 2>&1; then
-            # Configuration is valid, apply it
-            docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf
-            
-            # Reload nginx (zero downtime)
-            if docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1; then
-                log_success "Nginx configuration updated and reloaded successfully"
+
+    # Since nginx.conf is mounted as a volume, we need to restart the container
+    # The restart will be quick because nginx is lightweight
+    log "Restarting nginx container to apply new configuration..."
+    if docker-compose -f docker-compose.blue-green.yml restart nginx > /dev/null 2>&1; then
+        # Wait for nginx to be ready
+        sleep 3
+
+        # Verify nginx is running and can reach the target
+        if docker ps --format 'table {{.Names}}' | grep -q "^cakravia-nginx$"; then
+            # Test connectivity to target deployment
+            if docker exec cakravia-nginx curl -f -s "http://cakravia-app-${target_deployment}:3000/api/health" > /dev/null 2>&1; then
+                log_success "Nginx configuration updated and nginx restarted successfully"
                 return 0
             else
-                log_error "Nginx reload failed! Restoring backup..."
-                cp nginx/nginx.conf.backup nginx/nginx.conf
-                docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf
-                docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1
-                return 1
+                log_warning "Nginx restarted but cannot reach target deployment yet"
+                # Give it a bit more time
+                sleep 5
+                if docker exec cakravia-nginx curl -f -s "http://cakravia-app-${target_deployment}:3000/api/health" > /dev/null 2>&1; then
+                    log_success "Nginx can now reach target deployment"
+                    return 0
+                fi
             fi
-        else
-            log_error "Nginx configuration test failed! Restoring backup..."
-            cp nginx/nginx.conf.backup nginx/nginx.conf
-            return 1
         fi
-    else
-        log_error "Failed to copy configuration to nginx container!"
-        cp nginx/nginx.conf.backup nginx/nginx.conf
-        return 1
     fi
+
+    log_error "Nginx restart failed! Restoring backup..."
+    cp nginx/nginx.conf.backup nginx/nginx.conf
+    docker-compose -f docker-compose.blue-green.yml restart nginx > /dev/null 2>&1
+    return 1
 }
 
 # Function to rollback deployment
 rollback_deployment() {
     local active_deployment=$1
     local inactive_deployment=$2
-    
+
     log_warning "Initiating rollback to ${active_deployment}..."
-    
+
     # Restore previous nginx configuration
-    if [ -f "nginx/upstream.conf.backup" ]; then
-        cp nginx/upstream.conf.backup nginx/upstream.conf
-        docker exec cakravia-nginx nginx -s reload > /dev/null 2>&1
+    if [ -f "nginx/nginx.conf.backup" ]; then
+        cp nginx/nginx.conf.backup nginx/nginx.conf
+        docker-compose -f docker-compose.blue-green.yml restart nginx > /dev/null 2>&1
+        sleep 3
     fi
-    
+
     # Stop the failed container
     docker-compose -f docker-compose.blue-green.yml stop "app-${inactive_deployment}" > /dev/null 2>&1 || true
-    
+
     log_success "Rollback completed. ${active_deployment} is still active."
 }
 
