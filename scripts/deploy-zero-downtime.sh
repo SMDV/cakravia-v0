@@ -569,7 +569,24 @@ main() {
         rollback_deployment "$active_deployment" "$inactive_deployment"
         exit 1
     fi
-    
+
+    # Restart nginx to refresh DNS cache for the new container
+    # This is needed because nginx's depends_on uses 'service_started' for green,
+    # which means nginx may have stale DNS entries for newly-healthy containers
+    log "Restarting nginx to refresh DNS cache for ${inactive_deployment} container..."
+    if docker-compose -f docker-compose.blue-green.yml restart nginx > /dev/null 2>&1; then
+        # Wait for nginx to stabilize and reload its DNS cache
+        sleep 5
+        if ! is_container_running "cakravia-nginx"; then
+            log_error "Nginx failed to restart after DNS cache refresh"
+            rollback_deployment "$active_deployment" "$inactive_deployment"
+            exit 1
+        fi
+        log_success "Nginx restarted successfully, DNS cache refreshed"
+    else
+        log_warning "Nginx restart failed, continuing with existing DNS cache..."
+    fi
+
     # Verify container is still running and reachable before switching traffic
     log "Final verification before traffic switch..."
     if ! is_container_running "cakravia-app-${inactive_deployment}"; then
