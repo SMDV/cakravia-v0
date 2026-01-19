@@ -1,4 +1,4 @@
-name: Zero-Downtime Deploy to VPS
+name: Deploy to VPS
 
 on:
   push:
@@ -14,7 +14,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -46,7 +46,7 @@ jobs:
           echo "version=$(date +%Y%m%d-%H%M%S)-${GITHUB_SHA:0:7}" >> $GITHUB_OUTPUT
         fi
 
-    - name: Zero-Downtime Deployment
+    - name: Deploy to VPS
       uses: appleboy/ssh-action@v1.0.3
       with:
         host: ${{ secrets.VPS_HOST }}
@@ -58,30 +58,27 @@ jobs:
         envs: NEXT_PUBLIC_GOOGLE_CLIENT_ID,DEPLOYMENT_VERSION,GITHUB_SHA,GITHUB_REF
         script: |
           set -e
-          
-          echo "🚀 Starting Zero-Downtime Blue-Green Deployment"
+
+          echo "🚀 Starting Deployment"
           echo "Version: ${DEPLOYMENT_VERSION}"
           echo "Commit: ${GITHUB_SHA}"
           echo "Branch: ${GITHUB_REF}"
-          
+
           # Check if application directory exists
           if [ ! -d "/opt/cakravia" ]; then
             echo "Creating application directory..."
             sudo mkdir -p /opt/cakravia
             sudo chown $USER:$USER /opt/cakravia
           fi
-          
+
           # Navigate to application directory
           cd /opt/cakravia
-          
+
           # Check if this is first deployment
-          if [ ! -f "docker-compose.blue-green.yml" ]; then
+          if [ ! -f "docker-compose.yml" ]; then
             echo "First deployment - cloning repository..."
             git clone https://github.com/${{ github.repository }}.git .
-            
-            # Initial setup for first deployment
-            echo "Setting up for first deployment..."
-            
+
             # Create environment file
             cat > .env << EOF
           NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
@@ -91,25 +88,18 @@ jobs:
           DEPLOYMENT_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GITHUB_SHA=${GITHUB_SHA}
           EOF
-            
+
             # Create nginx directories
-            mkdir -p nginx/ssl nginx/logs monitoring
-            
-            # Set up initial nginx configuration for blue deployment
-            if [ -f "nginx/nginx.blue.conf" ]; then
-              sed -e "s/{{TIMESTAMP}}/$(date -u +"%Y-%m-%dT%H:%M:%SZ")/g" -e "s/{{VERSION}}/${DEPLOYMENT_VERSION}/g" nginx/nginx.blue.conf > nginx/nginx.conf
-            elif [ -f "nginx/nginx.blue-green.conf" ]; then
-              cp nginx/nginx.blue-green.conf nginx/nginx.conf
-            fi
-            
-            # Start initial blue deployment
-            echo "Starting initial blue deployment..."
-            docker-compose -f docker-compose.blue-green.yml up -d app-blue nginx
-            
+            mkdir -p nginx/ssl nginx/logs
+
+            # Start initial deployment
+            echo "Starting initial deployment..."
+            docker-compose up -d --build
+
             # Wait for initial deployment
             echo "Waiting for initial deployment to be ready..."
-            sleep 45
-            
+            sleep 60
+
             # Check initial deployment health
             for i in {1..10}; do
               if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
@@ -120,13 +110,13 @@ jobs:
                 sleep 10
               fi
             done
-            
+
             echo "✅ First deployment completed successfully!"
           else
             echo "Updating existing repository..."
             git fetch origin
             git reset --hard origin/main
-            
+
             # Update environment file
             cat > .env << EOF
           NEXT_PUBLIC_GOOGLE_CLIENT_ID=${NEXT_PUBLIC_GOOGLE_CLIENT_ID}
@@ -136,75 +126,50 @@ jobs:
           DEPLOYMENT_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
           GITHUB_SHA=${GITHUB_SHA}
           EOF
-            
-            # Clean up orphaned containers before deployment
-            echo "Cleaning up orphaned containers..."
-            docker-compose -f docker-compose.blue-green.yml down --remove-orphans
-            docker system prune -f
-            
-            # Run zero-downtime deployment
-            echo "Running zero-downtime deployment..."
-            if [ -f "scripts/deploy-zero-downtime.sh" ]; then
-              chmod +x scripts/deploy-zero-downtime.sh
-              if ./scripts/deploy-zero-downtime.sh "${DEPLOYMENT_VERSION}"; then
-                echo "✅ Zero-downtime deployment completed successfully!"
-              else
-                echo "❌ Zero-downtime deployment failed!"
-                exit 1
-              fi
-            else
-              echo "❌ Zero-downtime deployment script not found!"
-              exit 1
-            fi
+
+            # Stop existing containers
+            echo "Stopping existing containers..."
+            docker-compose down
+
+            # Pull latest images
+            echo "Pulling latest images..."
+            docker-compose pull
+
+            # Start new deployment
+            echo "Starting new deployment..."
+            docker-compose up -d --build
           fi
-          
+
           # Post-deployment verification
           echo "🔍 Running post-deployment verification..."
-          
+
           # Check container status
           echo "Container status:"
-          docker-compose -f docker-compose.blue-green.yml ps
-          
-          # Comprehensive health checks
-          echo "Testing health endpoints..."
-          
+          docker-compose ps
+
+          # Wait for application to be ready
+          echo "Waiting for application to be ready..."
+          sleep 30
+
           # Test main health endpoint
+          echo "Testing health endpoint..."
           if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
             echo "✅ Main health check passed"
           else
             echo "❌ Main health check failed"
+            docker-compose logs --tail=50
             exit 1
           fi
-          
-          # Test readiness endpoint
-          if curl -f http://localhost:8080/api/health/ready > /dev/null 2>&1; then
-            echo "✅ Readiness check passed"
-          else
-            echo "⚠️  Readiness check failed"
-          fi
-          
-          # Test liveness endpoint
-          if curl -f http://localhost:8080/api/health/live > /dev/null 2>&1; then
-            echo "✅ Liveness check passed"
-          else
-            echo "⚠️  Liveness check failed"
-          fi
-          
-          # Test deployment status endpoint
-          if curl -f http://localhost:8080/api/deployment/status > /dev/null 2>&1; then
-            echo "✅ Deployment status endpoint accessible"
-          else
-            echo "⚠️  Deployment status endpoint failed"
-          fi
-          
-          # Test application pages
+
+          # Test application homepage
+          echo "Testing application homepage..."
           if curl -f -s http://localhost:8080/ > /dev/null 2>&1; then
             echo "✅ Application homepage accessible"
           else
             echo "❌ Application homepage failed"
             exit 1
           fi
-          
+
           # Display deployment information
           echo ""
           echo "🎉 Deployment Summary:"
@@ -213,12 +178,8 @@ jobs:
           echo "   Time: $(date)"
           echo "   URL: https://cakravia.com"
           echo ""
-          
-          # Show current deployment status
-          echo "📊 Current Deployment Status:"
-          curl -s http://localhost:8080/api/deployment/status | jq '.' 2>/dev/null || echo "Could not fetch deployment status"
-          
-          echo "✅ Zero-downtime deployment completed successfully!"
+
+          echo "✅ Deployment completed successfully!"
       env:
         NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
         DEPLOYMENT_VERSION: ${{ steps.version.outputs.version }}
@@ -236,41 +197,42 @@ jobs:
         timeout: 5m
         script: |
           cd /opt/cakravia
-          
+
           echo "🏥 Running final health verification..."
-          
-          # Wait a bit for the deployment to stabilize
-          sleep 30
-          
-          # Final comprehensive health check
+
+          # Wait for deployment to stabilize
+          sleep 20
+
+          # Final health check
           for i in {1..3}; do
             echo "Health check round $i/3..."
-            
+
             if curl -f http://localhost:8080/api/health > /dev/null 2>&1; then
               echo "✅ Health check $i passed"
             else
               echo "❌ Health check $i failed"
+              docker-compose logs --tail=50
               exit 1
             fi
-            
+
             sleep 10
           done
-          
+
           echo "✅ Final health verification completed!"
 
     - name: Notify deployment status
       if: always()
       run: |
         if [ ${{ job.status }} == 'success' ]; then
-          echo "🎉 Zero-downtime deployment to cakravia.com successful!"
+          echo "🎉 Deployment to cakravia.com successful!"
           echo "Version: ${{ steps.version.outputs.version }}"
           echo "Commit: ${{ github.sha }}"
         else
-          echo "❌ Zero-downtime deployment failed!"
+          echo "❌ Deployment failed!"
           exit 1
         fi
 
-    - name: Rollback on Failure
+    - name: Show logs on failure
       if: failure()
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -278,26 +240,13 @@ jobs:
         username: ${{ secrets.VPS_USER }}
         key: ${{ secrets.VPS_SSH_KEY }}
         port: ${{ secrets.VPS_PORT || 22 }}
-        timeout: 10m
+        timeout: 5m
         script: |
           cd /opt/cakravia
-          
-          echo "🔄 Deployment failed, checking if rollback is needed..."
-          
-          # Check if backup configuration exists
-          if [ -f "nginx/nginx.conf.backup" ]; then
-            echo "Restoring previous nginx configuration..."
-            cp nginx/nginx.conf.backup nginx/nginx.conf
-            docker cp nginx/nginx.conf cakravia-nginx:/etc/nginx/nginx.conf || true
-            docker exec cakravia-nginx nginx -s reload || true
-          fi
-          
-          # Show current container status
-          echo "Current container status:"
-          docker-compose -f docker-compose.blue-green.yml ps || true
-          
-          # Show recent logs
-          echo "Recent application logs:"
-          docker-compose -f docker-compose.blue-green.yml logs --tail=20 || true
-          
-          echo "⚠️  Rollback completed. Please check the application status."
+
+          echo "📋 Container status:"
+          docker-compose ps || true
+
+          echo ""
+          echo "📋 Recent application logs:"
+          docker-compose logs --tail=100 || true
